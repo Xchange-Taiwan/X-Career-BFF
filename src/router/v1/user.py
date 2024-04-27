@@ -22,7 +22,7 @@ log.basicConfig(filemode='w', level=log.INFO)
 
 router = APIRouter(
     prefix='/users',
-    tags=['Profile'],
+    tags=['User'],
     responses={404: {'description': 'Not found'}},
 )
 
