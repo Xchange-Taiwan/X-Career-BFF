@@ -1,12 +1,14 @@
-import os
-import time
-import json
-from typing import List, Dict, Any
+import logging as log
+from typing import List
+
 from fastapi import (
     APIRouter,
-    Request, Depends,
-    Header, Path, Query, Body, Form
+    Path, Body
 )
+
+from ..res.response import *
+from ...config.constant import *
+from ...domain.mentor.mentor_service import MentorService
 from ...domain.mentor.model import (
     mentor_model as mentor,
     experience_model as experience,
@@ -14,14 +16,9 @@ from ...domain.mentor.model import (
 from ...domain.user.model import (
     common_model as common,
 )
-from ..res.response import *
-from ...config.conf import *
-from ...config.constant import *
-from ...config.exception import *
-import logging as log
+from ...infra.util.injection_util import get_mentor_service
 
 log.basicConfig(filemode='w', level=log.INFO)
-
 
 router = APIRouter(
     prefix='/mentors',
@@ -29,32 +26,38 @@ router = APIRouter(
     responses={404: {'description': 'Not found'}},
 )
 
+# service init with injection
+mentor_service: MentorService = get_mentor_service()
 
-@router.put('/{user_id}/profile',
+
+@router.put('/mentor/create',
             responses=idempotent_response('upsert_mentor_profile', mentor.MentorProfileVO))
 async def upsert_mentor_profile(
-    user_id: int = Path(...),
-    body: mentor.MentorProfileDTO = Body(...),
+        body: mentor.MentorProfileDTO = Body(...),
 ):
     # TODO: implement
+    res: mentor.MentorProfileVO = mentor_service.upsert_mentor(body)
     return res_success(data=None)
 
 
 @router.get('/{user_id}/profile',
             responses=idempotent_response('get_mentor_profile', mentor.MentorProfileVO))
 async def get_mentor_profile(
-    user_id: int = Path(...),
+        user_id: int = Path(...),
 ):
     # TODO: implement
+
+    profile = mentor_service.get_
+
     return res_success(data=None)
 
 
 @router.put('/{user_id}/experiences/{experience_type}',
             responses=idempotent_response('upsert_experience', experience.ExperienceVO))
 async def upsert_experience(
-    user_id: int = Path(...),
-    experience_type: ExperienceCategory = Path(...),
-    body: experience.ExperienceDTO = Body(...),
+        user_id: int = Path(...),
+        experience_type: ExperienceCategory = Path(...),
+        body: experience.ExperienceDTO = Body(...),
 ):
     # TODO: implement
     return res_success(data=None)
@@ -63,9 +66,9 @@ async def upsert_experience(
 @router.delete('/{user_id}/experiences/{experience_type}/{experience_id}',
                responses=idempotent_response('delete_experience', experience.ExperienceVO))
 async def delete_experience(
-    user_id: int = Path(...),
-    experience_id: int = Path(...),
-    experience_type: ExperienceCategory = Path(...),
+        user_id: int = Path(...),
+        experience_id: int = Path(...),
+        experience_type: ExperienceCategory = Path(...),
 ):
     # TODO: implement
     return res_success(data=None)
@@ -74,7 +77,7 @@ async def delete_experience(
 @router.get('/expertises',
             responses=idempotent_response('get_expertises', common.ProfessionListVO))
 async def get_expertises(
-    # category = ProfessionCategory.EXPERTISE = Query(...),
+        # category = ProfessionCategory.EXPERTISE = Query(...),
 ):
     # TODO: implement
     return res_success(data=None)
@@ -83,8 +86,8 @@ async def get_expertises(
 @router.put('/{user_id}/schedule',
             responses=idempotent_response('upsert_mentor_schedule', mentor.MentorScheduleVO))
 async def upsert_mentor_schedule(
-    user_id: int = Path(...),
-    body: List[mentor.TimeSlotDTO] = Body(...),
+        user_id: int = Path(...),
+        body: List[mentor.TimeSlotDTO] = Body(...),
 ):
     # TODO: implement
     return res_success(data=None)
@@ -93,8 +96,8 @@ async def upsert_mentor_schedule(
 @router.delete('/{user_id}/schedule/{schedule_id}',
                responses=idempotent_response('delete_mentor_schedule', mentor.MentorScheduleVO))
 async def delete_mentor_schedule(
-    user_id: int = Path(...),
-    schedule_id: int = Path(...),
+        user_id: int = Path(...),
+        schedule_id: int = Path(...),
 ):
     # TODO: implement
     return res_success(data=None)
