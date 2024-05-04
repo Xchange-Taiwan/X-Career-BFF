@@ -8,6 +8,8 @@ from fastapi import FastAPI, Request, \
     APIRouter
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+
+from src.infra.databse import SessionLocal
 from src.router.v1 import (
     auth,
     user,
@@ -28,6 +30,22 @@ app.add_middleware(
     allow_headers=['*'],
 )
 
+
+# Middleware to handle transaction rollback on exceptions
+@app.middleware("http")
+async def rollback_on_exception(request, call_next):
+    try:
+        response = await call_next(request)
+        return response
+    except HTTPException as http_exception:
+        raise http_exception
+    except Exception as e:
+        # Rollback the database session on any unhandled exception
+        db = SessionLocal()
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
 router_v1 = APIRouter(prefix='/api/v1')
 router_v1.include_router(auth.router)
 router_v1.include_router(user.router)
@@ -45,6 +63,7 @@ async def info(term: str):
         raise HTTPException(
             status_code=418, detail='Oops! Wrong phrase. Guess again?')
     return JSONResponse(content={'mention': 'You only live once.'})
+
 
 # Mangum Handler, this is so important
 handler = Mangum(app)

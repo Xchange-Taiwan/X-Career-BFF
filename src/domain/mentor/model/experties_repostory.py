@@ -2,12 +2,26 @@ from typing import List
 
 from sqlalchemy.orm import Session
 
+from src.config.constant import ProfessionCategory
 from src.domain.mentor.model.mentor_model import MentorExpertisesVo, MentorExpertisesInter, MentorExpertises, Mentor, \
     MentorProfileDTO
+from src.domain.user.model.common_model import ProfessionListVO, ProfessionVO
 from src.infra.databse import Transaction
 
 
-def convert(mentor_expert: type[MentorExpertises]) -> MentorExpertisesVo:
+def convert_to_profession_vo(mentor_expert: type[MentorExpertises]) -> ProfessionVO:
+    vo = ProfessionVO()
+    if not mentor_expert:
+        return vo
+
+    vo.id = mentor_expert.expertises_id
+    vo.subject = mentor_expert.subject
+    vo.metadata = {}
+    vo.category = ProfessionCategory.EXPERTISE
+    return vo
+
+
+def convert_to_mentor_expertises_vo(mentor_expert: type[MentorExpertises]) -> MentorExpertisesVo:
     vo = MentorExpertisesVo()
     if not mentor_expert:
         return vo
@@ -22,7 +36,7 @@ def convert(mentor_expert: type[MentorExpertises]) -> MentorExpertisesVo:
 class ExpertisesRepository:
     def get_all(self) -> List[MentorExpertisesVo]:
         mentor_experts: List[type[MentorExpertises]] = self.db.query(MentorExpertises).all()
-        return [convert(res) for res in mentor_experts]
+        return [convert_to_mentor_expertises_vo(res) for res in mentor_experts]
 
     def get_by_mentor_id(self, mentor_id: int, db: Session) -> List[MentorExpertisesVo]:
         mentor_expert_list: List[type[MentorExpertises]] = ((db.query(MentorExpertises)
@@ -35,9 +49,9 @@ class ExpertisesRepository:
 
                                                             .all())
 
-        return [convert(res) for res in mentor_expert_list]
+        return [convert_to_mentor_expertises_vo(res) for res in mentor_expert_list]
 
-    def insert_inter_table(self, mentor_dto: MentorProfileDTO) -> list[MentorExpertisesInter]:
+    def insert_inter_table(self, mentor_dto: MentorProfileDTO, db: Session) -> list[MentorExpertisesInter]:
         insert_list: list[MentorExpertisesInter] = []
 
         for expert in mentor_dto.expertises:
@@ -45,7 +59,6 @@ class ExpertisesRepository:
             inter.expertises_id = expert.id
             inter.mentor_id = mentor_dto.id
             insert_list.append(inter)
-        with Transaction() as session:
-            session.add_all(insert_list)
+        db.add_all(insert_list)
 
         return insert_list

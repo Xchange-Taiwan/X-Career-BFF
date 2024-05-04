@@ -1,8 +1,10 @@
+from typing import List
+
 from sqlalchemy.orm import Session
 
 from src.domain.mentor.mentor_repostory import MentorRepository
 from src.domain.mentor.model.experties_repostory import ExpertisesRepository
-from src.domain.mentor.model.mentor_model import MentorProfileDTO, MentorProfileVO
+from src.domain.mentor.model.mentor_model import MentorProfileDTO, MentorProfileVO, MentorExpertisesVo
 
 
 class MentorService:
@@ -11,9 +13,10 @@ class MentorService:
         self.__expertises_repository: ExpertisesRepository = expertises_repository
 
     def upsert_mentor(self, mentor_profile_dto: MentorProfileDTO, db: Session) -> MentorProfileVO:
-        res: MentorProfileVO = self.__mentor_repository.upsert_mentor(mentor_profile_dto)
-        self.__expertises_repository.insert_inter_table(mentor_profile_dto)
-        mentor_expertises_vo = self.__expertises_repository.get_by_mentor_id(mentor_profile_dto.id, db)
+        res: MentorProfileDTO = self.__mentor_repository.upsert_mentor(mentor_profile_dto, db)
+        self.__expertises_repository.insert_inter_table(mentor_profile_dto, db)
+        mentor_expertises_vo: List[MentorExpertisesVo] = self.__expertises_repository.get_by_mentor_id(
+            mentor_profile_dto.id, db)
         res.expertises = mentor_expertises_vo
         return res
 

@@ -38,7 +38,7 @@ async def upsert_mentor_profile(
 ):
     # TODO: implement
     res: mentor.MentorProfileVO = mentor_service.upsert_mentor(body, db)
-    return res_success(data=res)
+    return res_success(data=res.json())
 
 
 @router.get('/{user_id}/profile',
