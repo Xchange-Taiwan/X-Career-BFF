@@ -1,3 +1,5 @@
+from sqlalchemy.orm import Session
+
 from src.domain.mentor.mentor_repostory import MentorRepository
 from src.domain.mentor.model.experties_repostory import ExpertisesRepository
 from src.domain.mentor.model.mentor_model import MentorProfileDTO, MentorProfileVO
@@ -8,10 +10,10 @@ class MentorService:
         self.__mentor_repository: MentorRepository = mentor_repository
         self.__expertises_repository: ExpertisesRepository = expertises_repository
 
-    def upsert_mentor(self, mentor_profile_dto: MentorProfileDTO) -> MentorProfileVO:
+    def upsert_mentor(self, mentor_profile_dto: MentorProfileDTO, db: Session) -> MentorProfileVO:
         res: MentorProfileVO = self.__mentor_repository.upsert_mentor(mentor_profile_dto)
         self.__expertises_repository.insert_inter_table(mentor_profile_dto)
-        mentor_expertises_vo = self.__expertises_repository.get_by_mentor_id(mentor_profile_dto.id)
+        mentor_expertises_vo = self.__expertises_repository.get_by_mentor_id(mentor_profile_dto.id, db)
         res.expertises = mentor_expertises_vo
         return res
 

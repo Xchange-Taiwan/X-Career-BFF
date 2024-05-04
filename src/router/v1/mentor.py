@@ -3,8 +3,9 @@ from typing import List
 
 from fastapi import (
     APIRouter,
-    Path, Body
+    Path, Body, Depends
 )
+from sqlalchemy.orm import Session
 
 from ..res.response import *
 from ...config.constant import *
@@ -16,6 +17,7 @@ from ...domain.mentor.model import (
 from ...domain.user.model import (
     common_model as common,
 )
+from ...infra.databse import get_db
 from ...infra.util.injection_util import get_mentor_service
 
 log.basicConfig(filemode='w', level=log.INFO)
@@ -26,18 +28,17 @@ router = APIRouter(
     responses={404: {'description': 'Not found'}},
 )
 
-# service init with injection
-mentor_service: MentorService = get_mentor_service()
-
 
 @router.put('/mentor/create',
             responses=idempotent_response('upsert_mentor_profile', mentor.MentorProfileVO))
 async def upsert_mentor_profile(
         body: mentor.MentorProfileDTO = Body(...),
+        mentor_service: MentorService = Depends(get_mentor_service),
+        db: Session = Depends(get_db)
 ):
     # TODO: implement
-    res: mentor.MentorProfileVO = mentor_service.upsert_mentor(body)
-    return res_success(data=None)
+    res: mentor.MentorProfileVO = mentor_service.upsert_mentor(body, db)
+    return res_success(data=res)
 
 
 @router.get('/{user_id}/profile',
@@ -47,7 +48,7 @@ async def get_mentor_profile(
 ):
     # TODO: implement
 
-    profile = mentor_service.get_
+    # profile = mentor_service.get_
 
     return res_success(data=None)
 

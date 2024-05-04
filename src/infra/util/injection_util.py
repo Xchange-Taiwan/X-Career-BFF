@@ -15,6 +15,9 @@ def get_mentor_dao() -> MentorRepository:
 
 
 # Dependency function to create UserService instance with UserDAO dependency injected
-def get_mentor_service(mentor_dao: MentorRepository = Depends(get_mentor_dao()),
+def get_mentor_service(mentor_dao: MentorRepository = Depends(get_mentor_dao),
                        expertises_dao: ExpertisesRepository = Depends(get_expertises_dao)) -> MentorService:
+    print("inject", type(mentor_dao))
+    print("inject",
+          type(expertises_dao))
     return MentorService(mentor_dao, expertises_dao)

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
@@ -16,7 +16,7 @@ Base = declarative_base()
 class Mentor(Base):
     __tablename__ = 'mentor_profile'
 
-    mentor_id = Column(Integer, primary_key=True)
+    mentor_id = Column(Integer, autoincrement=True, primary_key=True, nullable=False)
     personal_statement = Column(String)
     seniority_level = Column(String)
     about = Column(String)
@@ -25,18 +25,20 @@ class Mentor(Base):
 class MentorExpertisesInter(Base):
     __tablename__ = 'mentor_expertises_inter'
 
-    expertises_id = Column(Integer, primary_key=True)
-    mentor_id = Column(Integer, primary_key=True)
-    mentor = relationship("Mentor", cascade="all, delete-orphan")
+    expertises_id = Column(Integer, ForeignKey("mentor_expertises.expertises_id"), autoincrement=True, primary_key=True,
+                           nullable=False)
+    mentor_id = Column(Integer, ForeignKey("mentor_profile.mentor_id"), autoincrement=True, primary_key=True,
+                       nullable=False)
 
 
 class MentorExpertises(Base):
     __tablename__ = 'mentor_expertises'
 
-    expertises_id = Column(Integer, primary_key=True)
+    expertises_id = Column(Integer, autoincrement=True, primary_key=True, nullable=False)
     expertises = Column(String)
     industry = Column(String)
     subject = Column(String)
+    inter = relationship("MentorExpertisesInter", cascade="all, delete-orphan")
 
 
 class MentorProfileDTO(BaseModel):
