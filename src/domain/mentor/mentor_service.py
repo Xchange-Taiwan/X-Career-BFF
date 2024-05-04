@@ -15,6 +15,7 @@ class MentorService:
     def upsert_mentor(self, mentor_profile_dto: MentorProfileDTO, db: Session) -> MentorProfileVO:
         res: MentorProfileDTO = self.__mentor_repository.upsert_mentor(mentor_profile_dto, db)
         self.__expertises_repository.insert_inter_table(mentor_profile_dto, db)
+        db.commit() #因為動作需要連續 在這裡commit才可以兩邊都進DB
         mentor_expertises_vo: List[MentorExpertisesVo] = self.__expertises_repository.get_by_mentor_id(
             mentor_profile_dto.id, db)
         res.expertises = mentor_expertises_vo

@@ -60,5 +60,4 @@ class ExpertisesRepository:
             inter.mentor_id = mentor_dto.id
             insert_list.append(inter)
         db.add_all(insert_list)
-
         return insert_list

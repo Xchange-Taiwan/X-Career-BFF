@@ -42,8 +42,6 @@ class MentorRepository:
             mentor.seniority_level = mentor_profile_dto.seniority_level
             mentor.personal_statement = mentor_profile_dto.personal_statement
             db.add(mentor)
-            db.commit()
-            db.refresh(mentor)
             res = convert_mentor_profile_dto(mentor)
         return res
 
