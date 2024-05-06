@@ -66,8 +66,8 @@ CREATE TABLE reservations (
     mentee_id INT NOT NULL,
     start_datetime BIGINT,
     end_datetime BIGINT,
-    my_status ACCEPT_STATUS,
-    status ACCEPT_STATUS,
+    my_status ACCEPT_STATUS NOT NULL DEFAULT 'pending',
+    status ACCEPT_STATUS NOT NULL DEFAULT 'pending',
     "role" MEMBER_ROLE,
     message_from_others TEXT DEFAULT ''
 );
