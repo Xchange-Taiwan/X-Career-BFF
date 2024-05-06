@@ -37,7 +37,7 @@ async def upsert_mentor_profile(
         db: Session = Depends(get_db)
 ):
     # TODO: implement
-    res: mentor.MentorProfileVO = mentor_service.upsert_mentor(body, db)
+    res: mentor.MentorProfileVO = mentor_service.upsert_mentor_profile(body, db)
     return res_success(data=res.json())
 
 

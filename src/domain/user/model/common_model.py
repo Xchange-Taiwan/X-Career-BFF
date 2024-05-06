@@ -20,7 +20,7 @@ class InterestListVO(BaseModel):
 
 class ProfessionDTO(BaseModel):
     id: int
-    category: ProfessionCategory
+    profession_category: ProfessionCategory
 
 
 class ProfessionVO(ProfessionDTO):

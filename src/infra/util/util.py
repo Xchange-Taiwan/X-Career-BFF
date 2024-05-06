@@ -21,3 +21,11 @@ def get_serial_num(cache: ICache, user_id: str):
         raise ServerException(msg='user has no authrozanization')
 
     return user[SERIAL_KEY]
+
+def check_for_null_fields(dto):
+    if not hasattr(dto, '__dict__'):
+        return False
+    for key, value in dto.__dict__.items():
+        if value is None:
+            return True
+    return False

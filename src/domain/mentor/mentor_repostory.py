@@ -2,51 +2,48 @@ from typing import List
 
 from sqlalchemy.orm import Session
 
-from src.domain.mentor.model.mentor_model import Mentor, MentorProfileDTO
-from src.infra.databse import get_db, Transaction
+from src.domain.mentor.model.mentor_model import MentorProfile, MentorProfileDTO
 
 
-def convert_mentor_profile_dto(mentor: type[Mentor]) -> MentorProfileDTO:
+def convert_mentor_profile_dto(mentor: type[MentorProfile]) -> MentorProfileDTO:
     res = MentorProfileDTO()
-    res.about = mentor.about
-    res.seniority_level = mentor.seniority_level
-    res.personal_statement = mentor.personal_statement
+    if mentor:
+        for key, value in mentor.__dict__.items():
+            if value is not None:
+                try:
+                    setattr(res, key, value)
+                except (AttributeError, ValueError) as err:
+                    print("key not in dto", key)
     return res
 
 
 class MentorRepository:
-    def __init__(self):
-        self.db: Session = get_db()
 
-    def get_all(self) -> List[MentorProfileDTO]:
-        mentors = self.db.query(Mentor).all()
+    def get_all_mentor_profile(self, db: Session) -> List[MentorProfileDTO]:
+        mentors = db.query(MentorProfile).all()
         return [convert_mentor_profile_dto(mentor) for mentor in mentors]
 
-    def get_mentor_by_id(self, mentor_id: int) -> MentorProfileDTO:
-        return convert_mentor_profile_dto(self.db.query(Mentor).filter(Mentor.id == mentor_id).first())
+    def get_mentor_profile_by_id(self, mentor_id: int, db: Session) -> MentorProfileDTO:
+        return convert_mentor_profile_dto(db.query(MentorProfile).filter(MentorProfile.id == mentor_id).first())
 
     def upsert_mentor(self, mentor_profile_dto: MentorProfileDTO, db: Session) -> MentorProfileDTO:
         res: MentorProfileDTO = MentorProfileDTO()
 
-        mentor = db.query(Mentor).filter(Mentor.mentor_id == mentor_profile_dto.id).first()
+        mentor = db.query(MentorProfile).filter(MentorProfile.mentor_profile_id == mentor_profile_dto.mentor_profile_id).first()
 
-        if mentor:
-            mentor.personal_statement = mentor_profile_dto.personal_statement
-            mentor.seniority_level = mentor_profile_dto.seniority_level
-            mentor.about = mentor_profile_dto.about
-            db.add(mentor)
-            res = convert_mentor_profile_dto(mentor)
-        else:
-            mentor = Mentor()
-            mentor.about = mentor_profile_dto.about
-            mentor.seniority_level = mentor_profile_dto.seniority_level
-            mentor.personal_statement = mentor_profile_dto.personal_statement
-            db.add(mentor)
-            res = convert_mentor_profile_dto(mentor)
+        if not mentor:
+            mentor = MentorProfile()
+
+        for key, value in mentor_profile_dto.__dict__.items():
+            if value is not None:
+                setattr(mentor, key, value)
+        db.add(mentor)
+        res = convert_mentor_profile_dto(mentor)
+        db.commit()
         return res
 
-    def delete_mentor_by_id(self, mentor_id: int) -> None:
-        mentor = self.db.query(Mentor).filter_by(Mentor.mentor_id == mentor_id).first()
+    def delete_mentor_profile_by_id(self, mentor_profile_id: int) -> None:
+        mentor = self.db.query(MentorProfile).filter_by(MentorProfile.mentor_id == mentor_profile_id).first()
         if mentor:
             self.db.delete(mentor)
             self.db.commit()

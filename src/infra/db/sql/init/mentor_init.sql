@@ -1,8 +1,10 @@
 create type SENIORITY_LEVEL as enum('No reveal', 'junior', 'intermediate', 'senior', 'staff', 'manager');
-create type CATEGORY as enum('No reveal', 'outdoor', 'indoor'); --這邊不知放啥
-create type SCHEDULES_STATUS as enum('allow', 'forbidden'); --這邊不知放啥
-create type ACCEPT_STATUS as enum('accept', 'pending', 'reject');
-create type MEMBER_ROLE as enum('mentor', 'mentee');
+create type INTEREST_CATEGORY as enum('interested_position', 'skill', 'topic');
+create type PROFESSION_CATEGORY as enum('expertise', 'industry');
+create type EXPERIENCE_CATEGORY as enum('work', 'education', 'link');
+create type SCHEDULE_TYPE as enum('allow', 'forbidden');
+create type BOOKING_STATUS as enum('accept', 'pending', 'reject');
+create type ROLE_TYPE as enum('mentor', 'mentee');
 
 CREATE TABLE mentor_profile (
     mentor_id SERIAL PRIMARY KEY,
@@ -26,21 +28,21 @@ CREATE TABLE mentor_profile (
 CREATE TABLE mentor_experiences (
     experiences_id SERIAL PRIMARY KEY,
     user_id INT NOT NULL, --might include mentor or mentee?
-    category CATEGORY NOT NULL,
+    category PROFESSION_CATEGORY NOT NULL,
     "order" INT NOT NULL,
-    metadata JSONB
+    mentor_experiences_metadata JSONB
 );
 
 CREATE TABLE professions (
     professions_id SERIAL PRIMARY KEY,
-    category CATEGORY DEFAULT 'No reveal',
+    profession_category PROFESSION_CATEGORY ,
     subject TEXT DEFAULT '',
-    metadata JSONB
+    professions_metadata JSONB
 );
 
 CREATE TABLE mentor_schedules (
     mentor_schedules_id SERIAL PRIMARY KEY,
-    "type" SCHEDULES_STATUS DEFAULT 'allow',
+    "type" SCHEDULES_TYPE DEFAULT 'allow',
     "year" INT DEFAULT -1,
     "month" INT DEFAULT -1,
     day_of_month INT NOT NULL,
@@ -55,8 +57,8 @@ CREATE INDEX mentor_schedule_index ON mentor_schedules("year", "month", day_of_m
 
 CREATE TABLE canned_message (
     canned_message_id SERIAL PRIMARY KEY,
-    user_id CATEGORY NOT NULL,
-    "role" MEMBER_ROLE NOT NULL,
+    user_id INT NOT NULL,
+    "role" ROLE_TYPE NOT NULL,
     MESSAGE TEXT
 );
 
@@ -66,9 +68,9 @@ CREATE TABLE reservations (
     mentee_id INT NOT NULL,
     start_datetime BIGINT,
     end_datetime BIGINT,
-    my_status ACCEPT_STATUS NOT NULL DEFAULT 'pending',
-    status ACCEPT_STATUS NOT NULL DEFAULT 'pending',
-    "role" MEMBER_ROLE,
+    my_status BOOKING_STATUS ,
+    status BOOKING_STATUS,
+    "role" ROLE_TYPE,
     message_from_others TEXT DEFAULT ''
 );
 

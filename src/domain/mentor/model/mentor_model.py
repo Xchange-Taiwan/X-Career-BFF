@@ -1,8 +1,8 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Text, BigInteger
+from sqlalchemy import Column, Integer, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
-
+from sqlalchemy import types
+from ..enum.mentor_enums import SeniorityLevel, ScheduleType
 from ...user.model.common_model import (
     ProfessionDTO,
 )
@@ -14,41 +14,10 @@ log.basicConfig(filemode='w', level=log.INFO)
 Base = declarative_base()
 
 
-class SeniorityLevel(Enum):
-    NO_REVEAL = 'No reveal'
-    JUNIOR = 'junior'
-    INTERMEDIATE = 'intermediate'
-    SENIOR = 'senior'
-    STAFF = 'staff'
-    MANAGER = 'manager'
-
-
-class Category(Enum):
-    NO_REVEAL = 'No reveal'
-    OUTDOOR = 'outdoor'
-    INDOOR = 'indoor'
-
-
-class SchedulesStatus(Enum):
-    ALLOW = 'allow'
-    FORBIDDEN = 'forbidden'
-
-
-class AcceptStatus(Enum):
-    ACCEPT = 'accept'
-    PENDING = 'pending'
-    REJECT = 'reject'
-
-
-class MemberRole(Enum):
-    MENTOR = 'mentor'
-    MENTEE = 'mentee'
-
-
 class MentorProfile(Base):
     __tablename__ = 'mentor_profile'
 
-    mentor_id = Column(Integer, primary_key=True)
+    mentor_profile_id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
     avatar = Column(String, default='')
     location = Column(String, default='')
@@ -57,7 +26,7 @@ class MentorProfile(Base):
     linkedin_profile = Column(String, default='')
     personal_statement = Column(Text, default='')
     about = Column(Text, default='')
-    seniority_level = Column(Enum(SeniorityLevel), nullable=False)
+    seniority_level = Column(types.Enum(SeniorityLevel), nullable=False)
     timezone = Column(Integer, default=0)
     experience = Column(Integer, default=0)
     interested_positions = Column(JSONB)
@@ -69,67 +38,84 @@ class MentorProfile(Base):
 class MentorExperiences(Base):
     __tablename__ = 'mentor_experiences'
 
-    experiences_id = Column(Integer, primary_key=True)
+    mentor_experiences_id = Column(Integer, primary_key=True)
     user_id = Column(Integer, nullable=False)
-    category = Column(Enum(Category), nullable=False)
+    category = Column(types.Enum(ProfessionCategory), nullable=False)
     order = Column(Integer, nullable=False)
-    metadata = Column(JSONB)
+    experiences_metadata = Column(JSONB)
 
 
 class Professions(Base):
     __tablename__ = 'professions'
 
     professions_id = Column(Integer, primary_key=True)
-    category = Column(Enum(Category), default=Category.NO_REVEAL)
+    category = Column(types.Enum(ProfessionCategory))
     subject = Column(String, default='')
-    metadata = Column(JSONB)
-
-
-class MentorSchedules(Base):
-    __tablename__ = 'mentor_schedules'
-
-    mentor_schedules_id = Column(Integer, primary_key=True)
-    type = Column(Enum(SchedulesStatus), default=SchedulesStatus.ALLOW)
-    year = Column(Integer, default=-1)
-    month = Column(Integer, default=-1)
-    day_of_month = Column(Integer, nullable=False)
-    day_of_week = Column(Integer, nullable=False)
-    start_time = Column(Integer, nullable=False)
-    end_time = Column(Integer, nullable=False)
-    cycle_start_date = Column(BigInteger)
-    cycle_end_date = Column(BigInteger)
+    professions_metadata = Column(JSONB)
 
 
 class CannedMessage(Base):
     __tablename__ = 'canned_message'
 
     canned_message_id = Column(Integer, primary_key=True)
-    user_id = Column(Enum(Category), nullable=False)
-    role = Column(Enum(MemberRole), nullable=False)
+    user_id = Column(Integer, nullable=False)
+    role = Column(types.Enum(RoleType), nullable=False)
     message = Column(Text)
 
 
-class Reservations(Base):
-    __tablename__ = 'reservations'
-
-    reservations_id = Column(Integer, primary_key=True)
-    mentor_id = Column(Integer, nullable=False)
-    mentee_id = Column(Integer, nullable=False)
-    start_datetime = Column(BigInteger)
-    end_datetime = Column(BigInteger)
-    my_status = Column(Enum(AcceptStatus), nullable=False, default=AcceptStatus.PENDING)
-    status = Column(Enum(AcceptStatus), nullable=False, default=AcceptStatus.PENDING)
-    role = Column(Enum(MemberRole))
-    message_from_others = Column(Text, default='')
+# class MentorProfileDTO(BaseModel):
+#     mentor_profile_id: Optional[int]
+#     avatar: Optional[str]
+#     location: Optional[str]
+#     timezone: Optional[int]
+#     experience: Optional[int]
+#
+#     personal_statement: Optional[str]
+#     about: Optional[str]
+#     # TODO: enum
+#     seniority_level: Optional[str] = ""
+#     expertises: Optional[List[ProfessionDTO]] = []
 
 
 class MentorProfileDTO(BaseModel):
-    id: Optional[int]
-    personal_statement: Optional[str]
-    about: Optional[str]
-    # TODO: enum
-    seniority_level: Optional[str] = ""
+    mentor_profile_id: Optional[int]
+    name: Optional[str]
+    avatar: Optional[str] = ''
+    location: Optional[str] = ''
+    industry: Optional[str] = ''
+    position: Optional[str] = ''
+    linkedin_profile: Optional[str] = ''
+    personal_statement: Optional[str] = ''
+    about: Optional[str] = ''
+    seniority_level:  Optional[str] = ''
+    timezone: Optional[int] = 0
+    experience: Optional[int] = 0
+    interested_positions: Optional[Dict] = None
+    skills: Optional[List[Dict]] = []
+    topics: Optional[List[Dict]] = []
     expertises: Optional[List[ProfessionDTO]] = []
+
+
+class MentorExperiencesDTO(BaseModel):
+    mentor_experiences_id: int
+    user_id: int
+    category: Optional[str]
+    order: Optional[int]
+    mentor_experiences_metadata: Optional[Dict] = None
+
+
+class ProfessionsDTO(BaseModel):
+    professions_id: int
+    category: Optional[str]
+    subject: Optional[str] = ''
+    professions_metadata: Optional[Dict] = None
+
+
+class CannedMessageDTO(BaseModel):
+    canned_message_id: int
+    user_id: int
+    role: Optional[str]
+    message: Optional[str]
 
 
 class MentorProfileVO(ProfileVO):
@@ -143,12 +129,12 @@ class MentorProfileVO(ProfileVO):
 class TimeSlotDTO(BaseModel):
     schedule_id: Optional[int]
     type: ScheduleType
-    year: int = SCHEDULE_YEAR
-    month: int = SCHEDULE_MONTH
-    day_of_month: int = SCHEDULE_DAY_OF_MONTH
-    day_of_week: int = SCHEDULE_DAY_OF_WEEK
-    start_time: int
-    end_time: int
+    year: Optional[int] = SCHEDULE_YEAR
+    month: Optional[int] = SCHEDULE_MONTH
+    day_of_month: Optional[int] = SCHEDULE_DAY_OF_MONTH
+    day_of_week: Optional[int] = SCHEDULE_DAY_OF_WEEK
+    start_time: Optional[int]
+    end_time: Optional[int]
 
 
 class TimeSlotVO(TimeSlotDTO):
@@ -158,11 +144,6 @@ class TimeSlotVO(TimeSlotDTO):
 class MentorScheduleVO(BaseModel):
     timeslots: Optional[List[TimeSlotVO]] = []
     next_id: Optional[int]
-
-
-class MentorExpertisesDto(BaseModel):
-    expertises_id: int
-    mentor_id: int
 
 
 class MentorExpertisesVo(BaseModel):
