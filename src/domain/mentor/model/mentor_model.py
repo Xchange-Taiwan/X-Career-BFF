@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, Text, BigInteger
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
@@ -13,32 +14,113 @@ log.basicConfig(filemode='w', level=log.INFO)
 Base = declarative_base()
 
 
-class Mentor(Base):
+class SeniorityLevel(Enum):
+    NO_REVEAL = 'No reveal'
+    JUNIOR = 'junior'
+    INTERMEDIATE = 'intermediate'
+    SENIOR = 'senior'
+    STAFF = 'staff'
+    MANAGER = 'manager'
+
+
+class Category(Enum):
+    NO_REVEAL = 'No reveal'
+    OUTDOOR = 'outdoor'
+    INDOOR = 'indoor'
+
+
+class SchedulesStatus(Enum):
+    ALLOW = 'allow'
+    FORBIDDEN = 'forbidden'
+
+
+class AcceptStatus(Enum):
+    ACCEPT = 'accept'
+    PENDING = 'pending'
+    REJECT = 'reject'
+
+
+class MemberRole(Enum):
+    MENTOR = 'mentor'
+    MENTEE = 'mentee'
+
+
+class MentorProfile(Base):
     __tablename__ = 'mentor_profile'
 
-    mentor_id = Column(Integer, autoincrement=True, primary_key=True, nullable=False)
-    personal_statement = Column(String)
-    seniority_level = Column(String)
-    about = Column(String)
+    mentor_id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    avatar = Column(String, default='')
+    location = Column(String, default='')
+    industry = Column(String, default='')
+    position = Column(String, default='')
+    linkedin_profile = Column(String, default='')
+    personal_statement = Column(Text, default='')
+    about = Column(Text, default='')
+    seniority_level = Column(Enum(SeniorityLevel), nullable=False)
+    timezone = Column(Integer, default=0)
+    experience = Column(Integer, default=0)
+    interested_positions = Column(JSONB)
+    skills = Column(JSONB)
+    topics = Column(JSONB)
+    expertises = Column(JSONB)
 
 
-class MentorExpertisesInter(Base):
-    __tablename__ = 'mentor_expertises_inter'
+class MentorExperiences(Base):
+    __tablename__ = 'mentor_experiences'
 
-    expertises_id = Column(Integer, ForeignKey("mentor_expertises.expertises_id"), autoincrement=True, primary_key=True,
-                           nullable=False)
-    mentor_id = Column(Integer, ForeignKey("mentor_profile.mentor_id"), autoincrement=True, primary_key=True,
-                       nullable=False)
+    experiences_id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, nullable=False)
+    category = Column(Enum(Category), nullable=False)
+    order = Column(Integer, nullable=False)
+    metadata = Column(JSONB)
 
 
-class MentorExpertises(Base):
-    __tablename__ = 'mentor_expertises'
+class Professions(Base):
+    __tablename__ = 'professions'
 
-    expertises_id = Column(Integer, autoincrement=True, primary_key=True, nullable=False)
-    expertises = Column(String)
-    industry = Column(String)
-    subject = Column(String)
-    inter = relationship("MentorExpertisesInter", cascade="all, delete-orphan")
+    professions_id = Column(Integer, primary_key=True)
+    category = Column(Enum(Category), default=Category.NO_REVEAL)
+    subject = Column(String, default='')
+    metadata = Column(JSONB)
+
+
+class MentorSchedules(Base):
+    __tablename__ = 'mentor_schedules'
+
+    mentor_schedules_id = Column(Integer, primary_key=True)
+    type = Column(Enum(SchedulesStatus), default=SchedulesStatus.ALLOW)
+    year = Column(Integer, default=-1)
+    month = Column(Integer, default=-1)
+    day_of_month = Column(Integer, nullable=False)
+    day_of_week = Column(Integer, nullable=False)
+    start_time = Column(Integer, nullable=False)
+    end_time = Column(Integer, nullable=False)
+    cycle_start_date = Column(BigInteger)
+    cycle_end_date = Column(BigInteger)
+
+
+class CannedMessage(Base):
+    __tablename__ = 'canned_message'
+
+    canned_message_id = Column(Integer, primary_key=True)
+    user_id = Column(Enum(Category), nullable=False)
+    role = Column(Enum(MemberRole), nullable=False)
+    message = Column(Text)
+
+
+class Reservations(Base):
+    __tablename__ = 'reservations'
+
+    reservations_id = Column(Integer, primary_key=True)
+    mentor_id = Column(Integer, nullable=False)
+    mentee_id = Column(Integer, nullable=False)
+    start_datetime = Column(BigInteger)
+    end_datetime = Column(BigInteger)
+    my_status = Column(Enum(AcceptStatus), nullable=False, default=AcceptStatus.PENDING)
+    status = Column(Enum(AcceptStatus), nullable=False, default=AcceptStatus.PENDING)
+    role = Column(Enum(MemberRole))
+    message_from_others = Column(Text, default='')
 
 
 class MentorProfileDTO(BaseModel):
