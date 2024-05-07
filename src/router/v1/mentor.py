@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from ..res.response import *
 from ...config.constant import *
-from ...domain.mentor.mentor_service import MentorService
+from src.domain.mentor.service.mentor_service import MentorService
 from ...domain.mentor.model import (
     mentor_model as mentor,
     experience_model as experience,
@@ -29,7 +29,7 @@ router = APIRouter(
 )
 
 
-@router.put('/mentor/create',
+@router.put('/mentor_profile/create',
             responses=idempotent_response('upsert_mentor_profile', mentor.MentorProfileVO))
 async def upsert_mentor_profile(
         body: mentor.MentorProfileDTO = Body(...),
@@ -45,6 +45,7 @@ async def upsert_mentor_profile(
             responses=idempotent_response('get_mentor_profile', mentor.MentorProfileVO))
 async def get_mentor_profile(
         user_id: int = Path(...),
+        db: Session = Depends(get_db)
 ):
     # TODO: implement
 

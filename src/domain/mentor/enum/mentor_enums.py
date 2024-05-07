@@ -2,7 +2,7 @@ from enum import Enum
 
 
 class SeniorityLevel(Enum):
-    NO_REVEAL = 'No reveal'
+    NO_REVEAL = 'no reveal'
     JUNIOR = 'junior'
     INTERMEDIATE = 'intermediate'
     SENIOR = 'senior'

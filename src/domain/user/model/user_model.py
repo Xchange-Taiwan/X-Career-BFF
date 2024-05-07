@@ -10,8 +10,8 @@ log.basicConfig(filemode='w', level=log.INFO)
 
 class ProfileDTO(BaseModel):
     name: Optional[str]
-    avator: Optional[str]
-    timezone: Optional[int]
+    avatar: Optional[str] = ''
+    timezone: Optional[int] = 0
     industry: Optional[int]
     position: Optional[str]
     company: Optional[str]

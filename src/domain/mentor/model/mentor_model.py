@@ -3,9 +3,6 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import types
 from ..enum.mentor_enums import SeniorityLevel, ScheduleType
-from ...user.model.common_model import (
-    ProfessionDTO,
-)
 from ...user.model.user_model import *
 from ....config.conf import *
 from ....config.constant import *
@@ -17,11 +14,10 @@ Base = declarative_base()
 class MentorProfile(Base):
     __tablename__ = 'mentor_profile'
 
-    mentor_profile_id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
     avatar = Column(String, default='')
     location = Column(String, default='')
-    industry = Column(String, default='')
     position = Column(String, default='')
     linkedin_profile = Column(String, default='')
     personal_statement = Column(Text, default='')
@@ -29,9 +25,11 @@ class MentorProfile(Base):
     seniority_level = Column(types.Enum(SeniorityLevel), nullable=False)
     timezone = Column(Integer, default=0)
     experience = Column(Integer, default=0)
+    company = Column(Text, default='')
     interested_positions = Column(JSONB)
     skills = Column(JSONB)
     topics = Column(JSONB)
+    industry = Column(JSONB)
     expertises = Column(JSONB)
 
 
@@ -63,6 +61,14 @@ class CannedMessage(Base):
     message = Column(Text)
 
 
+class Interests(Base):
+    __tablename__ = 'interests'
+    id = Column(Integer, primary_key=True)
+    category = Column(types.Enum(InterestCategory), nullable=False)
+    subject = Column(String, nullable=False)
+    desc = Column(JSONB)
+
+
 # class MentorProfileDTO(BaseModel):
 #     mentor_profile_id: Optional[int]
 #     avatar: Optional[str]
@@ -77,23 +83,14 @@ class CannedMessage(Base):
 #     expertises: Optional[List[ProfessionDTO]] = []
 
 
-class MentorProfileDTO(BaseModel):
-    mentor_profile_id: Optional[int]
-    name: Optional[str]
-    avatar: Optional[str] = ''
+class MentorProfileDTO(ProfileDTO):
+    user_id: Optional[int]
     location: Optional[str] = ''
-    industry: Optional[str] = ''
-    position: Optional[str] = ''
-    linkedin_profile: Optional[str] = ''
     personal_statement: Optional[str] = ''
     about: Optional[str] = ''
-    seniority_level:  Optional[str] = ''
-    timezone: Optional[int] = 0
+    seniority_level: Optional[SeniorityLevel]
     experience: Optional[int] = 0
-    interested_positions: Optional[Dict] = None
-    skills: Optional[List[Dict]] = []
-    topics: Optional[List[Dict]] = []
-    expertises: Optional[List[ProfessionDTO]] = []
+    expertises: Optional[List[int]] = []
 
 
 class MentorExperiencesDTO(BaseModel):
@@ -101,14 +98,14 @@ class MentorExperiencesDTO(BaseModel):
     user_id: int
     category: Optional[str]
     order: Optional[int]
-    mentor_experiences_metadata: Optional[Dict] = None
+    mentor_experiences_metadata: Optional[Dict] = {}
 
 
 class ProfessionsDTO(BaseModel):
     professions_id: int
     category: Optional[str]
     subject: Optional[str] = ''
-    professions_metadata: Optional[Dict] = None
+    professions_metadata: Optional[Dict] = {}
 
 
 class CannedMessageDTO(BaseModel):
@@ -122,8 +119,8 @@ class MentorProfileVO(ProfileVO):
     personal_statement: Optional[str]
     about: Optional[str]
     # TODO: enum
-    seniority_level: Optional[str] = ""
-    expertises: Optional[List[ProfessionVO]] = []
+    seniority_level: Optional[SeniorityLevel] = ""
+    expertises: Optional[List[ProfessionVO]]
 
 
 class TimeSlotDTO(BaseModel):
