@@ -1,8 +1,9 @@
-import json
-from typing import Any, Dict, List, Optional, Union
-from pydantic import BaseModel
-from ....config.constant import *
 import logging as log
+from typing import Dict, List
+
+from pydantic import BaseModel
+
+from ....config.constant import *
 
 log.basicConfig(filemode='w', level=log.INFO)
 
@@ -12,6 +13,17 @@ class InterestVO(BaseModel):
     category: InterestCategory
     subject: str
     desc: Dict
+
+
+class IndustryVO(BaseModel):
+    id: int
+    category: IndustryCategory
+    subject: str
+    desc: Dict
+
+
+class IndustryListVO(BaseModel):
+    industries: List[IndustryVO] = []
 
 
 class InterestListVO(BaseModel):

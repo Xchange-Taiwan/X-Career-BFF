@@ -1,29 +1,74 @@
 from typing import List
 
+from sqlalchemy import func, Integer
 from sqlalchemy.orm import Session
 
-from src.domain.mentor.model.mentor_model import MentorProfile, MentorProfileDTO, MentorProfileVO
+from src.domain.mentor.model.mentor_model import MentorProfileDTO
+from src.infra.db.orm.init.mentor_init import Profile
 from src.infra.util.convert_util import convert_model_to_dto, convert_dto_to_model
 
 
 class MentorRepository:
 
     def get_all_mentor_profile(self, db: Session) -> List[MentorProfileDTO]:
-        mentors = db.query(MentorProfile).all()
-        return [convert_model_to_dto(mentor) for mentor in mentors]
+        mentors = db.query(Profile).all()
+        return [convert_model_to_dto(mentor, MentorProfileDTO) for mentor in mentors]
 
-    def get_mentor_profile_by_id(self, mentor_id: int, db: Session) -> MentorProfileDTO:
-        return convert_model_to_dto(db.query(MentorProfile).filter(MentorProfile.id == mentor_id).first())
+    def get_mentor_profile_by_id(self, db: Session, mentor_id: int) -> MentorProfileDTO:
+        return convert_model_to_dto(db.query(Profile).filter(Profile.id == mentor_id).first(),
+                                    MentorProfileDTO)
 
-    def upsert_mentor(self, mentor_profile_dto: MentorProfileDTO, db: Session) -> MentorProfileDTO:
-        mentor = convert_dto_to_model(mentor_profile_dto, MentorProfile)
+    def get_mentor_profiles_by_conditions(self, db: Session, dto: MentorProfileDTO) -> List[MentorProfileDTO]:
+        dto_dict = dict(dto.__dict__)
+        query = db.query(Profile)
+        if dto_dict.get('user_id'):
+            # unique so early return
+            query = query.filter(Profile.user_id == dto.user_id)
+            profile = query.first()
+            return [convert_model_to_dto(profile, MentorProfileDTO)]
+        if dto_dict.get('name'):
+            query = query.filter(Profile.name == dto.name )
+        if dto_dict.get('location'):
+            query = query.filter(Profile.location.like('%' + dto.location + '%'))
+        if dto_dict.get('about'):
+            query = query.filter(Profile.about.like('%' + dto.about + '%'))
+        if dto_dict.get('personal_statement'):
+            query = query.filter(Profile.about.like('%' + dto.personal_statement + '%'))
+        if dto_dict.get('seniority_level'):
+            query = query.filter(Profile.seniority_level == dto.seniority_level)
+        if dto_dict.get('industry'):
+            query = query.filter(Profile.industry == dto.industry)
+        if dto_dict.get('position'):
+            query = query.filter(Profile.position == dto.position)
+        if dto_dict.get('company'):
+            query = query.filter(Profile.company == dto.company)
+        if dto_dict.get('experience'):
+            query = query.filter(Profile.experience >= dto.experience)
+
+        if dto_dict.get('skills'):
+            query = query.filter(
+                func.cast(func.jsonb_array_elements_text(Profile.skills), Integer).any_(dto.skills)
+            )
+        if dto_dict.get('topics'):
+            query = query.filter(
+                func.cast(func.jsonb_array_elements_text(Profile.topics), Integer).any_(dto.topics)
+            )
+        if dto_dict.get('expertises'):
+            query = query.filter(
+                func.cast(func.jsonb_array_elements_text(Profile.expertises), Integer).any_(dto.expertises)
+            )
+        profiles = query.all()
+        return [convert_model_to_dto(profile, MentorProfileDTO) for profile in profiles]
+
+    def upsert_mentor(self, db: Session, mentor_profile_dto: MentorProfileDTO) -> MentorProfileDTO:
+        mentor = convert_dto_to_model(mentor_profile_dto, Profile)
         db.merge(mentor)
         res = convert_model_to_dto(mentor, MentorProfileDTO)
 
         return res
 
-    def delete_mentor_profile_by_id(self, mentor_profile_id: int) -> None:
-        mentor = self.db.query(MentorProfile).filter_by(MentorProfile.mentor_id == mentor_profile_id).first()
+    def delete_mentor_profile_by_id(self, db: Session, user_id: str) -> None:
+        mentor = db.query(Profile).filter(Profile.user_id == user_id).first()
         if mentor:
-            self.db.delete(mentor)
-            self.db.commit()
+            db.delete(mentor)
+            db.commit()

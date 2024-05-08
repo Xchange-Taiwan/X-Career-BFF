@@ -18,6 +18,13 @@ class ExperienceCategory(Enum):
     LINK = 'link'
 
 
+class IndustryCategory(Enum):
+    SOFTWARE = 'software'
+    HARDWARE = 'hardware'
+    SERVICE = 'service'
+    FINANCE = 'finance'
+    OTHER = 'other'
+
 
 class RoleType(Enum):
     MENTOR = 'mentor'
@@ -35,13 +42,21 @@ class ReservationListState(Enum):
     PENDING = 'pending'
     HISTORY = 'history'
 
+
 class SortingBy(Enum):
     UPDATED_TIME = 'updated_time'
     # VIEW = 'view'
 
+
 class Sorting(Enum):
     ASC = 1
     DESC = -1
+
+
+class SchedulesType(Enum):
+    ALLOW = "allow"
+    FORBIDDEN = "forbidden"
+
 
 # serial_key is a field of the collection in the user's cache
 SERIAL_KEY = 'created_at'

@@ -8,66 +8,6 @@ from ....config.conf import *
 from ....config.constant import *
 
 log.basicConfig(filemode='w', level=log.INFO)
-Base = declarative_base()
-
-
-class MentorProfile(Base):
-    __tablename__ = 'mentor_profile'
-
-    user_id = Column(Integer, primary_key=True)
-    name = Column(String, nullable=False)
-    avatar = Column(String, default='')
-    location = Column(String, default='')
-    position = Column(String, default='')
-    linkedin_profile = Column(String, default='')
-    personal_statement = Column(Text, default='')
-    about = Column(Text, default='')
-    seniority_level = Column(types.Enum(SeniorityLevel), nullable=False)
-    timezone = Column(Integer, default=0)
-    experience = Column(Integer, default=0)
-    company = Column(Text, default='')
-    interested_positions = Column(JSONB)
-    skills = Column(JSONB)
-    topics = Column(JSONB)
-    industry = Column(JSONB)
-    expertises = Column(JSONB)
-
-
-class MentorExperiences(Base):
-    __tablename__ = 'mentor_experiences'
-
-    mentor_experiences_id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, nullable=False)
-    category = Column(types.Enum(ProfessionCategory), nullable=False)
-    order = Column(Integer, nullable=False)
-    experiences_metadata = Column(JSONB)
-
-
-class Professions(Base):
-    __tablename__ = 'professions'
-
-    professions_id = Column(Integer, primary_key=True)
-    category = Column(types.Enum(ProfessionCategory))
-    subject = Column(String, default='')
-    professions_metadata = Column(JSONB)
-
-
-class CannedMessage(Base):
-    __tablename__ = 'canned_message'
-
-    canned_message_id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, nullable=False)
-    role = Column(types.Enum(RoleType), nullable=False)
-    message = Column(Text)
-
-
-class Interests(Base):
-    __tablename__ = 'interests'
-    id = Column(Integer, primary_key=True)
-    category = Column(types.Enum(InterestCategory), nullable=False)
-    subject = Column(String, nullable=False)
-    desc = Column(JSONB)
-
 
 # class MentorProfileDTO(BaseModel):
 #     mentor_profile_id: Optional[int]
@@ -84,18 +24,18 @@ class Interests(Base):
 
 
 class MentorProfileDTO(ProfileDTO):
-    user_id: Optional[int]
-    location: Optional[str] = ''
-    personal_statement: Optional[str] = ''
-    about: Optional[str] = ''
+
+    location: Optional[str]
+    personal_statement: Optional[str]
+    about: Optional[str]
     seniority_level: Optional[SeniorityLevel]
-    experience: Optional[int] = 0
-    expertises: Optional[List[int]] = []
+    experience: Optional[int]
+    expertises: Optional[List[int]]
 
 
 class MentorExperiencesDTO(BaseModel):
     mentor_experiences_id: int
-    user_id: int
+    user_id: str
     category: Optional[str]
     order: Optional[int]
     mentor_experiences_metadata: Optional[Dict] = {}
@@ -110,7 +50,7 @@ class ProfessionsDTO(BaseModel):
 
 class CannedMessageDTO(BaseModel):
     canned_message_id: int
-    user_id: int
+    user_id: str
     role: Optional[str]
     message: Optional[str]
 

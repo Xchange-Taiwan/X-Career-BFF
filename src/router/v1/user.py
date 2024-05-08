@@ -7,6 +7,8 @@ from fastapi import (
     Request, Depends,
     Header, Path, Query, Body, Form
 )
+from sqlalchemy.orm import Session
+
 from ...domain.user.model import (
     common_model as common,
     user_model as user,
@@ -16,6 +18,11 @@ from ..res.response import *
 from ...config.constant import *
 from ...config.exception import *
 import logging as log
+
+from ...domain.user.service.industry_service import IndustryService
+from ...domain.user.service.interest_service import InterestService
+from ...infra.databse import get_db
+from ...infra.util.injection_util import get_interest_service, get_industry_service
 
 log.basicConfig(filemode='w', level=log.INFO)
 
@@ -49,19 +56,23 @@ async def get_profile(
 @router.get('/interests',
             responses=idempotent_response('get_interests', common.InterestListVO))
 async def get_interests(
-    interest: InterestCategory = Query(...),
+    db: Session = Depends(get_db),
+    interest_service: InterestService = Depends(get_interest_service)
+    #,interest: InterestCategory = Query(...)
 ):
-    # TODO: implement
-    return res_success(data=None)
+    res: common.InterestListVO = interest_service.get_all_interest(db)
+    return res_success(data=res.json())
 
 
 @router.get('/industries',
             responses=idempotent_response('get_industries', common.ProfessionListVO))
 async def get_industries(
+    db: Session = Depends(get_db),
+    industry_service: IndustryService = Depends(get_industry_service)
     # category = ProfessionCategory.INDUSTRY = Query(...),
 ):
-    # TODO: implement
-    return res_success(data=None)
+    res: common.ProfessionListVO = industry_service.get_all_industry(db)
+    return res_success(data=res.json())
 
 
 @router.get('/{user_id}/reservations',
