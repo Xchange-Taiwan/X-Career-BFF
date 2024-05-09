@@ -2,19 +2,19 @@ from typing import List, Optional, Type
 
 from sqlalchemy.orm import Session
 
-from src.config.constant import IndustryCategory
-from src.infra.db.orm.init.mentor_init import Industry
+from src.config.constant import ProfessionCategory
+from src.infra.db.orm.init.user_init import Profession
 
 
-class IndustryRepository:
-    def get_interest_by_ids(self, db: Session, ids: List[int]):
-        return db.query(Industry).filter(Industry.id.in_(ids)).all()
+class ProfessionRepository:
+    def get_profession_by_ids(self, db: Session, ids: List[int]):
+        return db.query(Profession).filter(Profession.id.in_(ids)).all()
 
-    def get_interest_by_id(self, db: Session, industry_id: int):
-        return db.query(Industry).filter(Industry.id == industry_id).first()
+    def get_profession_by_id(self, db: Session, industry_id: int):
+        return db.query(Profession).filter(Profession.id == industry_id).first()
 
-    def get_by_industry(self, db: Session, category: IndustryCategory) -> Optional[Type[Industry]]:
-        return db.query(Industry).filter(Industry.profession_category == category).first()
+    def get_by_profession(self, db: Session, category: ProfessionCategory) -> Optional[Type[Profession]]:
+        return db.query(Profession).filter(Profession.category == category).first()
 
-    def get_all_industry(self, db: Session) -> List[Type[Industry]]:
-        return db.query(Industry).all()
+    def get_all_profession(self, db: Session) -> List[Type[Profession]]:
+        return db.query(Profession).all()

@@ -12,12 +12,24 @@ CREATE TYPE industry_category AS ENUM (
     'FINANCE',
     'OTHER'
 );
-CREATE TYPE PROFESSION_CATEGORY AS ENUM (
-    'EXPERTISE',
-    'INDUSTRY'
+CREATE TYPE account_type AS ENUM('XC', 'GOOGLE', 'LINKEDIN');
+
+
+CREATE TABLE accounts (
+    aid SERIAL PRIMARY KEY,
+    email1 TEXT NOT NULL,
+    email2 TEXT,
+    pass_hash TEXT,
+    pass_salt TEXT,
+    oauth_id TEXT,
+    refresh_token TEXT,
+    user_id INTEGER UNIQUE,
+    type account_type,
+    is_active BOOL,
+    region TEXT
 );
 CREATE TABLE profiles (
-    user_id TEXT PRIMARY KEY,
+    user_id INTEGER PRIMARY KEY,
     "name" TEXT NOT NULL,
     avatar TEXT DEFAULT '',
     "location" TEXT DEFAULT '',
@@ -26,7 +38,7 @@ CREATE TABLE profiles (
     personal_statement TEXT DEFAULT '',
     about TEXT DEFAULT '',
     company TEXT DEFAULT '',
-    seniority_level SENIORITY_LEVEL NOT NULL,
+    seniority_level SENIORITY_LEVEL,
     timezone INT DEFAULT 0,
     experience INT DEFAULT 0,
 	industry INT,
@@ -39,8 +51,8 @@ CREATE TABLE profiles (
 
 
 CREATE TABLE mentor_experiences (
-    mentor_experiences_id SERIAL PRIMARY KEY,
-    user_id TEXT NOT NULL,
+    "id" SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
     category PROFESSION_CATEGORY NOT NULL,
     "order" INT NOT NULL,
     mentor_experiences_metadata JSONB,
@@ -49,15 +61,15 @@ CREATE TABLE mentor_experiences (
 
 
 CREATE TABLE professions (
-    professions_id SERIAL PRIMARY KEY,
-    profession_category PROFESSION_CATEGORY ,
+    "id" SERIAL PRIMARY KEY,
+    category PROFESSION_CATEGORY ,
     subject TEXT DEFAULT '',
     professions_metadata JSONB
 );
 
 CREATE TABLE mentor_schedules (
-    mentor_schedules_id SERIAL PRIMARY KEY,
-    user_id TEXT NOT NULL,
+    "id" SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
     "type" SCHEDULE_TYPE DEFAULT 'ALLOW',
     "year" INT DEFAULT -1,
     "month" INT DEFAULT -1,
@@ -73,16 +85,16 @@ CREATE TABLE mentor_schedules (
 CREATE INDEX mentor_schedule_index ON mentor_schedules("year", "month", day_of_month, day_of_week, start_time, end_time);
 
 CREATE TABLE canned_message (
-    canned_message_id SERIAL PRIMARY KEY,
-    user_id TEXT NOT NULL,
+    "id" SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
     "role" ROLE_TYPE NOT NULL,
     MESSAGE TEXT,
     CONSTRAINT fk_profiles_user_id FOREIGN KEY (user_id) REFERENCES profiles(user_id)
 );
 
 CREATE TABLE reservations (
-    reservations_id SERIAL PRIMARY KEY,
-    user_id TEXT NOT NULL,
+    "id" SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
     mentor_schedules_id INT NOT NULL,
     start_datetime BIGINT,
     end_datetime BIGINT,
@@ -91,7 +103,7 @@ CREATE TABLE reservations (
     "role" ROLE_TYPE,
     message_from_others TEXT DEFAULT '',
     CONSTRAINT fk_profiles_user_id FOREIGN KEY (user_id) REFERENCES profiles(user_id),
-    CONSTRAINT fk_mentor_schedules_id FOREIGN KEY (mentor_schedules_id) REFERENCES mentor_schedules(mentor_schedules_id)
+    CONSTRAINT fk_mentor_schedules_id FOREIGN KEY (mentor_schedules_id) REFERENCES mentor_schedules("id")
 );
 
 CREATE INDEX reservations_index ON reservations(user_id, start_datetime, end_datetime);
@@ -103,16 +115,12 @@ CREATE TABLE interests (
     "desc" JSONB
 );
 
-CREATE TABLE industries (
-    "id" SERIAL PRIMARY KEY,
-    category INTEREST_CATEGORY,
-    subject TEXT,
-    "desc" JSONB
-);
 
-CREATE TABLE industries (
-    "id" SERIAL PRIMARY KEY,
-    profession_category PROFESSION_CATEGORY,
-    subject TEXT,
-    industry_metadata JSONB
-);
+--以下測試用插入資料
+INSERT INTO public.interests
+("id", category, subject, "desc")
+values(1, 'INTERESTED_POSITION', 'TEST', '{}');
+
+INSERT INTO public.professions
+("id", category, subject, "professions_metadata")
+values(1, 'EXPERTISE', 'TEST', '{}');

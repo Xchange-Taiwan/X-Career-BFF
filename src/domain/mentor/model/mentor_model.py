@@ -1,3 +1,5 @@
+from typing import Dict
+
 from sqlalchemy import Column, Integer, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.declarative import declarative_base
@@ -35,7 +37,7 @@ class MentorProfileDTO(ProfileDTO):
 
 class MentorExperiencesDTO(BaseModel):
     mentor_experiences_id: int
-    user_id: str
+    user_id: int
     category: Optional[str]
     order: Optional[int]
     mentor_experiences_metadata: Optional[Dict] = {}
@@ -50,7 +52,7 @@ class ProfessionsDTO(BaseModel):
 
 class CannedMessageDTO(BaseModel):
     canned_message_id: int
-    user_id: str
+    user_id: int
     role: Optional[str]
     message: Optional[str]
 

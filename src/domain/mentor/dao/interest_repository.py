@@ -4,7 +4,9 @@ from sqlalchemy.orm import Session
 from typing_extensions import Optional, Type
 
 from src.config.constant import InterestCategory
-from src.infra.db.orm.init.mentor_init import Interest
+from src.config.exception import NotFoundException
+from src.domain.user.model.common_model import InterestVO
+from src.infra.db.orm.init.user_init import Interest
 
 
 class InterestRepository:

@@ -4,7 +4,7 @@ from sqlalchemy import func, Integer
 from sqlalchemy.orm import Session
 
 from src.domain.mentor.model.mentor_model import MentorProfileDTO
-from src.infra.db.orm.init.mentor_init import Profile
+from src.infra.db.orm.init.user_init import Profile, MentorExperience
 from src.infra.util.convert_util import convert_model_to_dto, convert_dto_to_model
 
 
@@ -15,19 +15,18 @@ class MentorRepository:
         return [convert_model_to_dto(mentor, MentorProfileDTO) for mentor in mentors]
 
     def get_mentor_profile_by_id(self, db: Session, mentor_id: int) -> MentorProfileDTO:
-        return convert_model_to_dto(db.query(Profile).filter(Profile.id == mentor_id).first(),
-                                    MentorProfileDTO)
+
+        #join MentorExperience 有存在的才返回
+        return convert_model_to_dto(
+            db.query(Profile).join(MentorExperience, MentorExperience.user_id == Profile.user_id).filter(
+                Profile.user_id == mentor_id).first(),
+            MentorProfileDTO)
 
     def get_mentor_profiles_by_conditions(self, db: Session, dto: MentorProfileDTO) -> List[MentorProfileDTO]:
         dto_dict = dict(dto.__dict__)
         query = db.query(Profile)
-        if dto_dict.get('user_id'):
-            # unique so early return
-            query = query.filter(Profile.user_id == dto.user_id)
-            profile = query.first()
-            return [convert_model_to_dto(profile, MentorProfileDTO)]
         if dto_dict.get('name'):
-            query = query.filter(Profile.name == dto.name )
+            query = query.filter(Profile.name == dto.name)
         if dto_dict.get('location'):
             query = query.filter(Profile.location.like('%' + dto.location + '%'))
         if dto_dict.get('about'):
@@ -67,7 +66,7 @@ class MentorRepository:
 
         return res
 
-    def delete_mentor_profile_by_id(self, db: Session, user_id: str) -> None:
+    def delete_mentor_profile_by_id(self, db: Session, user_id: int) -> None:
         mentor = db.query(Profile).filter(Profile.user_id == user_id).first()
         if mentor:
             db.delete(mentor)
