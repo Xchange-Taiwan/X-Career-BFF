@@ -5,7 +5,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from src.config.constant import ProfessionCategory, RoleType, InterestCategory, SchedulesType, BookingStatus
 from src.domain.account.enum.account_enum import AccountType
 from src.domain.mentor.enum.mentor_enums import SeniorityLevel
-
+from sqlalchemy.dialects.postgresql import ENUM as PgEnum
 Base = declarative_base()
 
 
@@ -35,7 +35,7 @@ class Profile(Base):
     personal_statement = Column(String, default='')
     about = Column(String, default='')
     company = Column(String, default='')
-    seniority_level = Column(types.Enum(SeniorityLevel))
+    seniority_level = Column(PgEnum(SeniorityLevel, name='seniority_level', create_type=False), nullable=False)
     timezone = Column(Integer, default=0)
     experience = Column(Integer, default=0)
     industry = Column(Integer)

@@ -5,6 +5,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import types
 from ..enum.mentor_enums import SeniorityLevel, ScheduleType
+from ...user.model.common_model import ProfessionListVO
 from ...user.model.user_model import *
 from ....config.conf import *
 from ....config.constant import *
@@ -62,7 +63,7 @@ class MentorProfileVO(ProfileVO):
     about: Optional[str]
     # TODO: enum
     seniority_level: Optional[SeniorityLevel] = ""
-    expertises: Optional[List[ProfessionVO]]
+    expertises: Optional[ProfessionListVO]
 
 
 class TimeSlotDTO(BaseModel):

@@ -38,11 +38,11 @@ def get_profession_service(
 
 # Dependency function to create Service instance with DAO dependency injected
 def get_mentor_service(mentor_repository: MentorRepository = Depends(get_mentor_dao),
-                       interest_service: InterestService = Depends(get_interest_service),
                        profile_repository: ProfileRepository = Depends(get_profile_dao),
+                       interest_service: InterestService = Depends(get_interest_service),
                        profession_service: ProfessionService = Depends(get_profession_service)
                        ) -> MentorService:
-    return MentorService(mentor_repository, interest_service, profession_service, profile_repository)
+    return MentorService(mentor_repository,  profile_repository, interest_service, profession_service,)
 
 
 def get_profile_service(interest_service: InterestService = Depends(get_interest_service),

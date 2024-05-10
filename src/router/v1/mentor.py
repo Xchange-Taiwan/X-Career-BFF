@@ -5,6 +5,7 @@ from fastapi import (
     APIRouter,
     Path, Body, Depends
 )
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
 from ..res.response import *
@@ -14,6 +15,7 @@ from ...domain.mentor.model import (
     mentor_model as mentor,
     experience_model as experience,
 )
+from ...domain.mentor.model.mentor_model import MentorProfileVO
 from ...domain.user.model import (
     common_model as common,
 )
@@ -42,16 +44,16 @@ async def upsert_mentor_profile(
 
 
 @router.get('/{user_id}/profile',
-            responses=idempotent_response('get_mentor_profile', mentor.MentorProfileVO))
+            responses=idempotent_response('get_mentor_profile', MentorProfileVO))
 async def get_mentor_profile(
         user_id: int = Path(...),
-        db: Session = Depends(get_db)
+        db: AsyncSession = Depends(get_db),
+        mentor_service: MentorService = Depends(get_mentor_service)
 ):
     # TODO: implement
+    mentor: MentorProfileVO = await mentor_service.get_mentor_profile_by_id(db, user_id)
 
-    # profile = mentor_service.get_
-
-    return res_success(data=None)
+    return res_success(data=mentor.json())
 
 
 @router.put('/{user_id}/experiences/{experience_type}',

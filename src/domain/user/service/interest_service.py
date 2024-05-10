@@ -21,20 +21,20 @@ class InterestService:
         interests: List[InterestVO] = [self.convert_to_interest_VO(interest) for interest in query]
         return InterestListVO(interests=interests)
 
-    async def get_by_interest_category(self, db: Session, interest: InterestCategory) -> InterestVO:
+    async def get_by_interest_category(self, db: AsyncSession, interest: InterestCategory) -> InterestVO:
         return self.convert_to_interest_VO(await self.__interest_repository.get_by_interest(db, interest))
 
-    async def get_interest_by_ids(self, db: Session, ids: List[int]) -> InterestListVO:
+    async def get_interest_by_ids(self, db: AsyncSession, ids: List[int]) -> InterestListVO:
         query: List[Type[Interest]] = await self.__interest_repository.get_interest_by_ids(db, ids)
 
         interests: List[InterestVO] = [self.convert_to_interest_VO(interest) for interest in query]
         return InterestListVO(interests=interests)
 
-    async def get_interest_by_id(self, db: Session, id: int) -> InterestVO:
-        query: List[Type[Interest]] = await self.__interest_repository.get_interest_by_ids(db, ids)
+    async def get_interest_by_id(self, db: AsyncSession, interest_id: int) -> InterestVO:
+        query: Type[Interest] = await self.__interest_repository.get_interest_by_id(db, interest_id)
 
-        interests: List[InterestVO] = [self.convert_to_interest_VO(interest) for interest in query]
-        return InterestListVO(interests=interests)
+        interests: InterestVO = self.convert_to_interest_VO(query)
+        return interests
     def convert_to_interest_VO(self, dto: Optional[Type[Interest]]) -> InterestVO:
         if not dto:
             raise NotFoundException(msg="no data found")
