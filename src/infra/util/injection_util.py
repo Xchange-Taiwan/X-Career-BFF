@@ -1,7 +1,7 @@
 # Dependency function to create DAO instance
 from fastapi import Depends
 
-from src.domain.mentor.dao.industry_repository import ProfessionRepository
+from src.domain.mentor.dao.profession_repository import ProfessionRepository
 from src.domain.mentor.dao.interest_repository import InterestRepository
 from src.domain.mentor.dao.mentor_repository import MentorRepository
 from src.domain.mentor.service.mentor_service import MentorService
@@ -38,18 +38,18 @@ def get_profession_service(
 
 # Dependency function to create Service instance with DAO dependency injected
 def get_mentor_service(mentor_repository: MentorRepository = Depends(get_mentor_dao),
-                       interest_repository: InterestRepository = Depends(get_interest_dao),
+                       interest_service: InterestService = Depends(get_interest_service),
                        profile_repository: ProfileRepository = Depends(get_profile_dao),
-                       profession_repository: ProfessionRepository = Depends(get_profession_dao)
+                       profession_service: ProfessionService = Depends(get_profession_service)
                        ) -> MentorService:
-    return MentorService(mentor_repository, interest_repository, profile_repository, profession_repository)
+    return MentorService(mentor_repository, interest_service, profession_service, profile_repository)
 
 
-def get_profile_service(
-        interest_service: InterestService = Depends(get_interest_service),
-        profile_repository: ProfileRepository = Depends(get_profile_dao),
-        profession_service: ProfessionService = Depends(get_profession_service)) -> ProfileService:
-    return ProfileService(interest_service, profile_repository, profession_service)
+def get_profile_service(interest_service: InterestService = Depends(get_interest_service),
+                        profession_service: ProfessionService = Depends(get_profession_service),
+                        profile_repository: ProfileRepository = Depends(get_profile_dao)) -> ProfileService:
+    return ProfileService(interest_service=interest_service, profession_service=profession_service,
+                          profile_repository=profile_repository)
 
 
 def get_interest_service(interest_dao: InterestRepository = Depends(get_interest_dao)):

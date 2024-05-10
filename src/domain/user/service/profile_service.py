@@ -1,6 +1,6 @@
-from typing import List, Optional, Dict
+from typing import List, Optional
 
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config.exception import NotAcceptableException, NotFoundException
 from src.domain.user.dao.profile_repository import ProfileRepository
@@ -17,28 +17,28 @@ class ProfileService:
                  profession_service: ProfessionService):
         self.__interest_service: InterestService = interest_service
         self.__profession_service: ProfessionService = profession_service
-        self.__profile_repository = profile_repository
+        self.__profile_repository: ProfileRepository = profile_repository
 
-    def get_by_user_id(self, db: Session, user_id: int) -> ProfileVO:
+    async def get_by_user_id(self, db: AsyncSession, user_id: int) -> ProfileVO:
         if user_id is None:
-            raise NotAcceptableException(msg="No user id is provided")
+            raise NotAcceptableException(msg="No user interest_id is provided")
 
-        return self.convert_to_profile_vo(self.__profile_repository.get_by_user_id(db, user_id))
+        return await self.convert_to_profile_vo(db, await self.__profile_repository.get_by_user_id(db, user_id))
 
-    def get_by_conditions(self, db: Session, dto: ProfileDTO) -> List[ProfileDTO]:
-        return self.__profile_repository.get_profiles_by_conditions(db, dto)
+    async def get_by_conditions(self, db: AsyncSession, dto: ProfileDTO) -> List[ProfileDTO]:
+        return await self.__profile_repository.get_profiles_by_conditions(db, dto)
 
-    def upsert_profile(self, db: Session, dto: ProfileDTO) -> ProfileVO:
-        return self.convert_to_profile_vo(db, self.__profile_repository.upsert_profile(db, dto))
+    async def upsert_profile(self, db: AsyncSession, dto: ProfileDTO) -> ProfileVO:
+        return await self.convert_to_profile_vo(db, await self.__profile_repository.upsert_profile(db, dto))
 
-    def convert_to_profile_vo(self, db: Session, dto: ProfileDTO) -> ProfileVO:
+    async def convert_to_profile_vo(self, db: AsyncSession, dto: ProfileDTO) -> ProfileVO:
         if dto is None:
             raise NotFoundException(msg="no data found")
-        industry: Optional[ProfessionVO] = self.__profession_service.get_interest_by_id(db, dto.industry)
-        interested_positions: Optional[InterestListVO] = self.__interest_service.get_interest_by_ids(db,
-                                                                                                     dto.interested_positions)
-        skills: Optional[InterestListVO] = self.__interest_service.get_interest_by_ids(db, dto.skills)
-        topics: Optional[InterestListVO] = self.__interest_service.get_interest_by_ids(db, dto.topics)
+        industry: Optional[ProfessionVO] = await self.__profession_service.get_profession_by_id(db, dto.industry)
+        interested_positions: Optional[InterestListVO] = await self.__interest_service.get_interest_by_ids(db,
+                                                                                                           dto.interested_positions)
+        skills: Optional[InterestListVO] = await self.__interest_service.get_interest_by_ids(db, dto.skills)
+        topics: Optional[InterestListVO] = await self.__interest_service.get_interest_by_ids(db, dto.topics)
 
         return ProfileVO(
             user_id=dto.user_id,

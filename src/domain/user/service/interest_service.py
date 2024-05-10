@@ -1,5 +1,6 @@
 from typing import Optional, List
 
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 from typing_extensions import Type
 
@@ -14,21 +15,26 @@ class InterestService:
     def __init__(self, interest_repository: InterestRepository):
         self.__interest_repository: InterestRepository = interest_repository
 
-    def get_all_interest(self, db: Session) -> InterestListVO:
-        query: List[Type[Interest]] = self.__interest_repository.get_all_interest(db)
+    async def get_all_interest(self, db: AsyncSession) -> InterestListVO:
+        query: List[Type[Interest]] = await self.__interest_repository.get_all_interest(db)
 
         interests: List[InterestVO] = [self.convert_to_interest_VO(interest) for interest in query]
         return InterestListVO(interests=interests)
 
-    def get_by_interest_category(self, db: Session, interest: InterestCategory) -> InterestVO:
-        return self.convert_to_interest_VO(self.__interest_repository.get_by_interest(db, interest))
+    async def get_by_interest_category(self, db: Session, interest: InterestCategory) -> InterestVO:
+        return self.convert_to_interest_VO(await self.__interest_repository.get_by_interest(db, interest))
 
-    def get_interest_by_ids(self, db: Session, ids: List[int]) -> InterestListVO:
-        query: List[Type[Interest]] = self.__interest_repository.get_interest_by_ids(db, ids)
+    async def get_interest_by_ids(self, db: Session, ids: List[int]) -> InterestListVO:
+        query: List[Type[Interest]] = await self.__interest_repository.get_interest_by_ids(db, ids)
 
         interests: List[InterestVO] = [self.convert_to_interest_VO(interest) for interest in query]
         return InterestListVO(interests=interests)
 
+    async def get_interest_by_id(self, db: Session, id: int) -> InterestVO:
+        query: List[Type[Interest]] = await self.__interest_repository.get_interest_by_ids(db, ids)
+
+        interests: List[InterestVO] = [self.convert_to_interest_VO(interest) for interest in query]
+        return InterestListVO(interests=interests)
     def convert_to_interest_VO(self, dto: Optional[Type[Interest]]) -> InterestVO:
         if not dto:
             raise NotFoundException(msg="no data found")

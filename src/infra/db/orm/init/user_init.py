@@ -19,7 +19,7 @@ class Account(Base):
     oauth_id = Column(String)
     refresh_token = Column(String)
     user_id = Column(Integer, unique=True)
-    type = Column(types.Enum(AccountType))
+    type = Column(type_=types.Enum(AccountType))
     is_active = Column(Boolean)
     region = Column(String)
 
@@ -35,7 +35,7 @@ class Profile(Base):
     personal_statement = Column(String, default='')
     about = Column(String, default='')
     company = Column(String, default='')
-    seniority_level = Column(types.Enum(SeniorityLevel), nullable=False)
+    seniority_level = Column(types.Enum(SeniorityLevel))
     timezone = Column(Integer, default=0)
     experience = Column(Integer, default=0)
     industry = Column(Integer)
@@ -49,7 +49,7 @@ class MentorExperience(Base):
     __tablename__ = 'mentor_experiences'
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('profiles.user_id'), nullable=False)
-    category = Column(types.Enum(ProfessionCategory), nullable=False)
+    category = Column(type_=types.Enum(ProfessionCategory))
     order = Column(Integer, nullable=False)
     mentor_experiences_metadata = Column(JSONB)
     # profile = relationship("Profile", backref="mentor_experiences")
@@ -58,7 +58,7 @@ class MentorExperience(Base):
 class Profession(Base):
     __tablename__ = 'professions'
     id = Column(Integer, primary_key=True)
-    category = Column(types.Enum(ProfessionCategory))
+    category = Column(type_=types.Enum(ProfessionCategory))
     subject = Column(String)
     profession_metadata = Column(JSONB)
 
@@ -67,7 +67,7 @@ class MentorSchedule(Base):
     __tablename__ = 'mentor_schedules'
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('profiles.user_id'), nullable=False)
-    type = Column(types.Enum(SchedulesType), default='ALLOW')
+    type = Column(type_=types.Enum(SchedulesType))
     year = Column(Integer, default=-1)
     month = Column(Integer, default=-1)
     day_of_month = Column(Integer, nullable=False)
@@ -83,7 +83,7 @@ class CannedMessage(Base):
     __tablename__ = 'canned_message'
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('profiles.user_id'), nullable=False)
-    role = Column(types.Enum(RoleType), nullable=False)
+    role = Column(type_=types.Enum(RoleType), nullable=False)
     message = Column(String)
     # profile = relationship("Profile", backref="canned_message")
 
@@ -95,9 +95,9 @@ class Reservation(Base):
     mentor_schedules_id = Column(Integer, ForeignKey('mentor_schedules.mentor_schedules_id'), nullable=False)
     start_datetime = Column(Integer)
     end_datetime = Column(Integer)
-    my_status = Column(types.Enum(BookingStatus))
-    status = Column(types.Enum(BookingStatus))
-    role = Column(types.Enum(RoleType))
+    my_status = Column(name="my_status", type_=types.Enum(BookingStatus))
+    status = Column(name="status", type_=types.Enum(BookingStatus))
+    role = Column(name="role_type", type_=types.Enum(RoleType))
     message_from_others = Column(String, default='')
     # profile = relationship("Profile", backref="reservations")
     # mentor_schedule = relationship("MentorSchedule", backref="reservations")
@@ -106,6 +106,6 @@ class Reservation(Base):
 class Interest(Base):
     __tablename__ = 'interests'
     id = Column(Integer, primary_key=True)
-    category = Column(types.Enum(InterestCategory))
+    category = Column(type_=types.Enum(InterestCategory))
     subject = Column(String)
     desc = Column(JSONB)
