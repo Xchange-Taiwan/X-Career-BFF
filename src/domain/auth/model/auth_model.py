@@ -67,6 +67,11 @@ class SSOLoginDTO(BaseModel):
         return d
 
 
+class NewTokenDTO(BaseModel):
+    user_id: int
+    refresh_token: str
+
+
 class ResetPasswordDTO(BaseModel):
     register_email: EmailStr
     password: str

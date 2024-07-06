@@ -1,13 +1,15 @@
 import os
 import time
+import uuid
 from datetime import datetime
-from typing import Callable, List, Union, Dict
+from typing import Callable, List, Union
 import jwt as jwt_util
 from fastapi import APIRouter, FastAPI, Header, Path, Query, Body, Request, Response, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.routing import APIRoute
-from ...config.conf import JWT_SECRET, JWT_ALGORITHM, TOKEN_EXPIRE_TIME
+from ...config.conf import JWT_SECRET, JWT_ALGORITHM, TOKEN_EXPIRE_TIME, SHORT_TERM_TTL
 from ...config.exception import *
+from ...infra.util.time_util import *
 import logging as log
 
 log.basicConfig(level=log.INFO)
@@ -47,10 +49,28 @@ def gen_token(data: dict, fields: List):
     for field in fields:
         val = str(data[field])
         public_info[field] = val
-        
-    exp = datetime.now().timestamp() + TOKEN_EXPIRE_TIME
-    public_info.update({ 'exp': exp })
+
+    public_info.update({ 'exp': expiration_time() })
     return jwt_util.encode(payload=public_info, key=secret, algorithm=JWT_ALGORITHM)
+
+
+def expiration_time():
+    return current_seconds() + TOKEN_EXPIRE_TIME
+
+
+def gen_refresh_token():
+    prefix = str(uuid.uuid4()).replace('-', '')
+    expiration = expiration_time()
+    return f'{prefix[0:20]}{expiration}'
+
+def valid_refresh_token(refresh_token: str) -> (bool):
+    future_time_in_secs = int(refresh_token[-10:])
+    current_time_in_secs = current_seconds()
+    diff = abs(future_time_in_secs - current_time_in_secs)
+    # 兩者誤差在過期時間的一半內，視為有效
+    passed = diff < SHORT_TERM_TTL / 2
+    log.info('\n\n\nfuture_t: %s, current_t: %s, diff: %s, passed: %s', future_time_in_secs, current_time_in_secs, diff, passed)
+    return passed
 
 
 def get_user_id(url_path: str) -> (int):
@@ -78,12 +98,22 @@ def __valid_user_id(data: dict, user_id):
     return int(data['user_id']) == int(user_id)
 
 
+def __outdated_token(data: dict) -> (bool):
+    if not 'exp' in data:
+        return True
+    
+    future_time_in_secs = int(data['exp'])
+    current_time_in_secs = current_seconds()
+    log.info('\n\n\noutdated?? future_time_in_secs: %d, current_time_in_secs: %d', future_time_in_secs, current_time_in_secs)
+    return not 'exp' in data or current_seconds() > future_time_in_secs
+
 
 def __verify_token_in_auth(user_id: int, credentials: HTTPAuthorizationCredentials, err_msg: str):
     secret = __get_secret(user_id)
     token = parse_token(credentials)
     data = __jwt_decode(jwt=token, key=secret, msg=err_msg)
-    if not __valid_user_id(data, user_id):
+
+    if not __valid_user_id(data, user_id) or __outdated_token(data):
         raise UnauthorizedException(msg=err_msg)
 
 
@@ -116,8 +146,8 @@ class AuthRoute(APIRoute):
             response: Response = await original_route_handler(request)
             duration = time.time() - before
             response.headers['X-Response-Time'] = str(duration)
-            log.info(f'route duration: {duration}')
-            log.info(f'route response headers: {response.headers}')
+            # log.info(f'route duration: {duration}')
+            # log.info(f'route response headers: {response.headers}')
             # log.info(f'route response: {response}')
             return response
 

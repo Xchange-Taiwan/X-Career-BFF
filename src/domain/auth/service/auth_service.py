@@ -1,5 +1,9 @@
 from typing import Any, List, Dict
-from ....router.req.authorization import gen_token
+from ....router.req.authorization import (
+    gen_token, 
+    gen_refresh_token, 
+    valid_refresh_token,
+)
 from ..model.auth_model import *
 from ...cache import ICache
 from ...service_api import IServiceApi
@@ -28,10 +32,10 @@ class AuthService:
         self.__cache_check_for_duplicates(email)
 
         code = gen_confirm_code()
-        auth_res = self.__req_send_confirmcode_by_email(
+        status_code = self.__req_send_confirmcode_by_email(
             host, email, code)
 
-        if auth_res == 'email_sent':
+        if status_code <= 200:
             self.__cache_confirmcode(email, body.password, code)
 
             # FIXME: remove the res here('code') during production
@@ -51,18 +55,20 @@ class AuthService:
             raise DuplicateUserException(msg='registered or registering')
 
     def __req_send_confirmcode_by_email(self, host: str, email: str, code: str):
-        auth_res, msg, err = self.req.post(f'{host}/sendcode/email', json={
+        auth_res, msg, status_code, err = self.req.post_with_statuscode(f'{host}/sendcode/email', json={
             'email': email,
             'code': code,
+            'exist': False,
         })
+        log.info(f'__req_send_confirmcode_by_email auth_res: %s, msg: %s, status_code: %d, err: %s', auth_res, msg, status_code, err)
         
-        if msg or err:
+        if status_code >= 400 or msg or err:
             log.error(f'{self.__cls_name}.__req_send_confirmcode_by_email:[request exception], \
-                host:%s, email:%s, code:%s, auth_res:%s, msg:%s, err:%s',
-                host, email, code, auth_res, msg, err)
+                host:%s, email:%s, code:%s, auth_res:%s, msg:%s, status_code:%s, err:%s',
+                host, email, code, auth_res, msg, status_code, err)
             self.cache.set(email, {'avoid_freq_email_req_and_hit_db': 1}, SHORT_TERM_TTL)
 
-        return auth_res
+        return status_code
 
     def __cache_confirmcode(self, email: EmailStr, password: str, code: str):
         # TODO: region 記錄在???
@@ -174,11 +180,12 @@ class AuthService:
         auth_res = self.apply_token(auth_res)
 
         # request user/professional data
-        user_res = self.req_user_data(
-            user_host,
-            user_id_key,
-            body.prefetch
-        )
+        user_res = None
+        # TODO: user service API 尚未調整
+        # self.req_user_data(
+        #     user_host,
+        #     user_id_key,
+        # )
 
         return {
             'auth': auth_res,
@@ -193,6 +200,7 @@ class AuthService:
     def cache_auth_res(self, user_id_key: str, auth_res: Dict):
         auth_res.update({
             'online': True,
+            'refresh_token': gen_refresh_token(),
         })
         updated = self.cache.set(
             user_id_key, auth_res, ex=LONG_TERM_TTL)
@@ -201,9 +209,14 @@ class AuthService:
                 user_id_key:%s, auth_res:%s, ex:%s, cache data:%s',
                 user_id_key, auth_res, LONG_TERM_TTL, updated)
             raise ServerException(msg='server_error')
+        
+        # remove sensitive data: aid
+        auth_res.pop('aid', None)
 
-    def req_user_data(self, user_host: str, user_id_key: str, size: int = PREFETCH):            
+
+    def req_user_data(self, user_host: str, user_id_key: str):            
         user_res = self.req.simple_get(
+            # TODO: user service API 尚未調整
             url=f'{user_host}{user_id_key}/userdata',
             params={
                 'size': size,
@@ -211,6 +224,26 @@ class AuthService:
         )
 
         return user_res
+
+
+    '''
+    gen new token and refresh_token
+    '''
+    async def get_new_token_pair(self, body: NewTokenDTO) -> (str):
+        user_id_key = str(body.user_id)
+        user = self.cache.get(user_id_key)
+        if not user:
+            raise UnauthorizedException(msg='Invalid user')
+        
+        cached_refresh_token = user.get('refresh_token', None)
+        if cached_refresh_token != body.refresh_token or \
+            not valid_refresh_token(cached_refresh_token):
+            raise UnauthorizedException(msg='Invalid User')
+
+        self.cache_auth_res(user_id_key, user)
+        res = self.apply_token(user)
+        return {k: res[k] for k in ['token', 'refresh_token'] if k in res}
+
 
     '''
     logout
@@ -269,9 +302,14 @@ class AuthService:
     async def send_reset_password_comfirm_email(self, auth_host: str, email: EmailStr):
         self.__cache_check_for_reset_password(email)
         data = self.__req_send_reset_password_comfirm_email(auth_host, email)
-        self.__cache_token_by_reset_password(data['token'], email)
+        if data != None and 'token' in data:
+            token = data['token']
+        else:
+            token = email + ':not_exist'
+        
+        self.__cache_token_by_reset_password(token, email)
         #TEST: log
-        return f'''send_email_success {data['token']}'''
+        return f'''send_email_success {token}'''
 
     async def reset_passwrod(self, auth_host: str, verify_token: str, body: ResetPasswordDTO):
         checked_email = self.cache.get(verify_token)
@@ -304,13 +342,17 @@ class AuthService:
         self.__req_update_password(auth_host, body)
 
     def __req_send_reset_password_comfirm_email(self, auth_host: str, email: EmailStr):
-        return self.req.simple_get(
-            f'{auth_host}/password/reset/email', params={'email': email}) 
+        try:
+            return self.req.simple_get(f'{auth_host}/password/reset/email', params={'email': email}) 
+        except Exception as e:
+            log.error(f'{self.__cls_name}.__req_send_reset_password_comfirm_email:[request exception], \
+                host:%s, email:%s, error:%s', auth_host, email, e)
+            return None
 
     def __cache_check_for_email_validation(self, user_id: int, register_email: EmailStr):
         user_id_key = str(user_id)
         data = self.cache.get(user_id_key)
-        if not 'email' in data or str(register_email) != data['email']:
+        if data is None or not 'email' in data or str(register_email) != data['email']:
             raise UnauthorizedException(msg='invalid email')
 
     def __req_update_password(self, auth_host: str, body: UpdatePasswordDTO):

@@ -6,24 +6,24 @@ log.basicConfig(filemode='w', level=log.INFO)
 
 
 auth_region_hosts = {
-    'default': os.getenv('REGION_HOST_AUTH', 'http://localhost:8007/auth/api/v1'),
-    'jp': os.getenv('JP_REGION_HOST_AUTH', 'http://localhost:8007/auth/api/v1'),
-    'ge': os.getenv('GE_REGION_HOST_AUTH', 'http://localhost:8007/auth/api/v1'),
-    'us': os.getenv('US_REGION_HOST_AUTH', 'http://localhost:8007/auth/api/v1'),
+    'default': os.getenv('REGION_HOST_AUTH', 'http://localhost:8007/auth-service/api/v1'),
+    'jp': os.getenv('JP_REGION_HOST_AUTH', 'http://localhost:8007/auth-service/api/v1'),
+    'ge': os.getenv('GE_REGION_HOST_AUTH', 'http://localhost:8007/auth-service/api/v1'),
+    'us': os.getenv('US_REGION_HOST_AUTH', 'http://localhost:8007/auth-service/api/v1'),
 }
 
 user_region_hosts = {
-    'default': os.getenv('REGION_HOST_USER', 'http://localhost:8008/user/api/v1'),
-    'jp': os.getenv('JP_REGION_HOST_USER', 'http://localhost:8008/user/api/v1'),
-    'ge': os.getenv('GE_REGION_HOST_USER', 'http://localhost:8008/user/api/v1'),
-    'us': os.getenv('US_REGION_HOST_USER', 'http://localhost:8008/user/api/v1'),
+    'default': os.getenv('REGION_HOST_USER', 'http://localhost:8008/user-service/api/v1'),
+    'jp': os.getenv('JP_REGION_HOST_USER', 'http://localhost:8008/user-service/api/v1'),
+    'ge': os.getenv('GE_REGION_HOST_USER', 'http://localhost:8008/user-service/api/v1'),
+    'us': os.getenv('US_REGION_HOST_USER', 'http://localhost:8008/user-service/api/v1'),
 }
 
 search_region_hosts = {
-    'default': os.getenv('REGION_HOST_SEARCH', 'http://localhost:8009/search/api/v1'),
-    'jp': os.getenv('JP_REGION_HOST_SEARCH', 'http://localhost:8009/search/api/v1'),
-    'ge': os.getenv('GE_REGION_HOST_SEARCH', 'http://localhost:8009/search/api/v1'),
-    'us': os.getenv('US_REGION_HOST_SEARCH', 'http://localhost:8009/search/api/v1'),
+    'default': os.getenv('REGION_HOST_SEARCH', 'http://localhost:8009/search-service/api/v1'),
+    'jp': os.getenv('JP_REGION_HOST_SEARCH', 'http://localhost:8009/search-service/api/v1'),
+    'ge': os.getenv('GE_REGION_HOST_SEARCH', 'http://localhost:8009/search-service/api/v1'),
+    'us': os.getenv('US_REGION_HOST_SEARCH', 'http://localhost:8009/search-service/api/v1'),
 }
 
 

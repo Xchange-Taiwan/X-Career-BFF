@@ -12,6 +12,8 @@ from ..req.authorization import *
 from ..res.response import *
 from ...config.exception import *
 from ...config.region_host import get_auth_region_host, get_user_region_host
+from ...config.service_client import service_client
+from ...config.cache import gw_cache
 import logging as log
 
 log.basicConfig(filemode='w', level=log.INFO)
@@ -19,8 +21,8 @@ log.basicConfig(filemode='w', level=log.INFO)
 auth_host = get_auth_region_host()
 user_host = get_user_region_host()
 _auth_service = AuthService(
-    None, 
-    None
+    service_client, 
+    gw_cache,
 )
 
 router = APIRouter(
@@ -58,6 +60,15 @@ async def login(
     return res_success(data=data)
 
 
+@router.post('/token',
+             status_code=201)
+async def refresh_token(
+    body: NewTokenDTO = Body(...),
+):
+    data = await _auth_service.get_new_token_pair(body)
+    return res_success(data=data)
+
+
 @router.post('/logout', status_code=201)
 async def logout(
     user_id: int = Body(..., embed=True),
@@ -68,11 +79,11 @@ async def logout(
 
 @router.put('/password/{user_id}/update')
 async def update_password(
-    user_id: int,
+    user_id: int = Path(...),
     update_password_dto: UpdatePasswordDTO = Body(...),
     verify=Depends(verify_token_by_update_password),
 ):
-    await _auth_service.update_password(auth_host, user_id, update_password_vo)
+    await _auth_service.update_password(auth_host, user_id, update_password_dto)
     return res_success(msg='update success')
 
 
@@ -89,5 +100,5 @@ async def reset_password(
     reset_passwrod_dto: ResetPasswordDTO = Body(...),
     verify_token: str = Query(...),
 ):
-    await _auth_service.reset_passwrod(auth_host, verify_token, reset_passwrod_vo)
+    await _auth_service.reset_passwrod(auth_host, verify_token, reset_passwrod_dto)
     return res_success(msg='reset success')
