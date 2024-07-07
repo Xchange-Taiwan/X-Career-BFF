@@ -60,4 +60,6 @@ PREFETCH = 3
 
 # Accessing environment variables with default values
 MENTOR_ROUTER_URL = os.getenv('MENTOR_ROUTER_URL', 'http://127.0.0.1:8000')
-USER_SERVICE_PREFIX: string = "/user-service"
+API_VERSION = os.getenv('API_VERSION', '/api/v1/')
+USER_SERVICE_PREFIX: str = "/user-service"
+MENTORS = "mentors"
