@@ -1,7 +1,13 @@
+import functools
 import time
+from typing import Dict
+
+from starlette import status
+
 from ...domain.cache import ICache
 from ...config.constant import SERIAL_KEY
-from ...config.exception import ServerException
+from ...config.exception import ServerException, ClientException, UnauthorizedException, ForbiddenException, \
+    NotFoundException, NotAcceptableException
 import logging as log
 
 log.basicConfig(filemode='w', level=log.INFO)
@@ -21,3 +27,6 @@ def get_serial_num(cache: ICache, user_id: str):
         raise ServerException(msg='user has no authrozanization')
 
     return user[SERIAL_KEY]
+
+
+
