@@ -32,12 +32,12 @@ def check_response_code(method: str, expected_code: int = 200):
                 err: str = service_api_res[2]
                 # ex: 40400 取至404
                 status_code: int = int(service_api_res[3][:3]) if len(service_api_res) >= 3 else None
-                if status_code is not None and status_code < 400 or status_code == expected_code:
+                if status_code is not None and (status_code < 400 or status_code == expected_code):
                     return service_api_res
 
                 log.error(
-                    f"service request fail, [%s]: %s, body:%s, params:%s, headers:%s, status_code:%s, msg:%s, \n response:%s",
-                    method, url, body, params, headers, status_code, msg, service_api_res)
+                    f"service request fail, [%s]: %s, body:%s, params:%s, headers:%s, status_code:%s, msg:%s, err: %s \n response:%s",
+                    method, url, body, params, headers, status_code, msg, err, service_api_res)
                 if status_code is not None:
 
                     if status_code == status.HTTP_400_BAD_REQUEST:
@@ -115,9 +115,11 @@ class AsyncServiceApiAdapter(IServiceApi):
                 msg: Optional[str] = dto.get('msg', None)
                 code: Optional[int] = dto.get('code', None)
         except Exception as e:
+            # 這邊有try catch是因為要特別捕捉err msg
             err = e.__str__()
 
         return dto.get('data'), msg, err, code  # 這裡應該是對應service的VO/responseDTO+msg
+
 
     @check_response_code('post', 200)
     async def simple_post(self, url: str, data: Dict = None, headers: Dict = None) -> Optional[Dict[str, str]]:
