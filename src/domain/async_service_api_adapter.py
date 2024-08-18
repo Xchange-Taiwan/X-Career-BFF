@@ -120,8 +120,7 @@ class AsyncServiceApiAdapter(IServiceApi):
 
         return dto.get('data'), msg, err, code  # 這裡應該是對應service的VO/responseDTO+msg
 
-
-    @check_response_code('post', 200)
+    @check_response_code('post', 201)
     async def simple_post(self, url: str, data: Dict = None, headers: Dict = None) -> Optional[Dict[str, str]]:
         async with httpx.AsyncClient() as client:
             response: Response = await client.post(url=url, json=data, headers=headers)
@@ -130,7 +129,7 @@ class AsyncServiceApiAdapter(IServiceApi):
 
             return dto.get('data')
 
-    @check_response_code('post', 200)
+    @check_response_code('post', 201)
     async def post(self, url: str, data: Dict = None, headers: Dict = None) -> (
             Optional[Dict[str, str]], Optional[str], Optional[str]):
         dto: Dict = {}  # init with empty dict
@@ -145,7 +144,7 @@ class AsyncServiceApiAdapter(IServiceApi):
 
             return dto.get('data'), msg, err
 
-    @check_response_code('post', 200)
+    @check_response_code('post', 201)
     async def post_with_statuscode(self, url: str, data: Dict = None, headers: Dict = None) -> (
             Optional[Dict[str, str]], Optional[str], Optional[int], Optional[str]):
         dto: Dict = {}  # init with empty dict
@@ -164,11 +163,11 @@ class AsyncServiceApiAdapter(IServiceApi):
 
         return dto.get('data'), msg, err, code
 
-    @check_response_code('post', 200)
+    @check_response_code('post', 201)
     async def post_data(self, url: str, byte_data: bytes, headers: Dict = None) -> (Optional[Dict[str, str]]):
         pass
 
-    @check_response_code('put', 200)
+    @check_response_code('put', 201)
     async def simple_put(self, url: str, data: Dict = None, headers: Dict = None) -> Optional[Dict[str, str]]:
         async with httpx.AsyncClient() as client:
             response: Response = await client.put(url=url, json=data, headers=headers)

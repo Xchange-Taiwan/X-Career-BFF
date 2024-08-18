@@ -13,6 +13,6 @@ class MentorService:
         self.service_api: AsyncServiceApiAdapter = service_api
         self.cache = cache
 
-    def get_mentor_profile(self, user_id: int):
+    async def get_mentor_profile(self, user_id: int):
         req_url = MENTOR_ROUTER_URL + USER_SERVICE_PREFIX + API_VERSION+ MENTORS+'/' + str(user_id) + '/profile'
         return self.service_api.get_with_statuscode(url=req_url)
