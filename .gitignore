@@ -6,4 +6,7 @@ venv
 **.db
 
 **/**.sh
-**.env
+**.env*
+
+!deploy.sh
+!.env.example
