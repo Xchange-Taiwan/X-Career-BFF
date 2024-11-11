@@ -1,5 +1,4 @@
 import os
-import json
 
 AWS_PROFILE = os.getenv('AWS_PROFILE', 'xc') # xc default
 STAGE = os.getenv('STAGE', 'local')

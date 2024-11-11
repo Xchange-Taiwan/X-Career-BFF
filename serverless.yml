@@ -18,7 +18,6 @@ app: x-career-bff
 
 # You can pin your service to only deploy with a specific Serverless version
 # Check out our docs for more details
-frameworkVersion: '3'
 
 package:
   individually: true
@@ -81,7 +80,6 @@ custom:
       description: XChange Career - BFF
       compatibleRuntimes:
       - python3.9
-
 
 functions:
   app:

@@ -1,6 +1,8 @@
 import io
 import json
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError, ClientError
+
+from ...config.exception import ServerException
 from ...configs.conf import XC_BUCKET
 from ...configs.exceptions import *
 import logging as log
