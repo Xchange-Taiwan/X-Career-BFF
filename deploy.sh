@@ -34,7 +34,7 @@ cp $SERVERLESS_FILE $BACKUP_FILE
 sed -i.bak "s|\${env:STAGE}|$BACKUP_ENV|g" "$BACKUP_FILE"  # 替换环境
 sed -i.bak "s|\${env:THE_REGION}|$REGION|g" "$BACKUP_FILE"  # 替换区域
 
-# 读取 .env 文件并替换 serverless.yml 中的环境变量
+# 读取 .env.dev 文件并替换 serverless.yml 中的环境变量
 while IFS='=' read -r key value; do
     # 跳过空行和注释行
     if [[ ! -z "$key" && ! "$key" =~ ^# ]]; then
@@ -58,3 +58,8 @@ sls deploy --config $BACKUP_FILE --region $REGION --stage $BACKUP_ENV # 添加�
 rm "$BACKUP_FILE"
 
 sh $BACKUP_ENV-env-deploy.sh
+
+if [ -f "$BACKUP_ENV-env-deploy.sh" ]; then
+    echo "Deploying env params..."
+    sh $BACKUP_ENV-env-deploy.sh
+fi

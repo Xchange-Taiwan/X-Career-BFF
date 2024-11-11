@@ -1,5 +1,4 @@
 import os
-import json
 
 LOCAL_REGION = os.getenv('AWS_REGION', 'ap-northeast-1')
 AWS_PROFILE = os.getenv('AWS_PROFILE', 'default') # xc default
