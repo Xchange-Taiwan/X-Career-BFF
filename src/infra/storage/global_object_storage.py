@@ -1,11 +1,16 @@
 import io
 import json
-from botocore.exceptions import NoCredentialsError, PartialCredentialsError, ClientError
+from datetime import datetime
 
-from ...config.exception import ServerException
-from ...configs.conf import XC_BUCKET
-from ...configs.exceptions import *
+from botocore.exceptions import NoCredentialsError, PartialCredentialsError, ClientError
+from fastapi import UploadFile, File, HTTPException
+
+from ...config.conf import XC_BUCKET
+from ...config.exception import ServerException, NotFoundException
+
 import logging as log
+
+from ...domain.file.file_info_model import FileInfoDTO
 
 log.basicConfig(filemode='w', level=log.INFO)
 
@@ -121,3 +126,31 @@ class GlobalObjectStorage:
                 bucket, key, result, err)
             raise ServerException(msg='find file fail')
 
+    async def upload(self, file: UploadFile = File(...)) -> FileInfoDTO:
+        try:
+            # Read file contents
+            file_content = await file.read()
+
+            # Upload file to S3
+            self.s3.Bucket(XC_BUCKET).put_object(
+                Key=file.filename,
+                Body=file_content,
+                ContentType=file.content_type
+            )
+            file_dto = FileInfoDTO(
+                file_id=file.filename,
+                filename=file.filename,
+                size=len(file_content),
+                content_type=file.content_type,
+                create_time=datetime.now(),
+                update_time=datetime.now()
+            )
+
+            # call service in x career user to save the file info
+            # Return file info
+            return file_dto
+
+        except (NoCredentialsError, PartialCredentialsError) as e:
+            raise HTTPException(status_code=400, detail="AWS credentials not found or incomplete")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail="An error occurred during file upload")
