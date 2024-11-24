@@ -1,11 +1,11 @@
 import json
-from typing import Dict, Optional
+from typing import Dict, Optional, List, Union
 from .client_response import ClientResponse
 import httpx
 
 
 class ServiceApiResponse(ClientResponse):
-    data: Optional[Dict] = None
+    data: Optional[Union[Dict, List, bool]] = None
 
     @staticmethod
     def parse(response: httpx.Response = None) -> 'ServiceApiResponse':
