@@ -1,7 +1,7 @@
 from typing import Any, List, Dict, Tuple
 from ....router.req.authorization import (
-    gen_token, 
-    gen_refresh_token, 
+    gen_token,
+    gen_refresh_token,
     valid_refresh_token,
 )
 from ..model.auth_model import *
@@ -10,7 +10,7 @@ from ....app.template.service_api import IServiceApi
 from ....infra.util.util import gen_confirm_code
 from ....infra.util.time_util import gen_timestamp, current_seconds
 from ....config.conf import *
-from ....config.constant import PREFETCH
+from ....config.constant import PREFETCH, MICRO_SERVICE_URL, USER_SERVICE_PREFIX, API_VERSION
 from ....config.exception import *
 import logging as log
 
@@ -49,7 +49,7 @@ class AuthService:
             log.error(f'{self.__cls_name}.__cache_check_for_signup:[too many reqeusts error],\
                 email:%s, cache data:%s', email, data)
             raise TooManyRequestsException(msg='frequently request', data=self.ttl_secs)
-        
+
         if data:
             await self.cache.delete(email)
             if 'token' in data:
@@ -74,7 +74,7 @@ class AuthService:
                 host:%s, email:%s, error:%s', host, email, e)
             await self.cache.set(email, {}, ex=REQUEST_INTERVAL_TTL)
             raise_http_exception(e, 'Email could not be delivered.', data=self.ttl_secs)
-            
+
 
 
     async def __cache_signup_token(self, email: EmailStr, password: str, token: str):
@@ -95,7 +95,7 @@ class AuthService:
             log.error(f'{self.__cls_name}.__cache_check_for_resend:[too many reqeusts error],\
                 email:%s, cache data:%s', email, data)
             raise TooManyRequestsException(msg='Frequently request.', data=self.ttl_secs)
-        
+
         if not data or not 'token' in data:
             log.error(f'{self.__cls_name}.__cache_check_for_resend:[no token error],\
                 email:%s, cache data:%s', email, data)
@@ -114,7 +114,7 @@ class AuthService:
 
         new_token = auth_res['token']
         await self.regenerate_signup_token(old_token, new_token)
-        
+
         data = self.ttl_secs.copy()
         if STAGE == TESTING:
             data.update({'token': new_token})
@@ -124,7 +124,7 @@ class AuthService:
         data = await self.cache.get(old_token)
         if not data or not 'email' in data or not 'password' in data:
             raise NotFoundException(msg='Email or password not found')
-        
+
         await self.cache.set(new_token, data, ex=REQUEST_INTERVAL_TTL)
         await self.cache.delete(old_token)
 
@@ -181,7 +181,7 @@ class AuthService:
         auth_res = self.apply_token(auth_res)
         auth_res = self.filter_auth_res(auth_res)
         return {'auth': auth_res}
-    
+
     async def __verify_confirm_token(self, token: str, user: Dict):
         if not user or not 'email' in user:
             raise ClientException(msg='Invalid or expired token.')
@@ -209,17 +209,17 @@ class AuthService:
         token = gen_token(res, ['region', 'user_id'])
         res.update({'token': token})
         return res
-    
+
     def filter_auth_res(self, res: Dict):
         return {k: res[k] for k in res if not k in AUTH_RESPONSE_FIELDS}
-    
+
     '''
     login preload process:
     若有機會在異地登入，則將登入流程改為 email 和 password 拆開：
         1) preload process API A => 用戶輸入 `email` => function login_preload_by_email
         2) preload process API B => 用戶輸入 `password` => login_preload_by_email_and_password (輸入其實包含 email 和 password; email 由前端緩存, 用戶以為只送 password)
     '''
-    
+
     '''
     preload process API A:
     1. frontend: 用戶輸入 `email`
@@ -242,7 +242,7 @@ class AuthService:
     # preload process API A => 用戶輸入 `email`(找用戶資料在哪裡)
     def login_preload_by_email(self, auth_host: str, body: LoginDTO):
         pass
-    
+
     '''
     preload process API B:
     4. frontend: 用戶輸入 `password`(輸入其實包含 email 和 password; email 由前端緩存, 用戶以為只送 password)
@@ -265,22 +265,31 @@ class AuthService:
     '''
 
     async def login(self, auth_host: str, user_host: str, body: LoginDTO):
-        auth_res = await self.__req_login(auth_host, body)
-        user_id = auth_res.get('user_id')
+        try:
+            auth_res = await self.__req_login(auth_host, body)
+            user_id = auth_res.get('user_id')
 
-        # cache auth data
-        await self.cache_auth_res(str(user_id), auth_res)
-        auth_res = self.apply_token(auth_res)
+            # cache auth data
+            await self.cache_auth_res(str(user_id), auth_res)
+            auth_res = self.apply_token(auth_res)
+            user_service_url = MICRO_SERVICE_URL+USER_SERVICE_PREFIX+API_VERSION+ 'users/'+str(user_id)+'/profile'
+            # 育志看一下這 API
+            user_res = await self.req.simple_get(user_service_url)
 
-        # 育志看一下這 API
-        # user_res = await self.req.simple_get(f'{user_host}/v1/users/{user_id}/profile')
-        user_res = None
 
-        auth_res = self.filter_auth_res(auth_res)
-        return {
-            'auth': auth_res,
-            'user': user_res,
-        }
+            auth_res = self.filter_auth_res(auth_res)
+            return {
+                'auth': auth_res,
+                'user': user_res,
+            }
+        except NotFoundException as not_found:
+            return {'user': {'is_onboarding': False}}
+        except Exception as e:
+            return {
+                'code': '50000',
+                'msg': str(e),
+                'data': None
+            }
 
     async def __req_login(self, auth_host: str, body: LoginDTO):
         auth_res = await self.req.simple_post(
@@ -288,7 +297,7 @@ class AuthService:
         if not auth_res or not 'user_id' in auth_res:
             raise UnauthorizedException(msg='Invalid user.')
         return auth_res
-        
+
 
     async def cache_auth_res(self, user_id_key: str, auth_res: Dict):
         auth_res.update({
@@ -302,12 +311,12 @@ class AuthService:
                 user_id_key:%s, auth_res:%s, ex:%s, cache data:%s',
                 user_id_key, auth_res, LONG_TERM_TTL, updated)
             raise ServerException(msg='server_error')
-        
+
         # remove sensitive data: aid
         auth_res.pop('aid', None)
 
 
-    async def req_user_data(self, user_host: str, user_id_key: str):            
+    async def req_user_data(self, user_host: str, user_id_key: str):
         user_res = await self.req.simple_get(
             # TODO: user service API 尚未調整
             url=f'{user_host}{user_id_key}/userdata',
@@ -327,7 +336,7 @@ class AuthService:
         user = await self.cache.get(user_id_key)
         if not user:
             raise UnauthorizedException(msg='Invalid user')
-        
+
         cached_refresh_token = user.get('refresh_token', None)
         if cached_refresh_token != body.refresh_token or \
             not valid_refresh_token(cached_refresh_token):
@@ -350,7 +359,7 @@ class AuthService:
         # 'LONG_TERM_TTL' for redirct notification
         await self.__cache_logout_status(user_id_key, user_logout_status)
         return (None, 'successfully logged out')
-    
+
     @staticmethod
     async def is_login(cache: ICache, visitor: BaseAuthDTO = None) -> (bool):
         if visitor is None:
@@ -400,7 +409,7 @@ class AuthService:
             await self.__cache_token_by_reset_password(token, email)
         else:
             token = email + ':not_exist'
-        
+
         data = self.ttl_secs.copy()
         if STAGE == TESTING:
             data.update({'token': token})
@@ -409,20 +418,20 @@ class AuthService:
     async def reset_passwrod(self, auth_host: str, verify_token: str, body: ResetPasswordDTO):
         checked_email = await self.cache.get(verify_token)
         if not checked_email:
-            raise UnauthorizedException(msg='invalid token') 
+            raise UnauthorizedException(msg='invalid token')
         if checked_email != body.register_email:
             raise UnauthorizedException(msg='invalid user')
         await self.__req_reset_password(auth_host, body)
         await self.__cache_remove_by_reset_password(verify_token, checked_email)
 
-    
+
     async def __cache_check_for_reset_password(self, email: EmailStr):
         data = await self.cache.get(f'reset_pw:{email}', True)
         if data and data.get('ttl', 0) > current_seconds():
             log.error(f'{self.__cls_name}.__cache_check_for_reset_password:[too many reqeusts error],\
                 email:%s, cache data:%s', email, data)
             raise TooManyRequestsException(msg='frequently request', data=self.ttl_secs)
-        
+
         if data:
             await self.cache.delete(f'reset_pw:{email}')
             # 將用不到的 verify_token 刪除
@@ -434,11 +443,11 @@ class AuthService:
     async def __cache_token_by_reset_password(self, verify_token: str, email: EmailStr):
         await self.cache.set(f'reset_pw:{email}', {'token':verify_token}, REQUEST_INTERVAL_TTL)
         await self.cache.set(verify_token, email, REQUEST_INTERVAL_TTL)
-        
+
     async def __cache_remove_by_reset_password(self, verify_token: str, email: EmailStr):
         await self.cache.delete(f'reset_pw:{email}')
         await self.cache.delete(verify_token)
-        
+
 
     async def update_password(self, auth_host: str, user_id: int, body: UpdatePasswordDTO):
         self.__cache_check_for_email_validation(user_id, body.register_email)
@@ -446,7 +455,7 @@ class AuthService:
 
     async def __req_send_reset_password_comfirm_email(self, auth_host: str, email: EmailStr):
         try:
-            return await self.req.simple_get(f'{auth_host}/v1/password/reset/email', params={'email': email}) 
+            return await self.req.simple_get(f'{auth_host}/v1/password/reset/email', params={'email': email})
         except Exception as e:
             log.error(f'{self.__cls_name}.__req_send_reset_password_comfirm_email:[request exception], \
                 host:%s, email:%s, error:%s', auth_host, email, e)
@@ -464,4 +473,4 @@ class AuthService:
 
     async def __req_reset_password(self, auth_host: str, body: ResetPasswordDTO):
         return await self.req.simple_put(
-            f'{auth_host}/v1/password/update', json=body.dict()) 
+            f'{auth_host}/v1/password/update', json=body.dict())
