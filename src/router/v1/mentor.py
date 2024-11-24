@@ -47,13 +47,14 @@ async def upsert_mentor_profile(
     return res_success(data=res)
 
 
-@router.get('/{user_id}/profile',
+@router.get('/{user_id}/{language}/profile',
             responses=idempotent_response('get_mentor_profile', mentor.MentorProfileVO))
 async def get_mentor_profile(
         request: Request,
         user_id: int = Path(...),
+        language: str = Path(...),
 ):
-    return await _mentor_service.get_mentor_profile(user_id)
+    return await _mentor_service.get_mentor_profile(user_id, language)
 
 
 @router.put('/{user_id}/experiences/{experience_type}',

@@ -13,6 +13,6 @@ class MentorService:
         self.service_api: AsyncServiceApiAdapter = service_api
         self.cache = cache
 
-    async def get_mentor_profile(self, user_id: int):
-        req_url = MICRO_SERVICE_URL + USER_SERVICE_PREFIX + API_VERSION + MENTORS + '/' + str(user_id) + '/profile'
-        return self.service_api.get(url=req_url)
+    async def get_mentor_profile(self, user_id: int, language: str = 'CHT'):
+        req_url = MICRO_SERVICE_URL + USER_SERVICE_PREFIX + API_VERSION + MENTORS + '/' + str(user_id) +'/'+ language + '/profile'
+        return await self.service_api.simple_get(url=req_url)
