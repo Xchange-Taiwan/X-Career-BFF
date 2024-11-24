@@ -4,9 +4,10 @@ import logging as log
 
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError, ClientError
 from fastapi import UploadFile, File, HTTPException
+from pydantic import HttpUrl
 
 from src.domain.file.model.file_info_model import FileInfoDTO, FileInfoVO
-from ...config.conf import XC_BUCKET
+from ...config.conf import XC_BUCKET, REGION
 from ...config.exception import ServerException, NotFoundException
 from ...domain.file.service.file_service import FileService
 
@@ -32,10 +33,9 @@ class GlobalObjectStorage:
 
         except Exception as e:
             log.error(f'{self.__cls_name}.init [init file error]\
-                bucket:%s, version:%s, file:%s, key:%s, err:%s', 
-                bucket, version, file, key, e.__str__())
+                bucket:%s, version:%s, file:%s, key:%s, err:%s',
+                      bucket, version, file, key, e.__str__())
             raise ServerException(msg='init file fail')
-
 
     def update(self, bucket, version, newdata):
         data = None
@@ -45,7 +45,7 @@ class GlobalObjectStorage:
             data = self.find(bucket)
             if data is None:
                 raise NotFoundException(msg=f'file:{bucket} not found')
-            
+
             if 'version' in data and data['version'] != version:
                 raise NotFoundException(msg='no version there OR invalid version')
 
@@ -56,19 +56,18 @@ class GlobalObjectStorage:
             obj = self.s3.Object(XC_BUCKET, key)
             obj.put(Body=result)
             return result
-        
+
         except NotFoundException as e:
             log.error(f'{self.__cls_name}.update [no version found] \
-                bucket:%s, version:%s, newdata:%s, data:%s, result:%s, key:%s, err:%s', 
-                bucket, version, newdata, data, result, key, e.__str__())
+                bucket:%s, version:%s, newdata:%s, data:%s, result:%s, key:%s, err:%s',
+                      bucket, version, newdata, data, result, key, e.__str__())
             raise NotFoundException(msg=e.msg)
 
         except Exception as e:
             log.error(f'{self.__cls_name}.update [update file error] \
-                bucket:%s, version:%s, newdata:%s, data:%s, result:%s, key:%s, err:%s', 
-                bucket, version, newdata, data, result, key, e.__str__())
+                bucket:%s, version:%s, newdata:%s, data:%s, result:%s, key:%s, err:%s',
+                      bucket, version, newdata, data, result, key, e.__str__())
             raise ServerException(msg='update file fail')
-
 
     def delete(self, bucket):
         key = None
@@ -81,10 +80,9 @@ class GlobalObjectStorage:
 
         except Exception as e:
             log.error(f'{self.__cls_name}.delete [delete file error] \
-                bucket:%s, key:%s, result:%s, err:%s', 
-                bucket, key, result, e.__str__())
+                bucket:%s, key:%s, result:%s, err:%s',
+                      bucket, key, result, e.__str__())
             raise ServerException(msg='delete file fail')
-
 
     '''
         return {
@@ -105,42 +103,46 @@ class GlobalObjectStorage:
             file_stream.seek(0)
             string = file_stream.read().decode('utf-8')
             result = json.loads(string)
-            
+
             return result
-        
+
         except ClientError as e:
             # file does not exist
             if e.response['Error']['Code'] == '404':
                 return None
             else:
                 log.error(f'{self.__cls_name}.find [req error] \
-                    bucket:%s, key:%s, result:%s, err:%s', 
-                    bucket, key, result, e.__str__())
+                    bucket:%s, key:%s, result:%s, err:%s',
+                          bucket, key, result, e.__str__())
                 raise ServerException(msg='req error of find file')
 
         except Exception as e:
             err = e.__str__()
             log.error(f'{self.__cls_name}.find [find file error] \
-                bucket:%s, key:%s, result:%s, err:%s', 
-                bucket, key, result, err)
+                bucket:%s, key:%s, result:%s, err:%s',
+                      bucket, key, result, err)
             raise ServerException(msg='find file fail')
 
     async def upload(self, file: UploadFile = File(...), user_id: int = -1) -> FileInfoVO:
         try:
             # Read file contents
             file_content = await file.read()
+            object_key = self.__get_obj_key(file.filename, user_id)
 
             # Upload file to S3
             self.s3.Bucket(XC_BUCKET).put_object(
-                Key=file.filename,
+                Key=object_key,
                 Body=file_content,
                 ContentType=file.content_type
             )
+            url: str = self.__get_obj_url(file.filename, user_id, REGION)
+
             file_dto = FileInfoDTO(
                 file_name=file.filename,
                 file_size=len(file_content),
                 content_type=file.content_type,
-                create_user_id=user_id
+                create_user_id=user_id,
+                url=url
             )
 
             file_dto = await self.file_service.create_file_info(file_dto)
@@ -153,7 +155,7 @@ class GlobalObjectStorage:
             raise HTTPException(status_code=500, detail="An error occurred during file upload")
 
     #create bucket
-    def create_bucket(self, bucket_name, region='us-east-1'):
+    def add_new_bucket(self, bucket_name, region='us-east-1'):
         try:
             # Create the bucket
             bucket = self.s3.create_bucket(
@@ -186,3 +188,9 @@ class GlobalObjectStorage:
 
         except Exception as e:
             print(f"Error creating bucket: {e}")
+
+    def __get_obj_key(self, file_name: str, user_id: int) -> str:
+        return 'files/' + str(user_id) + '/' + file_name
+
+    def __get_obj_url(self, file_name: str, user_id: int, region: str) -> str:
+        return f'https://{XC_BUCKET}.s3.{region}.amazonaws.com/{self.__get_obj_key(file_name, user_id)}'
