@@ -41,7 +41,7 @@ async def upsert_mentor_profile(
 ):
     router_path = request.url.path
     res: mentor.MentorProfileVO = None
-    req_url = MENTOR_ROUTER_URL + router_path
+    req_url = MICRO_SERVICE_URL + router_path
     async with httpx.AsyncClient() as client:
         res = await client.get(req_url)
     return res_success(data=res)

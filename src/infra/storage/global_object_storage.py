@@ -10,7 +10,7 @@ from ...config.exception import ServerException, NotFoundException
 
 import logging as log
 
-from ...domain.file.file_info_model import FileInfoDTO
+from src.domain.file.model.file_info_model import FileInfoDTO
 
 log.basicConfig(filemode='w', level=log.INFO)
 
