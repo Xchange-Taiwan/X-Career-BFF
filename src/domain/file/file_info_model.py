@@ -1,15 +1,15 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
-from pydantic import HttpUrl, BaseModel
+from pydantic import HttpUrl, BaseModel, UUID4
 
 
 class FileInfoDTO(BaseModel):
-    file_id: str  # uuid
-    filename: str
-    size: int
+    file_id: Optional[UUID4] # uuid
+    file_name: str
+    file_size: int
     content_type: Optional[str] = None
-    url: Optional[HttpUrl] = None  # Validates URL if provided
-    create_time: datetime
-    update_time: datetime
+    url: Optional[HttpUrl] = "http://example.com"  # Validates URL if provided
+    create_time: Optional[datetime] = datetime.now(timezone.utc)
+    update_time: Optional[datetime] = datetime.now(timezone.utc)
     is_deleted: bool = False

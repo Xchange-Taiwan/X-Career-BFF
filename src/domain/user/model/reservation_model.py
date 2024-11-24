@@ -25,8 +25,8 @@ class ReservationDTO(BaseModel):
 
 class AsyncUserDataVO(UserDTO):
     name: Optional[str]
-    avator: Optional[str]
-    position: Optional[str]
+    avatar: Optional[str]
+    job_title: Optional[str]
     company: Optional[str]
     industry: Optional[ProfessionVO]
     status: BookingStatus

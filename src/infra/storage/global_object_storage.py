@@ -138,9 +138,8 @@ class GlobalObjectStorage:
                 ContentType=file.content_type
             )
             file_dto = FileInfoDTO(
-                file_id=file.filename,
-                filename=file.filename,
-                size=len(file_content),
+                file_name=file.filename,
+                file_size=len(file_content),
                 content_type=file.content_type,
                 create_time=datetime.now(),
                 update_time=datetime.now()
