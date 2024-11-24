@@ -11,13 +11,15 @@ from ...config.exception import ServerException, NotFoundException
 import logging as log
 
 from src.domain.file.model.file_info_model import FileInfoDTO
+from ...domain.file.service.file_service import FileService
 
 log.basicConfig(filemode='w', level=log.INFO)
 
 
 class GlobalObjectStorage:
-    def __init__(self, s3):
+    def __init__(self, s3, file_service: FileService):
         self.s3 = s3
+        self.file_service = file_service
         self.__cls_name = self.__class__.__name__
 
     def init(self, bucket, version):
