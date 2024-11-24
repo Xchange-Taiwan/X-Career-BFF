@@ -28,8 +28,9 @@ class FileService:
         req_url = self.file_url + '/' + str(user_id)
         res: Optional[ServiceApiResponse] = await self.service_api.get(url=req_url)
         return FileInfoListVO(**res.data)
+
     async def create_file_info(self, file_info_dto: FileInfoDTO) -> FileInfoVO:
-        req_url = self.file_url+'/'+'create'
+        req_url = self.file_url + '/' + 'create'
         res: Optional[ServiceApiResponse] = await self.service_api.post(url=req_url, json=file_info_dto.dict())
         return FileInfoVO(**res.data)
 
@@ -42,3 +43,9 @@ class FileService:
         req_url = self.file_url + '/' + str(user_id) + '/' + file_id
         res: Optional[ServiceApiResponse] = await self.service_api.delete(url=req_url)
         return res.data
+
+
+file_service_singleton = FileService(
+    AsyncServiceApiAdapter(),
+    None
+)

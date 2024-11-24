@@ -1,16 +1,13 @@
 import io
 import json
-from datetime import datetime
+import logging as log
 
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError, ClientError
 from fastapi import UploadFile, File, HTTPException
 
+from src.domain.file.model.file_info_model import FileInfoDTO, FileInfoVO
 from ...config.conf import XC_BUCKET
 from ...config.exception import ServerException, NotFoundException
-
-import logging as log
-
-from src.domain.file.model.file_info_model import FileInfoDTO
 from ...domain.file.service.file_service import FileService
 
 log.basicConfig(filemode='w', level=log.INFO)
@@ -128,7 +125,7 @@ class GlobalObjectStorage:
                 bucket, key, result, err)
             raise ServerException(msg='find file fail')
 
-    async def upload(self, file: UploadFile = File(...)) -> FileInfoDTO:
+    async def upload(self, file: UploadFile = File(...), user_id: int = -1) -> FileInfoVO:
         try:
             # Read file contents
             file_content = await file.read()
@@ -143,11 +140,10 @@ class GlobalObjectStorage:
                 file_name=file.filename,
                 file_size=len(file_content),
                 content_type=file.content_type,
-                create_time=datetime.now(),
-                update_time=datetime.now()
+                create_user_id=user_id
             )
 
-            # call service in x career user to save the file info
+            file_dto = await self.file_service.create_file_info(file_dto)
             # Return file info
             return file_dto
 
@@ -155,3 +151,38 @@ class GlobalObjectStorage:
             raise HTTPException(status_code=400, detail="AWS credentials not found or incomplete")
         except Exception as e:
             raise HTTPException(status_code=500, detail="An error occurred during file upload")
+
+    #create bucket
+    def create_bucket(self, bucket_name, region='us-east-1'):
+        try:
+            # Create the bucket
+            bucket = self.s3.create_bucket(
+                Bucket=bucket_name,
+                CreateBucketConfiguration={
+                    'LocationConstraint': region
+                }
+            )
+            print(f"Bucket '{bucket_name}' created successfully.")
+
+            # Enable versioning
+            bucket_versioning = self.s3.BucketVersioning(bucket_name)
+            bucket_versioning.enable()
+            print(f"Versioning enabled for bucket '{bucket_name}'.")
+
+            # Enable encryption
+            self.s3.meta.client.put_bucket_encryption(
+                Bucket=bucket_name,
+                ServerSideEncryptionConfiguration={
+                    'Rules': [
+                        {
+                            'ApplyServerSideEncryptionByDefault': {
+                                'SSEAlgorithm': 'AES256'
+                            }
+                        }
+                    ]
+                }
+            )
+            print(f"Encryption enabled for bucket '{bucket_name}'.")
+
+        except Exception as e:
+            print(f"Error creating bucket: {e}")
