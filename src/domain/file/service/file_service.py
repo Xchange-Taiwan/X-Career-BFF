@@ -4,6 +4,7 @@ from typing import Optional, List
 from pydantic import UUID4
 
 from src.app.template.service_response import ServiceApiResponse
+from src.config.cache import gw_cache
 from src.config.constant import MICRO_SERVICE_URL, USER_SERVICE_PREFIX, API_VERSION, FILE
 from src.domain.cache import ICache
 from src.domain.file.model.file_info_model import FileInfoVO, FileInfoDTO, FileInfoListVO
@@ -47,5 +48,5 @@ class FileService:
 
 file_service_singleton = FileService(
     AsyncServiceApiAdapter(),
-    None
+    gw_cache
 )

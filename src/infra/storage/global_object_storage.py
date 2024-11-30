@@ -7,7 +7,7 @@ from fastapi import UploadFile, File, HTTPException
 from pydantic import HttpUrl
 
 from src.domain.file.model.file_info_model import FileInfoDTO, FileInfoVO
-from ...config.conf import XC_BUCKET, REGION
+from ...config.conf import XC_BUCKET, LOCAL_REGION
 from ...config.exception import ServerException, NotFoundException
 from ...domain.file.service.file_service import FileService
 
@@ -135,7 +135,7 @@ class GlobalObjectStorage:
                 Body=file_content,
                 ContentType=file.content_type
             )
-            url: str = self.__get_obj_url(file.filename, user_id, REGION)
+            url: str = self.__get_obj_url(file.filename, user_id, LOCAL_REGION)
 
             file_dto = FileInfoDTO(
                 file_name=file.filename,
