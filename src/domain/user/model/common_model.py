@@ -24,8 +24,9 @@ class ProfessionDTO(BaseModel):
 
 
 class ProfessionVO(ProfessionDTO):
-    subject: str
-    metadata: Dict
+    subject: str = ''
+    profession_metadata: Dict = {}
+    language: Optional[str] = ''
 
 
 class ProfessionListVO(BaseModel):
