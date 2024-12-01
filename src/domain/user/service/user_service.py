@@ -2,8 +2,10 @@ from typing import Optional
 
 from src.app.template.service_response import ServiceApiResponse
 from src.config.cache import gw_cache
-from src.config.constant import MICRO_SERVICE_URL, USER_SERVICE_PREFIX, API_VERSION, USERS
+from src.config.constant import MICRO_SERVICE_URL, USER_SERVICE_PREFIX, API_VERSION, USERS, ProfessionCategory, \
+    InterestCategory
 from src.domain.cache import ICache
+from src.domain.user.model.common_model import InterestListVO, ProfessionListVO
 from src.domain.user.model.user_model import ProfileDTO, ProfileVO
 from src.infra.client.async_service_api_adapter import AsyncServiceApiAdapter
 
@@ -24,6 +26,16 @@ class UserService:
         req_url = self.url + '/' + str(user_id) + '/' + 'profile'
         res: Optional[ServiceApiResponse] = await self.service_api.put(url=req_url, json=data.dict())
         return ProfileVO(**res.data)
+
+    async def get_interests(self, interest: InterestCategory) -> InterestListVO:
+        req_url = self.url + '/' + 'interests'
+        res: Optional[ServiceApiResponse] = await self.service_api.get(url=req_url, params={'interest': interest.value})
+        return InterestListVO(**res.data)
+
+    async def get_industries(self, profession_category: ProfessionCategory) -> ProfessionListVO:
+        req_url = self.url + '/' + 'industries'
+        res: Optional[ServiceApiResponse] = await self.service_api.get(url=req_url, params={'profession_category': profession_category.value})
+        return ProfessionListVO(**res.data)
 
 
 user_service_singleton: UserService = (

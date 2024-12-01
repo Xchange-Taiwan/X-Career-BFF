@@ -55,17 +55,17 @@ async def get_profile(
 async def get_interests(
         interest: InterestCategory = Query(...),
 ):
-    # TODO: implement
-    return res_success(data=None)
+    data: common.InterestListVO = await user_service.get_interests(interest)
+    return res_success(data=data.json())
 
 
 @router.get('/industries',
             responses=idempotent_response('get_industries', common.ProfessionListVO))
 async def get_industries(
-        # category = ProfessionCategory.INDUSTRY = Query(...),
+        category: ProfessionCategory = Query(...)
 ):
-    # TODO: implement
-    return res_success(data=None)
+    data: common.ProfessionListVO = await user_service.get_industries(category)
+    return res_success(data=data.json())
 
 
 @router.get('/{user_id}/reservations',
