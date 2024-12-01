@@ -2,7 +2,7 @@ from typing import Optional
 
 from src.app.template.service_response import ServiceApiResponse
 from src.config.cache import gw_cache
-from src.config.constant import MICRO_SERVICE_URL, USER_SERVICE_PREFIX, API_VERSION, USER
+from src.config.constant import MICRO_SERVICE_URL, USER_SERVICE_PREFIX, API_VERSION, USERS
 from src.domain.cache import ICache
 from src.domain.user.model.user_model import ProfileDTO, ProfileVO
 from src.infra.client.async_service_api_adapter import AsyncServiceApiAdapter
@@ -13,7 +13,7 @@ class UserService:
         self.__cls_name = self.__class__.__name__
         self.service_api: AsyncServiceApiAdapter = service_api
         self.cache = cache
-        self.url = MICRO_SERVICE_URL + API_VERSION + USER
+        self.url = MICRO_SERVICE_URL + USER_SERVICE_PREFIX + API_VERSION + USERS
 
     async def get_user_profile(self, user_id: int):
         req_url = self.url + '/' + str(user_id) + '/' + 'profile'

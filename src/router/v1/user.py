@@ -36,6 +36,7 @@ async def upsert_profile(
         user_id: int = Path(...),
         body: user.ProfileDTO = Body(...),
 ):
+    body.user_id = user_id
     data: user.ProfileVO = await user_service.upsert_user_profile(user_id, body)
     return res_success(data=data.json())
 
@@ -46,7 +47,7 @@ async def get_profile(
         user_id: int = Path(...),
 ):
     data: user.ProfileVO = await user_service.get_user_profile(user_id)
-    return res_success(data=None)
+    return res_success(data=data.json())
 
 
 @router.get('/interests',
