@@ -1,11 +1,10 @@
 import logging as log
-from typing import Optional, List
-
-from pydantic import UUID4
+from typing import Optional
 
 from src.app.template.service_response import ServiceApiResponse
 from src.config.cache import gw_cache
-from src.config.constant import MICRO_SERVICE_URL, USER_SERVICE_PREFIX, API_VERSION, FILE
+from src.config.conf import MICRO_SERVICE_URL, API_VERSION
+from src.config.constant import USER_SERVICE_PREFIX, FILE
 from src.domain.cache import ICache
 from src.domain.file.model.file_info_model import FileInfoVO, FileInfoDTO, FileInfoListVO
 from src.infra.client.async_service_api_adapter import AsyncServiceApiAdapter

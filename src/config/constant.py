@@ -59,8 +59,6 @@ SERIAL_KEY = 'created_at'
 PREFETCH = 3
 
 # Accessing environment variables with default values
-MICRO_SERVICE_URL = os.getenv('USER_SERVICE_URL', 'http://127.0.0.1:8000')
-API_VERSION = os.getenv('API_VERSION', '/api/v1/')
 USER_SERVICE_PREFIX: str = "/user-service"
 MENTORS = 'mentors'
 FILE = 'file'

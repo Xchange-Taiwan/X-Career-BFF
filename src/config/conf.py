@@ -42,3 +42,7 @@ SCHEDULE_MONTH = int(os.getenv('SCHEDULE_MONTH', '-1'))
 SCHEDULE_DAY_OF_MONTH = int(os.getenv('SCHEDULE_DAY_OF_MONTH', '-1'))
 SCHEDULE_DAY_OF_WEEK = int(os.getenv('SCHEDULE_DAY_OF_WEEK', '-1'))
 
+# micro service
+MICRO_SERVICE_URL = os.getenv('USER_SERVICE_URL', 'http://127.0.0.1:8000')
+API_VERSION = os.getenv('API_VERSION', '/api/v1/')
+

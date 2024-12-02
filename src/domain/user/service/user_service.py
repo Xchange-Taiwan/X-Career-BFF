@@ -2,8 +2,9 @@ from typing import Optional
 
 from src.app.template.service_response import ServiceApiResponse
 from src.config.cache import gw_cache
-from src.config.constant import MICRO_SERVICE_URL, USER_SERVICE_PREFIX, API_VERSION, USERS, ProfessionCategory, \
-    InterestCategory
+from src.config.conf import MICRO_SERVICE_URL, API_VERSION
+from src.config.constant import ProfessionCategory, \
+    InterestCategory, USER_SERVICE_PREFIX, USERS
 from src.domain.cache import ICache
 from src.domain.user.model.common_model import InterestListVO, ProfessionListVO
 from src.domain.user.model.user_model import ProfileDTO, ProfileVO
