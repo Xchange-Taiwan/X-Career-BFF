@@ -11,15 +11,12 @@ from ..req.auth_validation import *
 from ..req.authorization import *
 from ..res.response import *
 from ...config.exception import *
-from ...config.region_host import get_auth_region_host, get_user_region_host
 from ...config.service_client import service_client
 from ...config.cache import gw_cache
 import logging as log
 
 log.basicConfig(filemode='w', level=log.INFO)
 
-auth_host = get_auth_region_host()
-user_host = get_user_region_host()
 _auth_service = AuthService(
     service_client, 
     gw_cache,
@@ -94,7 +91,7 @@ async def update_password(
     update_password_dto: UpdatePasswordDTO = Body(...),
     verify=Depends(verify_token_by_update_password),
 ):
-    await _auth_service.update_password(auth_host, user_id, update_password_dto)
+    await _auth_service.update_password(user_id, update_password_dto)
     return res_success(msg='update success')
 
 
@@ -102,7 +99,7 @@ async def update_password(
 async def send_reset_password_comfirm_email(
     email: EmailStr,
 ):
-    data = await _auth_service.send_reset_password_comfirm_email(auth_host, email)
+    data = await _auth_service.send_reset_password_comfirm_email(email)
     return res_success(data=data, msg='send_email_success')
 
 
@@ -111,5 +108,5 @@ async def reset_password(
     reset_passwrod_dto: ResetPasswordDTO = Body(...),
     verify_token: str = Query(...),
 ):
-    await _auth_service.reset_passwrod(auth_host, verify_token, reset_passwrod_dto)
+    await _auth_service.reset_passwrod(verify_token, reset_passwrod_dto)
     return res_success(msg='reset success')

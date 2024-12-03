@@ -59,6 +59,7 @@ SERIAL_KEY = 'created_at'
 PREFETCH = 3
 
 # Accessing environment variables with default values
+# TODO: 參考 AUTH_SERVICE_URL 的用法，不需要這麼冗長; 另外 "/v1" 直接寫在每個 api path 裡如何?
 USER_SERVICE_PREFIX: str = "/user-service"
 MENTORS = 'mentors'
 FILE = 'file'

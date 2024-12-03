@@ -180,8 +180,8 @@ class AuthService:
         await self.cache.set(email, data, ex=REQUEST_INTERVAL_TTL)
 
     # return status_code, msg, err
-    async def __req_send_confirmcode_by_email(self, host: str, email: str, code: str):
-        auth_res = await self.req.simple_post(f'{host}/v1/sendcode/email', json={
+    async def __req_send_confirmcode_by_email(self, email: str, code: str):
+        auth_res = await self.req.simple_post(f'{AUTH_SERVICE_URL}/v1/sendcode/email', json={
             'email': email,
             'code': code,
             'exist': False,
@@ -280,7 +280,7 @@ class AuthService:
     '''
 
     # preload process API A => 用戶輸入 `email`(找用戶資料在哪裡)
-    def login_preload_by_email(self, auth_host: str, body: LoginDTO):
+    def login_preload_by_email(self, body: LoginDTO):
         pass
 
     '''
@@ -296,7 +296,7 @@ class AuthService:
     '''
 
     # preload process API B => 用戶輸入 `password`(異步的複製資料；輸入其實包含 email 和 password)
-    def login_preload_by_email_and_password(self, auth_host: str, user_host: str, body: LoginDTO):
+    def login_preload_by_email_and_password(self, body: LoginDTO):
         pass
 
 
@@ -436,9 +436,9 @@ class AuthService:
     password
     '''
 
-    async def send_reset_password_comfirm_email(self, auth_host: str, email: EmailStr):
+    async def send_reset_password_comfirm_email(self, email: EmailStr):
         await self.__cache_check_for_reset_password(email)
-        data = await self.__req_send_reset_password_comfirm_email(auth_host, email)
+        data = await self.__req_send_reset_password_comfirm_email(email)
         if data != None and 'token' in data:
             token = data['token']
             await self.__cache_token_by_reset_password(token, email)
@@ -450,13 +450,13 @@ class AuthService:
             data.update({'token': token})
         return data
 
-    async def reset_passwrod(self, auth_host: str, verify_token: str, body: ResetPasswordDTO):
+    async def reset_passwrod(self, verify_token: str, body: ResetPasswordDTO):
         checked_email = await self.cache.get(verify_token)
         if not checked_email:
             raise UnauthorizedException(msg='invalid token')
         if checked_email != body.register_email:
             raise UnauthorizedException(msg='invalid user')
-        await self.__req_reset_password(auth_host, body)
+        await self.__req_reset_password(body)
         await self.__cache_remove_by_reset_password(verify_token, checked_email)
 
     async def __cache_check_for_reset_password(self, email: EmailStr):
@@ -481,16 +481,16 @@ class AuthService:
         await self.cache.delete(f'reset_pw:{email}')
         await self.cache.delete(verify_token)
 
-    async def update_password(self, auth_host: str, user_id: int, body: UpdatePasswordDTO):
+    async def update_password(self, user_id: int, body: UpdatePasswordDTO):
         self.__cache_check_for_email_validation(user_id, body.register_email)
-        self.__req_update_password(auth_host, body)
+        self.__req_update_password(body)
 
-    async def __req_send_reset_password_comfirm_email(self, auth_host: str, email: EmailStr):
+    async def __req_send_reset_password_comfirm_email(self, email: EmailStr):
         try:
-            return await self.req.simple_get(f'{auth_host}/v1/password/reset/email', params={'email': email})
+            return await self.req.simple_get(f'{AUTH_SERVICE_URL}/v1/password/reset/email', params={'email': email})
         except Exception as e:
             log.error(f'{self.__cls_name}.__req_send_reset_password_comfirm_email:[request exception], \
-                host:%s, email:%s, error:%s', auth_host, email, e)
+                host:%s, email:%s, error:%s', AUTH_SERVICE_URL, email, e)
             return None
 
     async def __cache_check_for_email_validation(self, user_id: int, register_email: EmailStr):
@@ -499,10 +499,10 @@ class AuthService:
         if data is None or not 'email' in data or str(register_email) != data['email']:
             raise UnauthorizedException(msg='invalid email')
 
-    async def __req_update_password(self, auth_host: str, body: UpdatePasswordDTO):
+    async def __req_update_password(self, body: UpdatePasswordDTO):
         return await self.req.simple_put(
-            f'{auth_host}/v1/password/update', json=body.dict())
+            f'{AUTH_SERVICE_URL}/v1/password/update', json=body.dict())
 
-    async def __req_reset_password(self, auth_host: str, body: ResetPasswordDTO):
+    async def __req_reset_password(self, body: ResetPasswordDTO):
         return await self.req.simple_put(
-            f'{auth_host}/v1/password/update', json=body.dict())
+            f'{AUTH_SERVICE_URL}/v1/password/update', json=body.dict())
