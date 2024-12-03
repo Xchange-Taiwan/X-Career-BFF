@@ -20,6 +20,8 @@ REQUEST_INTERVAL_TTL = int(os.getenv('REQUEST_INTERVAL_TTL', 8))
 SHORT_TERM_TTL = int(os.getenv('SHORT_TERM_TTL', 1800))
 # default = 3 days (3 * 86400 secs)
 LONG_TERM_TTL = int(os.getenv('LONG_TERM_TTL', 3 * 86400))
+# default = 30 days (30 * 86400 secs)
+REFRESH_TOKEN_TTL = int(os.getenv('REFRESH_TOKEN_TTL', 2592000))
 
 # filter auth response fields
 AUTH_RESPONSE_FIELDS = os.getenv('AUTH_RESPONSE_FIELDS', 'email,account_type,region,online')
@@ -44,5 +46,6 @@ SCHEDULE_DAY_OF_WEEK = int(os.getenv('SCHEDULE_DAY_OF_WEEK', '-1'))
 
 # micro service
 MICRO_SERVICE_URL = os.getenv('USER_SERVICE_URL', 'http://127.0.0.1:8000')
+AUTH_SERVICE_URL = os.getenv('AUTH_SERVICE_URL', 'http://127.0.0.1:8008/auth-service/api')
 API_VERSION = os.getenv('API_VERSION', '/api/v1/')
 

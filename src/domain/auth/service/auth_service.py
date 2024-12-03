@@ -1,3 +1,4 @@
+from fastapi.responses import JSONResponse
 from ....config.constant import USER_SERVICE_PREFIX
 from ....router.req.authorization import (
     gen_token,
@@ -27,15 +28,56 @@ class AuthService:
         self.req = req
         self.cache = cache
         self.ttl_secs = {'ttl_secs': REQUEST_INTERVAL_TTL}
+        
+    
+    @staticmethod
+    def auth_response(data: Dict, msg='ok', code='0'):
+        auth: Dict = data.get('auth', None)
+        if not auth:
+            raise ServerException(msg='Invalid user')
+        
+        refresh_token = auth.pop('refresh_token', None)
+        token = auth.pop('token', None)
+
+        response = JSONResponse(
+            status_code=status.HTTP_201_CREATED,
+            content={
+                'code': code,
+                'msg': msg,
+                'data': data,
+            })
+
+        # 設定 Set-Cookie Header: refresh_token
+        response.set_cookie(
+            key='refresh_token',        # Cookie 名稱: refresh_token
+            value=refresh_token,        # Cookie 值: refresh_token
+            httponly=True,              # 防止 JavaScript 訪問，防範 XSS 攻擊
+            secure=True,                # 僅限 HTTPS 傳輸
+            samesite='Strict',          # 防範 CSRF 攻擊
+            max_age=REFRESH_TOKEN_TTL   # Cookie 有效時間 (秒)
+        )
+        
+        # 設定 Set-Cookie Header: refresh_token
+        response.set_cookie(
+            key='token',                # Cookie 名稱: token
+            value=token,                # Cookie 值: token
+            httponly=True,              # 防止 JavaScript 訪問，防範 XSS 攻擊
+            secure=True,                # 僅限 HTTPS 傳輸
+            samesite='Strict',          # 防範 CSRF 攻擊
+            max_age=LONG_TERM_TTL       # Cookie 有效時間 (秒)
+        )
+        
+        return response
+
 
     '''
     signup
     '''
 
-    async def signup(self, host: str, body: SignupDTO):
+    async def signup(self, body: SignupDTO):
         email = body.email
         await self.__cache_check_for_signup(email)
-        auth_res = await self.__req_send_signup_confirm_email(host, email)
+        auth_res = await self.__req_send_signup_confirm_email(email)
         if not 'token' in auth_res:
             raise ServerException(msg='signup fail', data=self.ttl_secs)
 
@@ -59,12 +101,14 @@ class AuthService:
                 await self.cache.delete(data.get('token'))
 
     # return status_code, msg, err
-    async def __req_send_signup_confirm_email(self, host: str, email: str):
+    async def __req_send_signup_confirm_email(self, email: str):
         try:
-            auth_res = await self.req.simple_post(f'{host}/v1/signup/email', json={
-                'email': email,
-                'exist': False,
-            })
+            auth_res = await self.req.simple_post(
+                f'{AUTH_SERVICE_URL}/v1/signup/email', 
+                json={
+                    'email': email,
+                    'exist': False,
+                })
             return auth_res
 
         except NotAcceptableException or DuplicateUserException as e:
@@ -73,7 +117,7 @@ class AuthService:
 
         except Exception as e:
             log.error(f'{self.__cls_name}.__req_send_signup_confirm_email:[request exception], \
-                host:%s, email:%s, error:%s', host, email, e)
+                host:%s, email:%s, error:%s', AUTH_SERVICE_URL, email, e)
             await self.cache.set(email, {}, ex=REQUEST_INTERVAL_TTL)
             raise_http_exception(e, 'Email could not be delivered.', data=self.ttl_secs)
 
@@ -108,9 +152,9 @@ class AuthService:
     signup_email_resend
     '''
 
-    async def signup_email_resend(self, host: str, email: EmailStr):
+    async def signup_email_resend(self, email: EmailStr):
         old_token = await self.__cache_check_for_token(email)
-        auth_res = await self.__req_send_signup_confirm_email(host, email)
+        auth_res = await self.__req_send_signup_confirm_email(email)
         if not 'token' in auth_res:
             raise ServerException(msg='Signup fail', data=self.ttl_secs)
 
@@ -158,24 +202,19 @@ class AuthService:
     confirm_signup
     '''
 
-    async def confirm_signup(self, host: str, token):
+    async def confirm_signup(self, token: str):
         # token: {email, passowrd}
         user = await self.cache.get(token)
         await self.__verify_confirm_token(token, user)
 
         # 'registering': empty data
         email = user.get('email', None)
-        auth_res = await self.req.simple_post(f'{host}/v1/signup',
+        auth_res = await self.req.simple_post(f'{AUTH_SERVICE_URL}/v1/signup',
                                               json={
                                                   'region': LOCAL_REGION,
                                                   'email': email,
                                                   'password': user['password'],
                                               })
-        # user_res = await self.req.simple_put(f'{user_host}/v1/mentors/mentor_profile/create',
-        #                                 json={
-        #                                     'region': body.region,
-        #                                     'email': body.email,
-        #                                 })
 
         user_id_key = str(auth_res['user_id'])
         await self.cache_auth_res(user_id_key, auth_res)
@@ -260,44 +299,51 @@ class AuthService:
     def login_preload_by_email_and_password(self, auth_host: str, user_host: str, body: LoginDTO):
         pass
 
+
     '''
     login
     有了 login preload process, login 可一律視為本地登入
     '''
 
-    async def login(self, auth_host: str, user_host: str, body: LoginDTO):
-        try:
-            auth_res = await self.__req_login(auth_host, body)
-            user_id = auth_res.get('user_id')
+    async def login(self, body: LoginDTO):
+        auth_res = await self.__req_login(body)
+        user_id = auth_res.get('user_id')
 
-            # cache auth data
-            await self.cache_auth_res(str(user_id), auth_res)
-            auth_res = self.apply_token(auth_res)
-            user_service_url = MICRO_SERVICE_URL + USER_SERVICE_PREFIX + API_VERSION + 'users/' + str(
-                user_id) + '/profile'
-            # 育志看一下這 API
-            user_res = await self.req.simple_get(user_service_url)
+        # cache auth data
+        await self.cache_auth_res(str(user_id), auth_res)
+        auth_res = self.apply_token(auth_res)
+        # 育志看一下這 API
+        user_res = await self.__req_user_profile(user_id)
+        auth_res = self.filter_auth_res(auth_res)
+        return {
+            'auth': auth_res,
+            'user': user_res,
+        }
 
-            auth_res = self.filter_auth_res(auth_res)
-            return {
-                'auth': auth_res,
-                'user': user_res,
-            }
-        except NotFoundException as not_found:
-            return {'user': {'is_onboarding': False}}
-        except Exception as e:
-            return {
-                'code': '50000',
-                'msg': str(e),
-                'data': None
-            }
 
-    async def __req_login(self, auth_host: str, body: LoginDTO):
+    async def __req_login(self, body: LoginDTO):
         auth_res = await self.req.simple_post(
-            f'{auth_host}/v1/login', json=body.dict())
+            f'{AUTH_SERVICE_URL}/v1/login', json=body.dict())
         if not auth_res or not 'user_id' in auth_res:
             raise UnauthorizedException(msg='Invalid user.')
         return auth_res
+
+
+    async def __req_user_profile(self, user_id: int):
+        try:
+            user_service_url = MICRO_SERVICE_URL + USER_SERVICE_PREFIX + API_VERSION + \
+                'users/' + str(user_id) + '/profile'
+            # 育志看一下這 API
+            return await self.req.simple_get(user_service_url)
+
+        except NotFoundException as not_found:
+            return {'is_onboarding': False}
+
+        except Exception as e:
+            log.error(f'{self.__cls_name}.__req_user_profile:[request exception], \
+                user_id:%s, error:%s', user_id, e)
+            return None
+ 
 
     async def cache_auth_res(self, user_id_key: str, auth_res: Dict):
         auth_res.update({
@@ -315,16 +361,6 @@ class AuthService:
         # remove sensitive data: aid
         auth_res.pop('aid', None)
 
-    async def req_user_data(self, user_host: str, user_id_key: str):
-        user_res = await self.req.simple_get(
-            # TODO: user service API 尚未調整
-            url=f'{user_host}{user_id_key}/userdata',
-            params={
-                'size': size,
-            }
-        )
-
-        return user_res
 
     '''
     gen new token and refresh_token

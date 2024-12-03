@@ -36,7 +36,7 @@ router = APIRouter(
 async def signup(
     body: SignupDTO = Body(...),
 ):
-    data = await _auth_service.signup(auth_host, body)
+    data = await _auth_service.signup(body)
     return post_success(data=data, msg='email_sent')
 
 
@@ -44,7 +44,7 @@ async def signup(
 async def signup_email_resend(
     email: EmailStr = Body(..., embed=True),
 ):
-    data = await _auth_service.signup_email_resend(auth_host, email)
+    data = await _auth_service.signup_email_resend(email)
     return post_success(data=data, msg='Verification email has been resent successfully.')
 
 
@@ -54,8 +54,11 @@ async def signup_email_resend(
 async def confirm_signup(
     token: str = Body(..., embed=True),
 ):
-    data = await _auth_service.confirm_signup(auth_host, token)
-    return post_success(data=data, msg='Confirming successful signup.')
+    data = await _auth_service.confirm_signup(token)
+    return AuthService.auth_response(
+        data=data, 
+        msg='Confirming successful signup.',
+    )
 
 
 @router.post('/login',
@@ -64,8 +67,8 @@ async def confirm_signup(
 async def login(
     body: LoginDTO = Depends(login_check_body),
 ):
-    data = await _auth_service.login(auth_host, user_host, body)
-    return post_success(data=data)
+    data = await _auth_service.login(body)
+    return AuthService.auth_response(data=data)
 
 
 @router.post('/token',
