@@ -1,5 +1,5 @@
 import logging as log
-from typing import Optional
+from typing import Optional, Dict
 
 from src.domain.cache import ICache
 from .model.experience_model import ExperienceVO, ExperienceDTO
@@ -7,8 +7,8 @@ from .model.mentor_model import MentorProfileDTO, MentorProfileVO
 from ..user.model.common_model import ProfessionListVO
 from ...app.template.service_response import ServiceApiResponse
 from ...config.conf import USER_SERVICE_URL
-from ...config.constant import USER_SERVICE_PREFIX, MENTORS, ExperienceCategory
-from ...config.exception import NotFoundException
+from ...config.constant import USER_SERVICE_PREFIX, MENTORS, ExperienceCategory, Language
+from ...config.exception import NotFoundException, raise_http_exception
 from ...infra.client.async_service_api_adapter import AsyncServiceApiAdapter
 
 log.basicConfig(filemode='w', level=log.INFO)
@@ -52,7 +52,11 @@ class MentorService:
         res: Optional[ServiceApiResponse] = await self.service_api.delete(url=req_url)
         return res.data
 
-    async def get_expertises(self) -> ProfessionListVO:
-        req_url = f"{USER_SERVICE_URL}/v1/{MENTORS}/expertises"
-        res: Optional[ServiceApiResponse] = await self.service_api.get(url=req_url)
-        return ProfessionListVO(**res.data)
+    async def get_expertises(self, language: Language) -> ProfessionListVO:
+        try:
+            req_url = f"{USER_SERVICE_URL}/v1/{MENTORS}/{language.value}/expertises"
+            res: Dict = await self.service_api.simple_get(url=req_url)
+            return res
+        except Exception as e:
+            log.error(e)
+            raise_http_exception(500, 'Internal Server Error')

@@ -8,7 +8,7 @@ from fastapi import (
 from src.infra.client.async_service_api_adapter import AsyncServiceApiAdapter
 from ..res.response import *
 from ...config.cache import gw_cache
-from ...config.constant import ExperienceCategory
+from ...config.constant import ExperienceCategory, Language
 from ...config.exception import *
 from ...domain.mentor.mentor_service import MentorService
 from ...domain.mentor.model import (
@@ -80,14 +80,15 @@ async def delete_experience(
     return res_success(data=res)
 
 
-@router.get('/expertises',
+@router.get('{language}/expertises',
             responses=idempotent_response('get_expertises', common.ProfessionListVO))
 async def get_expertises(
+        language: Language = Path(...)
         # can't use a certain enum as query, need to be a type
          # category : ProfessionCategory.EXPERTISE = Query(...),
 ):
-    res: common.ProfessionListVO = await _mentor_service.get_expertises()
-    return res_success(data=res.json())
+    res: Dict = await _mentor_service.get_expertises(language)
+    return res_success(data=res)
 
 
 @router.put('/{user_id}/schedule',

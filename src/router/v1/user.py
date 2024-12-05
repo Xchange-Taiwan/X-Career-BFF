@@ -50,22 +50,23 @@ async def get_profile(
     return res_success(data=data.json())
 
 
-@router.get('/interests',
+@router.get('{language}/interests',
             responses=idempotent_response('get_interests', common.InterestListVO))
 async def get_interests(
+        language: Language = Path(...),
         interest: InterestCategory = Query(...),
 ):
-    data: common.InterestListVO = await user_service.get_interests(interest)
-    return res_success(data=data.json())
+    data: Dict= await user_service.get_interests(language, interest)
+    return res_success(data=data)
 
 
-@router.get('/industries',
+@router.get('{language}/industries',
             responses=idempotent_response('get_industries', common.ProfessionListVO))
 async def get_industries(
-        category: ProfessionCategory = Query(...)
+        language: Language = Path(...)
 ):
-    data: common.ProfessionListVO = await user_service.get_industries(category)
-    return res_success(data=data.json())
+    data: Dict = await user_service.get_industries(language)
+    return res_success(data=data)
 
 
 @router.get('/{user_id}/reservations',
