@@ -33,8 +33,8 @@ class UserService:
         res: Optional[ServiceApiResponse] = await self.service_api.get(url=req_url, params={'interest': interest.value})
         return InterestListVO(**res.data)
 
-    async def get_industries(self, profession_category: ProfessionCategory) -> ProfessionListVO:
-        req_url = self.url + '/' + 'industries'
+    async def get_professions(self, profession_category: ProfessionCategory) -> ProfessionListVO:
+        req_url = self.url + '/' + 'professions'
         res: Optional[ServiceApiResponse] = await self.service_api.get(url=req_url, params={'category': profession_category.value})
         return ProfessionListVO(**res.data)
 
