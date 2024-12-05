@@ -50,7 +50,7 @@ async def get_profile(
     return res_success(data=data.json())
 
 
-@router.get('{language}/interests',
+@router.get('/{language}/interests',
             responses=idempotent_response('get_interests', common.InterestListVO))
 async def get_interests(
         language: Language = Path(...),
@@ -60,7 +60,7 @@ async def get_interests(
     return res_success(data=data)
 
 
-@router.get('{language}/industries',
+@router.get('/{language}/industries',
             responses=idempotent_response('get_industries', common.ProfessionListVO))
 async def get_industries(
         language: Language = Path(...)

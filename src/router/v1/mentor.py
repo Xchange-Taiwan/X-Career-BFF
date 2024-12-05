@@ -80,7 +80,7 @@ async def delete_experience(
     return res_success(data=res)
 
 
-@router.get('{language}/expertises',
+@router.get('/{language}/expertises',
             responses=idempotent_response('get_expertises', common.ProfessionListVO))
 async def get_expertises(
         language: Language = Path(...)
