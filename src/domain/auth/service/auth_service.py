@@ -331,8 +331,7 @@ class AuthService:
 
     async def __req_user_profile(self, user_id: int):
         try:
-            user_service_url = MICRO_SERVICE_URL + USER_SERVICE_PREFIX + API_VERSION + \
-                'users/' + str(user_id) + '/profile'
+            user_service_url = f"{USER_SERVICE_URL}/v1/users/{user_id}/profile"
             # 育志看一下這 API
             return await self.req.simple_get(user_service_url)
 

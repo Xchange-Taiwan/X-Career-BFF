@@ -1,17 +1,14 @@
-import logging as log
 from typing import List
 
-import httpx
 from fastapi import (
     APIRouter,
-    Path, Body, Query
+    Path, Body
 )
 
 from src.infra.client.async_service_api_adapter import AsyncServiceApiAdapter
 from ..res.response import *
 from ...config.cache import gw_cache
-from ...config.conf import MICRO_SERVICE_URL
-from ...config.constant import ExperienceCategory, ProfessionCategory
+from ...config.constant import ExperienceCategory
 from ...config.exception import *
 from ...domain.mentor.mentor_service import MentorService
 from ...domain.mentor.model import (
@@ -67,7 +64,7 @@ async def upsert_experience(
         body: experience.ExperienceDTO = Body(...),
 ):
 
-    res: experience.ExperienceVO = await _mentor_service.upsert_experience(body, user_id, experience_type.name)
+    res: experience.ExperienceVO = await _mentor_service.upsert_experience(body, user_id, experience_type.value)
     return res_success(data=res.json())
 
 
@@ -79,7 +76,7 @@ async def delete_experience(
         experience_type: ExperienceCategory = Path(...),
 ):
 
-    res: bool = await _mentor_service.delete_experience(user_id, experience_id, experience_type.name)
+    res: bool = await _mentor_service.delete_experience(user_id, experience_id, experience_type.value)
     return res_success(data=res)
 
 
