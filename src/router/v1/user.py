@@ -59,12 +59,12 @@ async def get_interests(
     return res_success(data=data.json())
 
 
-@router.get('/professions',
-            responses=idempotent_response('get_professions', common.ProfessionListVO))
-async def get_professions(
+@router.get('/industries',
+            responses=idempotent_response('get_industries', common.ProfessionListVO))
+async def get_industries(
         category: ProfessionCategory = Query(...)
 ):
-    data: common.ProfessionListVO = await user_service.get_professions(category)
+    data: common.ProfessionListVO = await user_service.get_industries(category)
     return res_success(data=data.json())
 
 
