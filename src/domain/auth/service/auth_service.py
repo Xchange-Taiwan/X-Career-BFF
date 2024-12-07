@@ -220,7 +220,9 @@ class AuthService:
         await self.cache_auth_res(user_id_key, auth_res)
         auth_res = self.apply_token(auth_res)
         auth_res = self.filter_auth_res(auth_res)
-        return {'auth': auth_res}
+        return {
+            'auth': auth_res,
+        }
 
     async def __verify_confirm_token(self, token: str, user: Dict):
         if not user or not 'email' in user:
@@ -365,20 +367,23 @@ class AuthService:
     gen new token and refresh_token
     '''
 
-    async def get_new_token_pair(self, body: NewTokenDTO) -> (str):
-        user_id_key = str(body.user_id)
+    async def get_new_token_pair(self, payload: NewTokenDTO) -> (str):
+        user_id_key = str(payload.user_id)
         user = await self.cache.get(user_id_key)
         if not user:
             raise UnauthorizedException(msg='Invalid user')
 
         cached_refresh_token = user.get('refresh_token', None)
-        if cached_refresh_token != body.refresh_token or \
+        if cached_refresh_token != payload.refresh_token or \
                 not valid_refresh_token(cached_refresh_token):
             raise UnauthorizedException(msg='Invalid User')
 
         await self.cache_auth_res(user_id_key, user)
         res = self.apply_token(user)
-        return {k: res[k] for k in ['token', 'refresh_token'] if k in res}
+        auth_res = {k: res[k] for k in ['user_id', 'token', 'refresh_token'] if k in res}
+        return {
+            'auth': auth_res,
+        }
 
     '''
     logout

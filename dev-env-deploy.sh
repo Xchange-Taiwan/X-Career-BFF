@@ -30,6 +30,7 @@ SCHEDULE_YEAR=-1,
 SCHEDULE_MONTH=-1,
 SCHEDULE_DAY_OF_MONTH=-1,
 SCHEDULE_DAY_OF_WEEK=-1,
-USER_SERVICE_URL=https://gvjbxpuqmh.execute-api.ap-northeast-1.amazonaws.com/dev/user-service/api,
 AUTH_SERVICE_URL=https://d11k5l9gl6.execute-api.ap-northeast-1.amazonaws.com/dev/auth-service/api,
+USER_SERVICE_URL=https://gvjbxpuqmh.execute-api.ap-northeast-1.amazonaws.com/dev/user-service/api,
+SEARCH_SERVICE_URL=https://io9u1c6wah.execute-api.ap-northeast-1.amazonaws.com/dev/search-service/api,
 }"

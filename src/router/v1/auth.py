@@ -71,10 +71,10 @@ async def login(
 @router.post('/token',
              status_code=201)
 async def refresh_token(
-    body: NewTokenDTO = Body(...),
+    payload: NewTokenDTO = Depends(refresh_token_check),
 ):
-    data = await _auth_service.get_new_token_pair(body)
-    return post_success(data=data)
+    data = await _auth_service.get_new_token_pair(payload)
+    return AuthService.auth_response(data=data)
 
 
 @router.post('/logout', status_code=201)
