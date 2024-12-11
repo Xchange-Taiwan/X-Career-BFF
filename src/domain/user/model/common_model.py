@@ -18,7 +18,6 @@ class InterestVO(BaseModel):
 
 class InterestListVO(BaseModel):
     interests: List[InterestVO] = []
-    language: Optional[str]
 
 
 class ProfessionDTO(BaseModel):
@@ -35,4 +34,3 @@ class ProfessionVO(ProfessionDTO):
 
 class ProfessionListVO(BaseModel):
     professions: List[ProfessionVO] = []
-    language: Optional[str]
