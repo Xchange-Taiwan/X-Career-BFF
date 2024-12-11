@@ -337,13 +337,10 @@ class AuthService:
             # 育志看一下這 API
             return await self.req.simple_get(user_service_url)
 
-        except NotFoundException as not_found:
-            return {'is_onboarding': False}
-
         except Exception as e:
             log.error(f'{self.__cls_name}.__req_user_profile:[request exception], \
                 user_id:%s, error:%s', user_id, e)
-            return None
+            raise_http_exception(e, 'User not found.')
  
 
     async def cache_auth_res(self, user_id_key: str, auth_res: Dict):
