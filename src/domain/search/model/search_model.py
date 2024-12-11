@@ -11,7 +11,7 @@ log.basicConfig(filemode='w', level=log.INFO)
 
 class SearchMentorProfileDTO(BaseModel):
     search_patterns: List[str]
-    filter_positions: List[str]
+    filter_job_title: List[str]
     filter_skills: List[str]
     filter_topics: List[str]
     filter_expertises: List[str]
