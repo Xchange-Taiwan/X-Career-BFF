@@ -216,13 +216,32 @@ class AuthService:
                                                   'password': user['password'],
                                               })
 
-        user_id_key = str(auth_res['user_id'])
-        await self.cache_auth_res(user_id_key, auth_res)
+        # init user profile
+        user_id = auth_res.get('user_id')
+        await self.__init_user_profile(user_id)
+
+        # cache auth data
+        await self.cache_auth_res(str(user_id), auth_res)
         auth_res = self.apply_token(auth_res)
         auth_res = self.filter_auth_res(auth_res)
         return {
             'auth': auth_res,
         }
+
+    async def __init_user_profile(self, user_id: int):
+        try:
+            user_service_url = f"{USER_SERVICE_URL}/v1/users/{user_id}/profile"
+            user_res = await self.req.simple_put(
+                url=user_service_url,
+                json={'user_id': user_id}
+            )
+            return user_res
+
+        except Exception as e:
+            log.error(f'{self.__cls_name}.__init_user_profile:[request exception], \
+                user_id:%s, error:%s', user_id, e)
+            # FIXME: remove user in auth service
+            raise_http_exception(e, 'Unable to initial user profile.')
 
     async def __verify_confirm_token(self, token: str, user: Dict):
         if not user or not 'email' in user:
@@ -315,7 +334,7 @@ class AuthService:
         await self.cache_auth_res(str(user_id), auth_res)
         auth_res = self.apply_token(auth_res)
         # 育志看一下這 API
-        user_res = await self.__req_user_profile(user_id)
+        user_res = await self.__get_user_profile(user_id)
         auth_res = self.filter_auth_res(auth_res)
         return {
             'auth': auth_res,
@@ -331,14 +350,14 @@ class AuthService:
         return auth_res
 
 
-    async def __req_user_profile(self, user_id: int):
+    async def __get_user_profile(self, user_id: int):
         try:
             user_service_url = f"{USER_SERVICE_URL}/v1/users/{user_id}/profile"
             # 育志看一下這 API
             return await self.req.simple_get(user_service_url)
 
         except Exception as e:
-            log.error(f'{self.__cls_name}.__req_user_profile:[request exception], \
+            log.error(f'{self.__cls_name}.__get_user_profile:[request exception], \
                 user_id:%s, error:%s', user_id, e)
             raise_http_exception(e, 'User not found.')
  
