@@ -1,7 +1,9 @@
+from typing import List
+
 import boto3
 from fastapi import File, UploadFile, APIRouter
 
-from src.domain.file.model.file_info_model import FileInfoVO
+from src.domain.file.model.file_info_model import FileInfoVO, FileInfoListVO
 from src.domain.file.service.file_service import file_service_singleton
 from src.infra.storage.global_object_storage import GlobalObjectStorage
 from src.router.res.response import idempotent_response, res_success
@@ -16,7 +18,12 @@ router = APIRouter(
 )
 
 
-@router.post('/', responses=idempotent_response('upload_file', FileInfoVO))
+@router.post('/', responses=idempotent_response('upload_file', FileInfoListVO))
 async def upload(file: UploadFile = File(...), user_id: int = -1):
-    res: FileInfoVO = await _obj_store.upload(file, user_id)
+    res: FileInfoListVO = await _obj_store.upload_avatar(file, user_id)
     return res_success(data=res.json())
+
+@router.delete('/', responses=idempotent_response('delete_file', bool))
+async def delete(user_id: int = -1, file_name: str = ''):
+    res: bool = await _obj_store.delete_file(user_id, file_name)
+    return res_success(data=res)
