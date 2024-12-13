@@ -48,3 +48,7 @@ SCHEDULE_DAY_OF_WEEK = int(os.getenv('SCHEDULE_DAY_OF_WEEK', '-1'))
 USER_SERVICE_URL = os.getenv('USER_SERVICE_URL', 'http://127.0.0.1:8000/user-service/api')
 AUTH_SERVICE_URL = os.getenv('AUTH_SERVICE_URL', 'http://127.0.0.1:8008/auth-service/api')
 
+# storage
+MAX_WIDTH = os.getenv('MAX_WIDTH', 300)
+MAX_HEIGHT = os.getenv('MAX_HEIGHT', 300)
+MAX_STORAGE_SIZE = os.getenv('MAX_STORAGE_SIZE', 15 * 1024 * 1024)  # give 15 MB to users

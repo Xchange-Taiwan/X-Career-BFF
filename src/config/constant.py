@@ -76,6 +76,4 @@ FILE = 'file'
 USERS = 'users'
 PROFILE = 'profile'
 
-MAX_WIDTH = 300
-MAX_HEIGHT = 300
-MAX_STORAGE_SIZE = 15 * 1024 * 1024  # give 15 MB to users
+
