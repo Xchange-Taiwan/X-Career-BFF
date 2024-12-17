@@ -7,7 +7,7 @@ from .model.mentor_model import MentorProfileDTO, MentorProfileVO
 from ..user.model.common_model import ProfessionListVO
 from ...app.template.service_response import ServiceApiResponse
 from ...config.conf import USER_SERVICE_URL
-from ...config.constant import USER_SERVICE_PREFIX, MENTORS, ExperienceCategory, Language
+from ...config.constant import MENTORS, ExperienceCategory, Language
 from ...config.exception import NotFoundException, raise_http_exception
 from ...infra.client.async_service_api_adapter import AsyncServiceApiAdapter
 

@@ -1,5 +1,5 @@
 from ...user.model.common_model import (
-    ProfessionDTO,
+    ProfessionDTO, ProfessionListVO,
 )
 from ...user.model.user_model import *
 from ....config.conf import *
@@ -17,11 +17,10 @@ class MentorProfileDTO(ProfileDTO):
 
 
 class MentorProfileVO(ProfileVO):
-    personal_statement: Optional[str]
-    about: Optional[str]
-    # TODO: enum
-    seniority_level: Optional[str] = []
-    expertises: Optional[List[ProfessionVO]] = []
+    personal_statement: Optional[str] = ""
+    about: Optional[str] = ""
+    seniority_level: Optional[str] = ""
+    expertises: Optional[ProfessionListVO] = None
 
 
 class TimeSlotDTO(BaseModel):

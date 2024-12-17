@@ -51,9 +51,9 @@ async def upsert_mentor_profile(
 async def get_mentor_profile(
         # request: Request,
         user_id: int = Path(...),
-        language: str = Path(...),
+        language: Language = Path(...),
 ):
-    return await _mentor_service.get_mentor_profile(user_id, language)
+    return await _mentor_service.get_mentor_profile(user_id, language.value)
 
 
 @router.put('/{user_id}/experiences/{experience_type}',

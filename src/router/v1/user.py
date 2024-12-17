@@ -17,6 +17,7 @@ from ...config.constant import *
 from ...config.exception import *
 import logging as log
 
+from ...domain.user.model.common_model import InterestListVO
 from ...domain.user.service.user_service import user_service, UserService
 
 log.basicConfig(filemode='w', level=log.INFO)
@@ -54,7 +55,7 @@ async def get_interests(
         language: Language = Path(...),
         interest: InterestCategory = Query(...),
 ):
-    data: Dict= await user_service.get_interests(language, interest)
+    data: Dict = await user_service.get_interests(language, interest)
     return res_success(data=data)
 
 

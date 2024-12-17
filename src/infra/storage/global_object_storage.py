@@ -199,7 +199,6 @@ class GlobalObjectStorage:
         except (NoCredentialsError, PartialCredentialsError) as e:
             raise HTTPException(status_code=400, detail="AWS credentials not found or incomplete")
         except Exception as e:
-            print(e)
             raise HTTPException(status_code=500, detail="An error occurred during file delete")
 
     async def __upload_avatar_and_info(self, avatar: bytes, avatar_key: str, file_name: str, content_type: str,

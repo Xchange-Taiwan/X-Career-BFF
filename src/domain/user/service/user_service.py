@@ -30,23 +30,23 @@ class UserService:
         res: Optional[ServiceApiResponse] = await self.service_api.put(url=req_url, json=data.dict())
         return ProfileVO(**res.data)
 
-    async def get_interests(self, language: Language, interest: InterestCategory) -> InterestListVO:
+    async def get_interests(self, language: Language, interest: InterestCategory) -> Dict:
         try:
             req_url = f"{USER_SERVICE_URL}/v1/{USERS}/{language.value}/interests"
             res: Dict = await self.service_api.simple_get(url=req_url, params={'interest': interest.value})
             return res
         except Exception as e:
             log.error(e)
-            raise_http_exception(500, 'Internal Server Error')
+            raise_http_exception(e, 'Internal Server Error')
 
-    async def get_industries(self, language: Language) -> ProfessionListVO:
+    async def get_industries(self, language: Language) -> Dict:
         try:
             req_url = f"{USER_SERVICE_URL}/v1/{USERS}/{language.value}/industries"
             res: Dict = await self.service_api.simple_get(url=req_url)
             return res
         except Exception as e:
             log.error(e)
-            raise_http_exception(500, 'Internal Server Error')
+            raise_http_exception(e, 'Internal Server Error')
 
 
 user_service: UserService = UserService(AsyncServiceApiAdapter(), gw_cache)
