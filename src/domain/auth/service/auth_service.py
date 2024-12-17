@@ -28,16 +28,15 @@ class AuthService:
         self.req = req
         self.cache = cache
         self.ttl_secs = {'ttl_secs': REQUEST_INTERVAL_TTL}
-        
-    
+
+
     @staticmethod
     def auth_response(data: Dict, msg='ok', code='0'):
         auth: Dict = data.get('auth', None)
         if not auth:
             raise ServerException(msg='Invalid user')
-        
+
         refresh_token = auth.pop('refresh_token', None)
-        token = auth.pop('token', None)
 
         response = JSONResponse(
             status_code=status.HTTP_201_CREATED,
@@ -46,6 +45,9 @@ class AuthService:
                 'msg': msg,
                 'data': data,
             })
+
+        if not refresh_token:
+            return response
 
         # 設定 Set-Cookie Header: refresh_token
         response.set_cookie(
@@ -56,17 +58,7 @@ class AuthService:
             samesite='Strict',          # 防範 CSRF 攻擊
             max_age=REFRESH_TOKEN_TTL   # Cookie 有效時間 (秒)
         )
-        
-        # 設定 Set-Cookie Header: refresh_token
-        response.set_cookie(
-            key='token',                # Cookie 名稱: token
-            value=token,                # Cookie 值: token
-            httponly=True,              # 防止 JavaScript 訪問，防範 XSS 攻擊
-            secure=True,                # 僅限 HTTPS 傳輸
-            samesite='Strict',          # 防範 CSRF 攻擊
-            max_age=LONG_TERM_TTL       # Cookie 有效時間 (秒)
-        )
-        
+
         return response
 
 
@@ -331,7 +323,10 @@ class AuthService:
         user_id = auth_res.get('user_id')
 
         # cache auth data
-        await self.cache_auth_res(str(user_id), auth_res)
+        await self.cache_auth_res(
+            str(user_id),
+            auth_res, 
+            removed_fields={'refresh_token'})
         auth_res = self.apply_token(auth_res)
         # 育志看一下這 API
         user_res = await self.__get_user_profile(user_id)
@@ -362,7 +357,7 @@ class AuthService:
             raise_http_exception(e, 'User not found.')
  
 
-    async def cache_auth_res(self, user_id_key: str, auth_res: Dict):
+    async def cache_auth_res(self, user_id_key: str, auth_res: Dict, removed_fields: Set = set()):
         auth_res.update({
             'online': True,
             'refresh_token': gen_refresh_token(),
@@ -375,8 +370,10 @@ class AuthService:
                       user_id_key, auth_res, LONG_TERM_TTL, updated)
             raise ServerException(msg='server_error')
 
-        # remove sensitive data: aid
-        auth_res.pop('aid', None)
+        # remove sensitive data: 'aid' & removed_fields
+        removed_fields.add('aid')
+        for field in removed_fields:
+            auth_res.pop(field, None)
 
 
     '''
@@ -396,7 +393,7 @@ class AuthService:
 
         await self.cache_auth_res(user_id_key, user)
         res = self.apply_token(user)
-        auth_res = {k: res[k] for k in ['user_id', 'token', 'refresh_token'] if k in res}
+        auth_res = {k: res[k] for k in ['user_id', 'token'] if k in res}
         return {
             'auth': auth_res,
         }
@@ -502,8 +499,8 @@ class AuthService:
         await self.cache.delete(verify_token)
 
     async def update_password(self, user_id: int, body: UpdatePasswordDTO):
-        self.__cache_check_for_email_validation(user_id, body.register_email)
-        self.__req_update_password(body)
+        await self.__cache_check_for_email_validation(user_id, body.register_email)
+        await self.__req_update_password(body)
 
     async def __req_send_reset_password_comfirm_email(self, email: EmailStr):
         try:

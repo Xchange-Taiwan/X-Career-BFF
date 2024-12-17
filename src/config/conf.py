@@ -9,8 +9,8 @@ XC_BUCKET = os.getenv('XC_BUCKET', 'x-career')
 
 JWT_SECRET = os.getenv('JWT_SECRET', None)
 JWT_ALGORITHM = os.getenv('JWT_ALGORITHM', 'HS256')
-# TODO: default = 60 mins (3600 secs)
-TOKEN_EXPIRE_TIME = int(os.getenv('TOKEN_EXPIRE_TIME', 30))
+# TODO: default = 30 mins (1800 secs)
+TOKEN_EXPIRE_TIME = int(os.getenv('TOKEN_EXPIRE_TIME', 1800))
 
 BATCH = int(os.getenv('BATCH', '10'))
 
