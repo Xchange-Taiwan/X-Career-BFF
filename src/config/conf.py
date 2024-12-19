@@ -1,11 +1,11 @@
 import os
 
 LOCAL_REGION = os.getenv('AWS_REGION', 'ap-northeast-1')
-AWS_PROFILE = os.getenv('AWS_PROFILE', 'default') # xc default
+AWS_PROFILE = os.getenv('AWS_PROFILE', 'default')  # xc default
 STAGE = os.getenv('STAGE', 'local')
 TESTING = os.getenv('TESTING', 'local')
 
-XC_BUCKET = os.getenv('XC_BUCKET', 'x-career')
+XC_BUCKET = os.getenv('XC_BUCKET', 'x-career-user-dev-serverlessdeploymentbucket-bmz2uc2exezm')
 
 JWT_SECRET = os.getenv('JWT_SECRET', None)
 JWT_ALGORITHM = os.getenv('JWT_ALGORITHM', 'HS256')
@@ -27,7 +27,6 @@ REFRESH_TOKEN_TTL = int(os.getenv('REFRESH_TOKEN_TTL', 2592000))
 AUTH_RESPONSE_FIELDS = os.getenv('AUTH_RESPONSE_FIELDS', 'email,account_type,region,online')
 AUTH_RESPONSE_FIELDS = AUTH_RESPONSE_FIELDS.strip().split(',')
 
-
 # cache
 # dynamodb
 TABLE_CACHE = os.getenv('TABLE_CACHE', 'dev_x_career_bff_cache')
@@ -36,7 +35,6 @@ REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
 REDIS_PORT = int(os.getenv('REDIS_PORT', '6379'))
 REDIS_USER = os.getenv('REDIS_USERNAME', None)
 REDIS_PASS = os.getenv('REDIS_PASSWORD', None)
-
 
 # schedule
 SCHEDULE_YEAR = int(os.getenv('SCHEDULE_YEAR', '-1'))
@@ -51,4 +49,4 @@ AUTH_SERVICE_URL = os.getenv('AUTH_SERVICE_URL', 'http://127.0.0.1:8008/auth-ser
 # storage
 MAX_WIDTH = os.getenv('MAX_WIDTH', 300)
 MAX_HEIGHT = os.getenv('MAX_HEIGHT', 300)
-MAX_STORAGE_SIZE = os.getenv('MAX_STORAGE_SIZE', 15 * 1024 * 1024)  # give 15 MB to users
+MAX_STORAGE_SIZE = int(os.getenv('MAX_STORAGE_SIZE', 15 * 1024 * 1024))  # give 15 MB to users

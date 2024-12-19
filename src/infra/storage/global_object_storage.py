@@ -133,11 +133,12 @@ class GlobalObjectStorage:
             avatar = await file.read()
             content_type = file.content_type
             file_type = file.content_type[6:]
-            avatar_name = 'avatar' + '.' + file_type
+            avatar_name = f'avatar.{file_type}'
             avatar_key = self.__get_obj_key(avatar_name, user_id)
             minor_avatar = self.__get_resized_obj(avatar, file_type)
-            minor_avatar_key = self.__get_obj_key('minor_avatar' + '.' + file_type, user_id)
-            minor_avatar_name = 'minor_avatar' + '.' + file_type
+            minor_avatar_name = f'minor_avatar.{file_type}'
+            minor_avatar_key = self.__get_obj_key(minor_avatar_name, user_id)
+
             if self.get_user_storage_size(user_id) + len(avatar)+len(minor_avatar) > MAX_STORAGE_SIZE:
                 raise HTTPException(status_code=400, detail="File size too large")
 
@@ -163,7 +164,6 @@ class GlobalObjectStorage:
         except (NoCredentialsError, PartialCredentialsError) as e:
             raise HTTPException(status_code=400, detail="AWS credentials not found or incomplete")
         except Exception as e:
-            print(e)
             raise HTTPException(status_code=500, detail="An error occurred during file upload_avatar")
 
     async def delete_file(self, user_id: int, file_name: str) -> bool:
