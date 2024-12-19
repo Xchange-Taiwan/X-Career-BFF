@@ -25,3 +25,5 @@ class FileInfoVO(BaseModel):
 
 class FileInfoListVO(BaseModel):
     file_info_vo_list: List[FileInfoVO]
+class FileInfoListVO(BaseModel):
+    file_info_vo_list: List[FileInfoVO]

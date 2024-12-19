@@ -17,7 +17,7 @@ router = APIRouter(
 
 
 # Resquest obj is used to access router path
-@router.get('/{user_id}/{file_id}',
+@router.get('/{user_id}/{file_name}',
             responses=idempotent_response('get_file_info_by_id', FileInfoVO))
 async def get_file_info_by_id(
         user_id: int = Path(...),
@@ -52,7 +52,7 @@ async def update_file_info(
     return res_success(data=res.json())
 
 
-@router.delete('/{user_id}/{file_id}',
+@router.delete('/{user_id}/{file_name}',
                responses=idempotent_response('delete_file_info', bool
                                              ))
 async def delete_file_info(
