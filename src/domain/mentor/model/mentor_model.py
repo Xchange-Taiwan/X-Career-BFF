@@ -29,7 +29,7 @@ class MentorProfileVO(ProfileVO):
 class TimeSlotDTO(BaseModel):
     id: Optional[int] = Field(None, example=0)
     user_id: int = Field(..., example=1)
-    dt_type: str = Field(..., example=AVAILABLE_EVT, regex=f'^({AVAILABLE_EVT}|{UNAVAILABLE_EVT})$')
+    dt_type: str = Field(..., example=AVAILABLE_EVT, pattern=f'^({AVAILABLE_EVT}|{UNAVAILABLE_EVT})$')
     dt_year: Optional[int] = Field(default=None, example=2024)
     dt_month: Optional[int] = Field(default=None, example=6)
     dtstart: int = Field(..., example=1717203600)
