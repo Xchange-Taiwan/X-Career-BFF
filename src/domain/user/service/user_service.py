@@ -20,8 +20,8 @@ class UserService:
         self.service_api: AsyncServiceApiAdapter = service_api
         self.cache = cache
 
-    async def get_user_profile(self, user_id: int) -> ProfileVO:
-        req_url = f"{USER_SERVICE_URL}/v1/{USERS}/{user_id}/profile"
+    async def get_user_profile(self, user_id: int, language: str = 'zh_TW') -> ProfileVO:
+        req_url = f"{USER_SERVICE_URL}/v1/{USERS}/{user_id}/{language}/profile"
         res: Optional[ServiceApiResponse] = await self.service_api.get(url=req_url)
         return ProfileVO(**res.data)
 
