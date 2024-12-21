@@ -1,15 +1,19 @@
+import asyncio
 import io
 import json
 import logging as log
 
+from PIL import Image
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError, ClientError
 from fastapi import UploadFile, File, HTTPException
-from pydantic import HttpUrl
 
-from src.domain.file.model.file_info_model import FileInfoDTO, FileInfoVO
-from ...config.conf import XC_BUCKET, LOCAL_REGION
+from src.domain.file.model.file_info_model import FileInfoDTO, FileInfoListVO
+from ...config.conf import XC_BUCKET, LOCAL_REGION, MAX_STORAGE_SIZE, MAX_WIDTH, MAX_HEIGHT
 from ...config.exception import ServerException, NotFoundException
 from ...domain.file.service.file_service import FileService
+from ...domain.user.model.user_model import ProfileVO, ProfileDTO
+from ...domain.user.service import user_service
+from ...domain.user.service.user_service import user_service
 
 log.basicConfig(filemode='w', level=log.INFO)
 
@@ -123,74 +127,141 @@ class GlobalObjectStorage:
                       bucket, key, result, err)
             raise ServerException(msg='find file fail')
 
-    async def upload(self, file: UploadFile = File(...), user_id: int = -1) -> FileInfoVO:
+    async def upload_avatar(self, file: UploadFile = File(...), user_id: int = -1) -> FileInfoListVO:
         try:
             # Read file contents
-            file_content = await file.read()
-            object_key = self.__get_obj_key(file.filename, user_id)
+            avatar = await file.read()
+            content_type = file.content_type
+            file_type = file.content_type[6:]
+            avatar_name = f'avatar.{file_type}'
+            avatar_key = self.__get_obj_key(avatar_name, user_id)
+            minor_avatar = self.__get_resized_obj(avatar, file_type)
+            minor_avatar_name = f'minor_avatar.{file_type}'
+            minor_avatar_key = self.__get_obj_key(minor_avatar_name, user_id)
 
-            # Upload file to S3
-            self.s3.Bucket(XC_BUCKET).put_object(
-                Key=object_key,
-                Body=file_content,
-                ContentType=file.content_type
-            )
-            url: str = self.__get_obj_url(file.filename, user_id, LOCAL_REGION)
+            if self.get_user_storage_size(user_id) + len(avatar)+len(minor_avatar) > MAX_STORAGE_SIZE:
+                raise HTTPException(status_code=400, detail="File size too large")
 
-            file_dto = FileInfoDTO(
-                file_name=file.filename,
-                file_size=len(file_content),
-                content_type=file.content_type,
-                create_user_id=user_id,
-                url=url
-            )
+            avatar_dto = \
+                await self.__upload_avatar_and_info(avatar,
+                                                    avatar_key,
+                                                    avatar_name,
+                                                    content_type,
+                                                    user_id)
+            minor_avatar_dto = \
+                await self.__upload_avatar_and_info(minor_avatar,
+                                                    minor_avatar_key,
+                                                    minor_avatar_name,
+                                                    content_type,
+                                                    user_id)
 
-            file_dto = await self.file_service.create_file_info(file_dto)
+            res = await asyncio.gather(avatar_dto, minor_avatar_dto)
             # Return file info
-            return file_dto
+            res = list(res)
+            res.sort(key=lambda x: x.file_size)
+            return FileInfoListVO(file_info_vo_list=res)
 
         except (NoCredentialsError, PartialCredentialsError) as e:
             raise HTTPException(status_code=400, detail="AWS credentials not found or incomplete")
         except Exception as e:
-            raise HTTPException(status_code=500, detail="An error occurred during file upload")
+            raise HTTPException(status_code=500, detail="An error occurred during file upload_avatar")
 
-    #create bucket
-    def add_new_bucket(self, bucket_name, region='us-east-1'):
+    async def delete_file(self, user_id: int, file_name: str) -> bool:
         try:
-            # Create the bucket
-            bucket = self.s3.create_bucket(
-                Bucket=bucket_name,
-                CreateBucketConfiguration={
-                    'LocationConstraint': region
-                }
-            )
-            print(f"Bucket '{bucket_name}' created successfully.")
-
-            # Enable versioning
-            bucket_versioning = self.s3.BucketVersioning(bucket_name)
-            bucket_versioning.enable()
-            print(f"Versioning enabled for bucket '{bucket_name}'.")
-
-            # Enable encryption
-            self.s3.meta.client.put_bucket_encryption(
-                Bucket=bucket_name,
-                ServerSideEncryptionConfiguration={
-                    'Rules': [
-                        {
-                            'ApplyServerSideEncryptionByDefault': {
-                                'SSEAlgorithm': 'AES256'
-                            }
-                        }
-                    ]
-                }
-            )
-            print(f"Encryption enabled for bucket '{bucket_name}'.")
-
+            self.s3.Object(XC_BUCKET, self.__get_obj_key(file_name, user_id)).delete()
+            res = await self.file_service.delete_file_info(user_id, file_name)
+            if not res:
+                raise NotFoundException(msg=f'file:{file_name} not found in db')
+            return True
+        except (NoCredentialsError, PartialCredentialsError) as e:
+            raise HTTPException(status_code=400, detail="AWS credentials not found or incomplete")
+        except NotFoundException as e:
+            raise HTTPException(status_code=404, detail=e.msg)
         except Exception as e:
-            print(f"Error creating bucket: {e}")
+            print(e)
+            raise HTTPException(status_code=500, detail="An error occurred during file delete")
+
+    async def delete_avatar(self, user_id: int) -> bool:
+        try:
+            profile_vo: ProfileVO = await user_service.get_user_profile(user_id)
+            avatar_name: str = profile_vo.avatar.split('/')[-1]
+            minor_avatar_name: str = 'minor_' + avatar_name
+            delete_tasks = [
+                self.delete_file(user_id, avatar_name),
+                self.delete_file(user_id, minor_avatar_name)
+            ]
+            await asyncio.gather(*delete_tasks)
+
+            profile_dto = ProfileDTO.from_vo(profile_vo)
+            profile_dto.avatar = ''
+            await user_service.upsert_user_profile(user_id, profile_dto)
+            return True
+        except (NoCredentialsError, PartialCredentialsError) as e:
+            raise HTTPException(status_code=400, detail="AWS credentials not found or incomplete")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail="An error occurred during file delete")
+
+    async def __upload_avatar_and_info(self, avatar: bytes, avatar_key: str, file_name: str, content_type: str,
+                                       user_id: int):
+        # Upload file to S3
+        self.s3.Bucket(XC_BUCKET).put_object(
+            Key=avatar_key,
+            Body=avatar,
+            ContentType=content_type
+        )
+        avatar_url: str = self.__get_obj_url(file_name, user_id, LOCAL_REGION)
+        file_dto = FileInfoDTO(
+            file_name=file_name,
+            file_size=len(avatar),
+            content_type=content_type,
+            create_user_id=user_id,
+            url=avatar_url
+        )
+        avatar_dto = self.file_service.create_file_info(file_dto)
+        return avatar_dto
 
     def __get_obj_key(self, file_name: str, user_id: int) -> str:
         return 'files/' + str(user_id) + '/' + file_name
 
     def __get_obj_url(self, file_name: str, user_id: int, region: str) -> str:
         return f'https://{XC_BUCKET}.s3.{region}.amazonaws.com/{self.__get_obj_key(file_name, user_id)}'
+
+    def __get_resized_obj(self, content: bytes, content_type: str = 'jpeg') -> bytes:
+        image = Image.open(io.BytesIO(content))
+
+        # Resize the image to the specified dimensions
+        width, height = image.size
+        if width > MAX_WIDTH or height > MAX_HEIGHT:
+            new_width, new_height = MAX_WIDTH, MAX_HEIGHT
+            if width > height:
+                new_height = int(height * MAX_WIDTH / width)
+            else:
+                new_width = int(width * MAX_HEIGHT / height)
+            image = image.resize((new_width, new_height))
+
+        # Save the resized image to a BytesIO buffer
+        buffer = io.BytesIO()
+        image.save(buffer, format=content_type.lower())
+        buffer.seek(0)
+
+        return buffer.getvalue()
+
+    def __get_total_file_size(self, bucket_name, prefix):
+        try:
+            bucket = self.s3.Bucket(bucket_name)
+            total_size = 0
+
+            # Iterate over objects filtered by the prefix
+            for obj in bucket.objects.filter(Prefix=prefix):
+                total_size += obj.size
+
+            if 0 == total_size:
+                raise HTTPException(status_code=404, detail="No files found under the specified directory.")
+
+            return total_size
+
+        except ClientError as e:
+            raise HTTPException(status_code=500, detail=f"Error interacting with S3: {e.response['Error']['Message']}")
+
+    def get_user_storage_size(self, user_id: int):
+        return self.__get_total_file_size(XC_BUCKET, f'files/{user_id}/')
