@@ -7,11 +7,6 @@ TESTING = os.getenv('TESTING', 'local')
 
 XC_BUCKET = os.getenv('XC_BUCKET', 'x-career-user-dev-serverlessdeploymentbucket-bmz2uc2exezm')
 
-JWT_SECRET = os.getenv('JWT_SECRET', None)
-JWT_ALGORITHM = os.getenv('JWT_ALGORITHM', 'HS256')
-# TODO: default = 30 mins (1800 secs)
-TOKEN_EXPIRE_TIME = int(os.getenv('TOKEN_EXPIRE_TIME', 1800))
-
 BATCH = int(os.getenv('BATCH', '10'))
 
 # default = 8 secs
@@ -20,6 +15,11 @@ REQUEST_INTERVAL_TTL = int(os.getenv('REQUEST_INTERVAL_TTL', 8))
 SHORT_TERM_TTL = int(os.getenv('SHORT_TERM_TTL', 1800))
 # default = 3 days (3 * 86400 secs)
 LONG_TERM_TTL = int(os.getenv('LONG_TERM_TTL', 3 * 86400))
+# JWT
+JWT_SECRET = os.getenv('JWT_SECRET', None)
+JWT_ALGORITHM = os.getenv('JWT_ALGORITHM', 'HS256')
+# default = 30 mins (1800 secs)
+ACCESS_TOKEN_TTL = int(os.getenv('ACCESS_TOKEN_TTL', 1800))
 # default = 30 days (30 * 86400 secs)
 REFRESH_TOKEN_TTL = int(os.getenv('REFRESH_TOKEN_TTL', 2592000))
 
@@ -40,6 +40,7 @@ REDIS_PASS = os.getenv('REDIS_PASSWORD', None)
 # micro service
 USER_SERVICE_URL = os.getenv('USER_SERVICE_URL', 'http://127.0.0.1:8000/user-service/api')
 AUTH_SERVICE_URL = os.getenv('AUTH_SERVICE_URL', 'http://127.0.0.1:8008/auth-service/api')
+SEARCH_SERVICE_URL = os.getenv('SEARCH_SERVICE_URL', 'http://127.0.0.1:8012/search-service/api')
 
 # storage
 MAX_WIDTH = os.getenv('MAX_WIDTH', 300)
