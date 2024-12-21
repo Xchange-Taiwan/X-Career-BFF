@@ -20,9 +20,9 @@ class MentorService:
         self.service_api: AsyncServiceApiAdapter = service_api
         self.cache = cache
 
-    async def get_mentor_profile(self, user_id: int, language: str = 'CHT') -> MentorProfileVO:
+    async def get_mentor_profile(self, user_id: int, language: str = 'zh_TW') -> MentorProfileVO:
 
-        req_url = f"{USER_SERVICE_URL}/v1/{MENTORS}/{user_id}/{language}/profile"
+        req_url = f"{USER_SERVICE_URL}/v1/{MENTORS}/{user_id}/{language}/mentor_profile"
 
         res: Optional[ServiceApiResponse] = await self.service_api.get(url=req_url)
         if not res:

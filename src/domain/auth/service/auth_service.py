@@ -1,5 +1,5 @@
 from fastapi.responses import JSONResponse
-from ....config.constant import USER_SERVICE_PREFIX
+from ....config.constant import USER_SERVICE_PREFIX, USERS
 from ....router.req.authorization import (
     gen_token,
     gen_refresh_token,
@@ -318,7 +318,7 @@ class AuthService:
     有了 login preload process, login 可一律視為本地登入
     '''
 
-    async def login(self, body: LoginDTO):
+    async def login(self, body: LoginDTO, language: str):
         auth_res = await self.__req_login(body)
         user_id = auth_res.get('user_id')
 
@@ -329,7 +329,7 @@ class AuthService:
             removed_fields={'refresh_token'})
         auth_res = self.apply_token(auth_res)
         # 育志看一下這 API
-        user_res = None # await self.__get_user_profile(user_id)
+        user_res = await self.__get_user_profile(user_id, language)
         auth_res = self.filter_auth_res(auth_res)
         return {
             'auth': auth_res,
@@ -345,9 +345,9 @@ class AuthService:
         return auth_res
 
 
-    async def __get_user_profile(self, user_id: int):
+    async def __get_user_profile(self, user_id: int, language: str):
         try:
-            user_service_url = f"{USER_SERVICE_URL}/v1/users/{user_id}/profile"
+            user_service_url = f"{USER_SERVICE_URL}/v1/{USERS}/{user_id}/{language}/profile"
             # 育志看一下這 API
             return await self.req.simple_get(user_service_url)
 

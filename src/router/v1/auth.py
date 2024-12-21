@@ -5,6 +5,8 @@ from fastapi import (
     Request, Depends,
     Cookie, Header, Path, Query, Body, Form
 )
+
+from ...config.constant import Language
 from ...domain.auth.model.auth_model import *
 from ...domain.auth.service.auth_service import AuthService
 from ..req.auth_validation import *
@@ -63,8 +65,9 @@ async def confirm_signup(
              status_code=201)
 async def login(
     body: LoginDTO = Depends(login_check_body),
+    language: Language = Query(default=Language.EN_US)
 ):
-    data = await _auth_service.login(body)
+    data = await _auth_service.login(body, language.value)
     return AuthService.auth_response(data=data)
 
 

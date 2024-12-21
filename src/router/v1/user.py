@@ -40,12 +40,13 @@ async def upsert_profile(
     return res_success(data=data.json())
 
 
-@router.get('/{user_id}/profile',
+@router.get('/{user_id}/{language}/profile',
             responses=idempotent_response('get_profile', user.ProfileVO))
 async def get_profile(
         user_id: int = Path(...),
+        language: Language = Path(...),
 ):
-    data: user.ProfileVO = await user_service.get_user_profile(user_id)
+    data: user.ProfileVO = await user_service.get_user_profile(user_id, language.value)
     return res_success(data=data.json())
 
 
