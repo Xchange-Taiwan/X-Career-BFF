@@ -329,7 +329,7 @@ class AuthService:
             removed_fields={'refresh_token'})
         auth_res = self.apply_token(auth_res)
         # 育志看一下這 API
-        user_res = await self.__get_user_profile(user_id)
+        user_res = None # await self.__get_user_profile(user_id)
         auth_res = self.filter_auth_res(auth_res)
         return {
             'auth': auth_res,

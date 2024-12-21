@@ -7,7 +7,7 @@ import jwt as jwt_util
 from fastapi import APIRouter, FastAPI, Header, Path, Query, Body, Request, Response, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.routing import APIRoute
-from ...config.conf import JWT_SECRET, JWT_ALGORITHM, TOKEN_EXPIRE_TIME, SHORT_TERM_TTL
+from ...config.conf import JWT_SECRET, JWT_ALGORITHM, ACCESS_TOKEN_TTL, SHORT_TERM_TTL
 from ...config.exception import *
 from ...infra.util.time_util import *
 import logging as log
@@ -55,7 +55,7 @@ def gen_token(data: dict, fields: List):
 
 
 def expiration_time():
-    return current_seconds() + TOKEN_EXPIRE_TIME
+    return current_seconds() + ACCESS_TOKEN_TTL
 
 
 def gen_refresh_token():
