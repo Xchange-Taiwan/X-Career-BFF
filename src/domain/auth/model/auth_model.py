@@ -1,6 +1,6 @@
 import json
 from typing import Any, Dict, List, Set, Optional, Union
-from pydantic import BaseModel, EmailStr, validator
+from pydantic import BaseModel, EmailStr, field_validator
 from ....config.exception import ClientException
 import logging as log
 
@@ -12,14 +12,14 @@ class SignupDTO(BaseModel):
     password: str
     confirm_password: str
 
-    @validator('confirm_password')
+    @field_validator('confirm_password')
     def passwords_match(cls, v, values, **kwargs):
         if 'password' in values and v != values['password']:
             raise ClientException(msg='passwords do not match')
         return v
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             'example': {
                 'email': 'user@example.com',
                 'password': 'secret',
@@ -34,7 +34,7 @@ class SignupConfirmDTO(BaseModel):
     token: str
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             'example': {
                 'region': 'ap-northeast-1',
                 'email': 'user@example.com',
@@ -48,7 +48,7 @@ class LoginDTO(BaseModel):
     password: str
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             'example': {
                 'email': 'user@example.com',
                 'password': 'secret',
@@ -77,14 +77,14 @@ class ResetPasswordDTO(BaseModel):
     password: str
     confirm_password: str
 
-    @validator('confirm_password')
+    @field_validator('confirm_password')
     def passwords_match(cls, v, values, **kwargs):
         if 'password' in values and v != values['password']:
             raise ClientException(msg='passwords do not match')
         return v
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             'example': {
                 'register_email': 'user@example.com',
                 'password': 'secret',
@@ -97,7 +97,7 @@ class UpdatePasswordDTO(ResetPasswordDTO):
     origin_password: str
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             'example': {
                 'register_email': 'user@example.com',
                 'password': 'secret2',
