@@ -78,6 +78,17 @@ class DuplicateUserException(HTTPException, ErrorLogger):
         return self.msg
 
 
+class UnprocessableClientException(HTTPException, ErrorLogger):
+    def __init__(self, msg: str, code: str = '42200', data: Any = None):
+        self.msg = msg  # 將改為 lang 語系
+        self.code = code  # 將以 code + lang 給出特定語言的訊息
+        self.data = data
+        self.status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    def __str__(self) -> str:
+        return self.msg
+
+
 class TooManyRequestsException(HTTPException, ErrorLogger):
     def __init__(self, msg: str, code: str = '42900', data: Any = None):
         self.msg = msg  # 將改為 lang 語系
@@ -124,6 +135,10 @@ def __duplicate_user_exception_handler(request: Request, exc: DuplicateUserExcep
     return JSONResponse(status_code=exc.status_code, content=res_err_format(msg=exc.msg, code=exc.code, data=exc.data))
 
 
+def __unprocessable_client_exception_handler(request: Request, exc: UnprocessableClientException):
+    return JSONResponse(status_code=exc.status_code, content=res_err_format(msg=exc.msg, code=exc.code, data=exc.data))
+
+
 def __too_many_requests_exception_handler(request: Request, exc: TooManyRequestsException):
     return JSONResponse(status_code=exc.status_code, content=res_err_format(msg=exc.msg, code=exc.code, data=exc.data))
 
@@ -139,6 +154,7 @@ def include_app(app: FastAPI):
     app.add_exception_handler(NotFoundException, __not_found_exception_handler)
     app.add_exception_handler(NotAcceptableException, __not_acceptable_exception_handler)
     app.add_exception_handler(DuplicateUserException, __duplicate_user_exception_handler)
+    app.add_exception_handler(UnprocessableClientException, __unprocessable_client_exception_handler)
     app.add_exception_handler(TooManyRequestsException, __too_many_requests_exception_handler)
     app.add_exception_handler(ServerException, __server_exception_handler)
 
@@ -161,6 +177,9 @@ def raise_http_exception(e: Exception, msg: str = None, data: Any = None):
 
     # if isinstance(e, DuplicateUserException):
     #     raise DuplicateUserException(msg=msg or e.msg, data=data or e.data)
+    
+    if isinstance(e, UnprocessableClientException):
+        raise UnprocessableClientException(msg=msg or e.msg, data=data or e.data)
 
     if isinstance(e, TooManyRequestsException):
         raise TooManyRequestsException(msg=msg or e.msg, data=data or e.data)
@@ -177,6 +196,7 @@ status_code_mapping = {
     403: ForbiddenException,
     404: NotFoundException,
     406: NotAcceptableException,  # No DuplicateUserException
+    422: UnprocessableClientException,
     429: TooManyRequestsException,
     500: ServerException,
 }
@@ -184,6 +204,6 @@ status_code_mapping = {
 
 def raise_http_exception_by_status_code(status_code: int, msg: str = None, data: Any = None):
     if status_code in status_code_mapping:
-        raise_http_exception(status_code_mapping[status_code](msg, data))
+        raise_http_exception(status_code_mapping[status_code](msg=msg, data=data))
 
     raise ServerException(msg=msg)

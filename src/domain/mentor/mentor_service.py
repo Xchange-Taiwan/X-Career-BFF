@@ -1,15 +1,24 @@
 import logging as log
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 
 from src.domain.cache import ICache
 from .model.experience_model import ExperienceVO, ExperienceDTO
-from .model.mentor_model import MentorProfileDTO, MentorProfileVO
+from .model.mentor_model import (
+    MentorProfileDTO, 
+    MentorProfileVO,
+    MentorScheduleVO,
+    TimeSlotDTO,
+)
 from ..user.model.common_model import ProfessionListVO
 from ...app.template.service_response import ServiceApiResponse
 from ...config.conf import USER_SERVICE_URL
 from ...config.constant import MENTORS, ExperienceCategory, Language
 from ...config.exception import NotFoundException, raise_http_exception
-from ...infra.client.async_service_api_adapter import AsyncServiceApiAdapter
+from ...config.cache import gw_cache
+from ...config.service_client import (
+    AsyncServiceApiAdapter,
+    service_client,
+)
 
 log.basicConfig(filemode='w', level=log.INFO)
 
@@ -53,10 +62,30 @@ class MentorService:
         return res.data
 
     async def get_expertises(self, language: Language) -> ProfessionListVO:
-        try:
-            req_url = f"{USER_SERVICE_URL}/v1/{MENTORS}/{language.value}/expertises"
-            res: Dict = await self.service_api.simple_get(url=req_url)
-            return res
-        except Exception as e:
-            log.error(e)
-            raise_http_exception(500, 'Internal Server Error')
+        req_url = f"{USER_SERVICE_URL}/v1/{MENTORS}/{language.value}/expertises"
+        res: Dict = await self.service_api.simple_get(url=req_url)
+        return res
+
+
+    async def get_schedules(self, user_id: int, dt_year: int, dt_month: int, query: Optional[Dict] = None) -> MentorScheduleVO:
+        req_url = f'{USER_SERVICE_URL}/v1/{MENTORS}/{user_id}/schedule/{dt_year}/{dt_month}'
+        res: Optional[ServiceApiResponse] = await self.service_api.get(url=req_url, params=query)
+        return MentorScheduleVO(**res.data)
+
+
+    async def save_schedules(self, user_id: int, data: List[TimeSlotDTO]) -> MentorScheduleVO:
+        req_url = f'{USER_SERVICE_URL}/v1/{MENTORS}/{user_id}/schedule'
+        req_json = [d.dict() for d in data]
+        res: Optional[ServiceApiResponse] = await self.service_api.put(url=req_url, json=req_json)
+        return MentorScheduleVO(**res.data)
+
+
+    async def delete_schedule(self, user_id: int, schedule_id: int) -> Optional[ServiceApiResponse]:
+        req_url = f'{USER_SERVICE_URL}/v1/{MENTORS}/{user_id}/schedule/{schedule_id}'
+        res: Optional[ServiceApiResponse] = await self.service_api.delete(url=req_url)
+        return res
+
+_mentor_service = MentorService(
+    service_client,
+    gw_cache
+)

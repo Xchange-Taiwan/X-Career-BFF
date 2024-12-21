@@ -77,3 +77,6 @@ USERS = 'users'
 PROFILE = 'profile'
 
 
+# schedule event types: AVAILABLE, UNAVAILABLE
+AVAILABLE_EVT = 'AVAILABLE'
+UNAVAILABLE_EVT = 'UNAVAILABLE'

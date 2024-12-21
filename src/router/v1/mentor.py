@@ -1,16 +1,15 @@
-from typing import List
+from typing import List, Optional
 
 from fastapi import (
     APIRouter,
     Path, Body
 )
 
-from src.infra.client.async_service_api_adapter import AsyncServiceApiAdapter
+from ...app.template.service_response import ServiceApiResponse
 from ..res.response import *
-from ...config.cache import gw_cache
 from ...config.constant import ExperienceCategory, Language
 from ...config.exception import *
-from ...domain.mentor.mentor_service import MentorService
+from ...domain.mentor.mentor_service import _mentor_service
 from ...domain.mentor.model import (
     mentor_model as mentor,
     experience_model as experience,
@@ -25,10 +24,6 @@ router = APIRouter(
     prefix='/mentors',
     tags=['Mentor'],
     responses={404: {'description': 'Not found'}},
-)
-_mentor_service = MentorService(
-    AsyncServiceApiAdapter(),
-    gw_cache
 )
 
 
@@ -97,15 +92,16 @@ async def upsert_mentor_schedule(
         user_id: int = Path(...),
         body: List[mentor.TimeSlotDTO] = Body(...),
 ):
-    # TODO: implement
-    return res_success(data=None)
+    res: mentor.MentorScheduleVO = await _mentor_service.save_schedules(user_id, body)
+    return res_success(data=res.dict())
 
 
 @router.delete('/{user_id}/schedule/{schedule_id}',
-               responses=idempotent_response('delete_mentor_schedule', mentor.MentorScheduleVO))
+               responses=idempotent_response('delete_mentor_schedule', int))
 async def delete_mentor_schedule(
         user_id: int = Path(...),
         schedule_id: int = Path(...),
 ):
-    # TODO: implement
-    return res_success(data=None)
+    res: ServiceApiResponse = await _mentor_service.delete_schedule(user_id, schedule_id)
+    return res_success(data=res.data, msg=res.msg, code=res.code)
+

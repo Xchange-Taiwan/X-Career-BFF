@@ -11,6 +11,7 @@ from ...domain.search.model import (
     search_model as search,
 )
 from ..res.response import *
+from ...domain.mentor.mentor_service import _mentor_service
 from ...config.conf import *
 from ...config.constant import *
 from ...config.exception import *
@@ -65,14 +66,23 @@ async def get_mentor(
     return res_success(data=None)
 
 
-# TODO: read from professional service
-@router.get('/{user_id}/schedule',
-            responses=idempotent_response('get_mentor_schedule', mentor.MentorScheduleVO))
-async def get_mentor_schedule(
-    user_id: int = Path(...),
-    year: int = Query(SCHEDULE_YEAR),
-    batch: int = Query(BATCH),
-    next_id: int = Query(0),
+@router.get('/{user_id}/schedule/{dt_year}/{dt_month}',
+            responses=idempotent_response('get_mentor_schedule_list', mentor.MentorScheduleVO))
+async def get_schedules(
+        user_id: int = Path(...),
+        dt_year: int = Path(...),
+        dt_month: int = Path(...),
+        limit: int = Query(None, ge=1),
+        next_dtstart: int = Query(None),
 ):
-    # TODO: implement
-    return res_success(data=None)
+    query = None
+    if limit:
+        query = {'limit': limit, 'next_dtstart': next_dtstart or 0} # next_dtstart is optional
+
+    res: mentor.MentorScheduleVO = await _mentor_service.get_schedules(
+        user_id=user_id,
+        dt_year=dt_year,
+        dt_month=dt_month,
+        query=query,
+    )
+    return res_success(data=res.dict())

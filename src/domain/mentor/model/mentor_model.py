@@ -1,9 +1,12 @@
+from pydantic import BaseModel, Field
 from ...user.model.common_model import (
-    ProfessionDTO, ProfessionListVO,
+    ProfessionDTO,
+    ProfessionListVO,
 )
 from ...user.model.user_model import *
 from ....config.conf import *
 from ....config.constant import *
+
 
 log.basicConfig(filemode='w', level=log.INFO)
 
@@ -24,20 +27,22 @@ class MentorProfileVO(ProfileVO):
 
 
 class TimeSlotDTO(BaseModel):
-    schedule_id: Optional[int]
-    type: ScheduleType
-    year: int = SCHEDULE_YEAR
-    month: int = SCHEDULE_MONTH
-    day_of_month: int = SCHEDULE_DAY_OF_MONTH
-    day_of_week: int = SCHEDULE_DAY_OF_WEEK
-    start_time: int
-    end_time: int
+    id: Optional[int] = Field(None, example=0)
+    user_id: int = Field(..., example=1)
+    dt_type: str = Field(..., example=AVAILABLE_EVT, regex=f'^({AVAILABLE_EVT}|{UNAVAILABLE_EVT})$')
+    dt_year: Optional[int] = Field(default=None, example=2024)
+    dt_month: Optional[int] = Field(default=None, example=6)
+    dtstart: int = Field(..., example=1717203600)
+    dtend: int = Field(..., example=1717207200)
+    timezone: str = Field(default='UTC', example='UTC')
+    rrule: Optional[str] = Field(default=None, example='FREQ=WEEKLY;COUNT=4')
+    exdate: List[Optional[int]] = Field(default=[], example=[1718413200, 1719622800])
 
 
 class TimeSlotVO(TimeSlotDTO):
-    schedule_id: int
+    id: int = Field(..., example=0)
 
 
 class MentorScheduleVO(BaseModel):
-    timeslots: Optional[List[TimeSlotVO]] = []
-    next_id: Optional[int]
+    timeslots: Optional[List[TimeSlotVO]] = Field(default=[])
+    next_dtstart: Optional[int] = Field(default=None, example=0)
