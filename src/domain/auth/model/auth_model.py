@@ -1,6 +1,8 @@
 import json
 from typing import Any, Dict, List, Set, Optional, Union
 from pydantic import BaseModel, EmailStr, field_validator, ValidationInfo
+
+from ...user.model.user_model import ProfileVO
 from ....config.exception import ClientException
 import logging as log
 
@@ -126,4 +128,4 @@ class SignupResponseVO(BaseModel):
 
 class LoginResponseVO(SignupResponseVO):
     # TODO: define user VO
-    user: Dict
+    user: ProfileVO
