@@ -53,10 +53,6 @@ class MentorService:
         return res.data
 
     async def get_expertises(self, language: Language) -> ProfessionListVO:
-        try:
-            req_url = f"{USER_SERVICE_URL}/v1/{MENTORS}/{language.value}/expertises"
-            res: Dict = await self.service_api.simple_get(url=req_url)
-            return res
-        except Exception as e:
-            log.error(e)
-            raise_http_exception(500, 'Internal Server Error')
+        req_url = f"{USER_SERVICE_URL}/v1/{MENTORS}/{language.value}/expertises"
+        res: Dict = await self.service_api.simple_get(url=req_url)
+        return res
