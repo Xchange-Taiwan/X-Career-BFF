@@ -339,7 +339,7 @@ class AuthService:
 
     async def __req_login(self, body: LoginDTO):
         auth_res = await self.req.simple_post(
-            f'{AUTH_SERVICE_URL}/v1/login', json=body.dict())
+            f'{AUTH_SERVICE_URL}/v1/login', json=body.model_dump())
         if not auth_res or not 'user_id' in auth_res:
             raise UnauthorizedException(msg='Invalid user.')
         return auth_res
@@ -518,8 +518,8 @@ class AuthService:
 
     async def __req_update_password(self, body: UpdatePasswordDTO):
         return await self.req.simple_put(
-            f'{AUTH_SERVICE_URL}/v1/password/update', json=body.dict())
+            f'{AUTH_SERVICE_URL}/v1/password/update', json=body.model_dump())
 
     async def __req_reset_password(self, body: ResetPasswordDTO):
         return await self.req.simple_put(
-            f'{AUTH_SERVICE_URL}/v1/password/update', json=body.dict())
+            f'{AUTH_SERVICE_URL}/v1/password/update', json=body.model_dump())

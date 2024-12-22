@@ -93,7 +93,7 @@ async def upsert_mentor_schedule(
         body: List[mentor.TimeSlotDTO] = Body(...),
 ):
     res: mentor.MentorScheduleVO = await _mentor_service.save_schedules(user_id, body)
-    return res_success(data=res.dict())
+    return res_success(data=res.model_dump())
 
 
 @router.delete('/{user_id}/schedule/{schedule_id}',

@@ -85,4 +85,4 @@ async def get_schedules(
         dt_month=dt_month,
         query=query,
     )
-    return res_success(data=res.dict())
+    return res_success(data=res.model_dump())
