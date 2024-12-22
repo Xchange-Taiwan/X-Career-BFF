@@ -30,7 +30,7 @@ class MentorService:
         return MentorProfileVO(**res.data)
 
     async def upsert_mentor_profile(self, data: MentorProfileDTO) -> MentorProfileVO:
-        req_url = f"{USER_SERVICE_URL}/v1/{MENTORS}/mentor_profile/create"
+        req_url = f"{USER_SERVICE_URL}/v1/{MENTORS}/mentor_profile"
 
         res: Optional[ServiceApiResponse] = await self.service_api.post(url=req_url, json=data.dict())
         return MentorProfileVO(**res.data)
