@@ -17,8 +17,10 @@ from ...config.constant import *
 from ...config.exception import *
 import logging as log
 
-log.basicConfig(filemode='w', level=log.INFO)
+from ...domain.user.model.common_model import InterestListVO
+from ...domain.user.service.user_service import user_service, UserService
 
+log.basicConfig(filemode='w', level=log.INFO)
 
 router = APIRouter(
     prefix='/users',
@@ -30,47 +32,50 @@ router = APIRouter(
 @router.put('/{user_id}/profile',
             responses=idempotent_response('upsert_profile', user.ProfileVO))
 async def upsert_profile(
-    user_id: int = Path(...),
-    body: user.ProfileDTO = Body(...),
+        user_id: int = Path(...),
+        body: user.ProfileDTO = Body(...),
 ):
-    # TODO: implement
-    return res_success(data=None)
+    body.user_id = user_id
+    data: user.ProfileVO = await user_service.upsert_user_profile(user_id, body)
+    return res_success(data=data.json())
 
 
-@router.get('/{user_id}/profile',
+@router.get('/{user_id}/{language}/profile',
             responses=idempotent_response('get_profile', user.ProfileVO))
 async def get_profile(
-    user_id: int = Path(...),
+        user_id: int = Path(...),
+        language: Language = Path(...),
 ):
-    # TODO: implement
-    return res_success(data=None)
+    data: user.ProfileVO = await user_service.get_user_profile(user_id, language.value)
+    return res_success(data=data.json())
 
 
-@router.get('/interests',
+@router.get('/{language}/interests',
             responses=idempotent_response('get_interests', common.InterestListVO))
 async def get_interests(
-    interest: InterestCategory = Query(...),
+        language: Language = Path(...),
+        interest: InterestCategory = Query(...),
 ):
-    # TODO: implement
-    return res_success(data=None)
+    data: Dict = await user_service.get_interests(language, interest)
+    return res_success(data=data)
 
 
-@router.get('/industries',
+@router.get('/{language}/industries',
             responses=idempotent_response('get_industries', common.ProfessionListVO))
 async def get_industries(
-    # category = ProfessionCategory.INDUSTRY = Query(...),
+        language: Language = Path(...)
 ):
-    # TODO: implement
-    return res_success(data=None)
+    data: Dict = await user_service.get_industries(language)
+    return res_success(data=data)
 
 
 @router.get('/{user_id}/reservations',
             responses=idempotent_response('reservation_list', reservation.ReservationListVO))
 async def reservation_list(
-    user_id: int = Path(...),
-    state: ReservationListState = Query(...),
-    batch: int = Query(...),
-    next_id: int = Query(None),
+        user_id: int = Path(...),
+        state: ReservationListState = Query(...),
+        batch: int = Query(...),
+        next_id: int = Query(None),
 ):
     # TODO: implement
     return res_success(data=None)
@@ -79,8 +84,8 @@ async def reservation_list(
 @router.post('/{user_id}/reservations',
              responses=post_response('new_booking', reservation.ReservationVO))
 async def new_booking(
-    user_id: int = Path(...),
-    body: reservation.ReservationDTO = Body(...),
+        user_id: int = Path(...),
+        body: reservation.ReservationDTO = Body(...),
 ):
     # TODO: implement
     return res_success(data=None)
@@ -89,9 +94,9 @@ async def new_booking(
 @router.put('/{user_id}/reservations/{reservation_id}',
             responses=idempotent_response('update_or_delete_booking', reservation.ReservationVO))
 async def update_or_delete_booking(
-    user_id: int = Path(...),
-    reservation_id: int = Path(...),
-    body: reservation.ReservationDTO = Body(...),
+        user_id: int = Path(...),
+        reservation_id: int = Path(...),
+        body: reservation.ReservationDTO = Body(...),
 ):
     # TODO: implement
     return res_success(data=None)

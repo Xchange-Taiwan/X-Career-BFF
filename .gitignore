@@ -13,3 +13,7 @@ test2/
 !deploy.sh
 !dev-env-deploy.sh
 !.env.example
+
+.idea/**
+
+*.py~

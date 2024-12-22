@@ -8,18 +8,20 @@ log.basicConfig(filemode='w', level=log.INFO)
 
 
 class ExperienceDTO(BaseModel):
-    id: Optional[int]
-    language: Optional[str]
-    desc: Dict
-    order: int
+    id: Optional[int] = None
+    desc: Dict = {}
+    order: int = 0
 
 
 class ExperienceVO(BaseModel):
     id: int
-    language: Optional[str]
     category: ExperienceCategory
     desc: Dict
     order: int
+
+    @staticmethod
+    def of(exp_id: int, desc: Dict, order: int, category: ExperienceCategory) -> 'ExperienceVO':
+        return ExperienceVO(id=exp_id, desc=desc, order=order, category=category)
 
 
 class ExperienceListVO(BaseModel):

@@ -57,4 +57,8 @@ sls print --config $BACKUP_FILE --region $REGION --stage $BACKUP_ENV # 添加区
 sls deploy --config $BACKUP_FILE --region $REGION --stage $BACKUP_ENV # 添加区域和环境参数
 rm "$BACKUP_FILE"
 
-sh $BACKUP_ENV-env-deploy.sh
+
+if [ -f "$BACKUP_ENV-env-deploy.sh" ]; then
+    echo "Deploying env params..."
+    sh $BACKUP_ENV-env-deploy.sh --account $AWS_PROFILE
+fi

@@ -3,53 +3,63 @@ from enum import Enum
 import os
 
 
+class Language(Enum):
+    EN_US = 'en_US'
+    ZH_TW = 'zh_TW'
+
+
 class InterestCategory(Enum):
-    INTERESTED_POSITION = 'interested_position'
-    SKILL = 'skill'
-    TOPIC = 'topic'
+    INTERESTED_POSITION = 'INTERESTED_POSITION'
+    SKILL = 'SKILL'
+    TOPIC = 'TOPIC'
 
 
 class ProfessionCategory(Enum):
-    EXPERTISE = 'expertise'
-    INDUSTRY = 'industry'
+    EXPERTISE = 'EXPERTISE'
+    INDUSTRY = 'INDUSTRY'
 
 
 class ExperienceCategory(Enum):
-    WORK = 'work'
-    EDUCATION = 'education'
-    LINK = 'link'
+    WORK = 'WORK'
+    EDUCATION = 'EDUCATION'
+    LINK = 'LINK'
 
 
 class ScheduleType(Enum):
-    ALLOW = 'allow'
-    FORBIDDEN = 'forbidden'
+    ALLOW = 'ALLOW'
+    FORBIDDEN = 'FORBIDDEN'
 
 
 class RoleType(Enum):
-    MENTOR = 'mentor'
-    MENTEE = 'mentee'
+    MENTOR = 'MENTOR'
+    MENTEE = 'MENTEE'
 
 
 class BookingStatus(Enum):
-    PENDING = 'pending'
-    ACCEPT = 'accept'
-    REJECT = 'reject'
+    PENDING = 'PENDING'
+    ACCEPT = 'ACCEPT'
+    REJECT = 'REJECT'
 
 
 class ReservationListState(Enum):
-    UPCOMING = 'upcoming'
-    PENDING = 'pending'
-    HISTORY = 'history'
+    UPCOMING = 'UPCOMING'
+    PENDING = 'PENDING'
+    HISTORY = 'HISTORY'
 
 
 class SortingBy(Enum):
-    UPDATED_TIME = 'updated_time'
-    # VIEW = 'view'
+    UPDATED_TIME = 'UPDATED_TIME'
+    # VIEW = 'VIEW'
 
 
 class Sorting(Enum):
     ASC = 1
     DESC = -1
+
+
+class SchedulesType(Enum):
+    ALLOW = "ALLOW"
+    FORBIDDEN = "FORBIDDEN"
 
 
 # serial_key is a field of the collection in the user's cache
@@ -59,7 +69,11 @@ SERIAL_KEY = 'created_at'
 PREFETCH = 3
 
 # Accessing environment variables with default values
-MENTOR_ROUTER_URL = os.getenv('MENTOR_ROUTER_URL', 'http://127.0.0.1:8000')
-API_VERSION = os.getenv('API_VERSION', '/api/v1/')
+# TODO: 參考 AUTH_SERVICE_URL 的用法，不需要這麼冗長; 另外 "/v1" 直接寫在每個 api path 裡如何?
 USER_SERVICE_PREFIX: str = "/user-service"
-MENTORS = "mentors"
+MENTORS = 'mentors'
+FILE = 'file'
+USERS = 'users'
+PROFILE = 'profile'
+
+
