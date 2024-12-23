@@ -21,6 +21,7 @@ class ProfileVO(BaseModel):
     skills: Optional[InterestListVO] = None
     topics: Optional[InterestListVO] = None
     industries: Optional[ProfessionListVO] = None
+    on_boarding: Optional[bool] = False
     language: Optional[str] = 'zh_TW'
 
 
