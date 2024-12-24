@@ -42,6 +42,12 @@ class ProfileDTO(BaseModel):
     industries: Optional[List[str]] = []
     language: Optional[str] = 'zh_TW'
 
+    def to_request(self) -> Dict[str, Any]:
+        dict: Dict = self.model_dump()
+        req: Dict = {key: val for key, val in dict.items() if dict[key] is not None}
+        return req
+
+
     @staticmethod
     def from_vo(vo: ProfileVO) -> "ProfileDTO":
         """
