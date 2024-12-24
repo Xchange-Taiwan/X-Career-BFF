@@ -30,12 +30,12 @@ class FileService:
 
     async def create_file_info(self, file_info_dto: FileInfoDTO) -> FileInfoVO:
         req_url = f"{USER_SERVICE_URL}/v1/{FILE}/create"
-        res: Optional[ServiceApiResponse] = await self.service_api.post(url=req_url, json=file_info_dto.dict())
+        res: Optional[ServiceApiResponse] = await self.service_api.post(url=req_url, json=file_info_dto.model_dump())
         return FileInfoVO(**res.data)
 
     async def update_file_info(self, user_id: int, file_info_dto: FileInfoDTO) -> FileInfoVO:
         req_url = f"{USER_SERVICE_URL}/v1/{FILE}/{user_id}/update"
-        res: Optional[ServiceApiResponse] = await self.service_api.put(url=req_url, json=file_info_dto.dict())
+        res: Optional[ServiceApiResponse] = await self.service_api.put(url=req_url, json=file_info_dto.model_dump())
         return FileInfoVO(**res.data)
 
     async def delete_file_info(self, user_id: int, file_id: str) -> bool:

@@ -28,7 +28,7 @@ def validate_image(file: UploadFile = File(...)):
 @router.post('/', responses=idempotent_response('upload_avatar', FileInfoListVO))
 async def upload_avatar(file: UploadFile = Depends(validate_image), user_id: int = -1):
     res: FileInfoListVO = await _obj_store.upload_avatar(file, user_id)
-    return res_success(data=res.json())
+    return res_success(data=res.model_dump())
 
 
 @router.delete('/avatar', responses=idempotent_response('delete_avatar', bool))
