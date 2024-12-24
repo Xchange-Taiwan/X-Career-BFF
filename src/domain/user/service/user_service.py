@@ -27,7 +27,7 @@ class UserService:
 
     async def upsert_user_profile(self, data: ProfileDTO) -> ProfileVO:
         req_url = f"{USER_SERVICE_URL}/v1/{USERS}/profile"
-        res: Optional[ServiceApiResponse] = await self.service_api.put(url=req_url, json=data.model_dump())
+        res: Optional[ServiceApiResponse] = await self.service_api.put(url=req_url, json=data.to_request())
         return ProfileVO(**res.data)
 
     async def get_interests(self, language: Language, interest: InterestCategory) -> Dict:
