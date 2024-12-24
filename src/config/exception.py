@@ -175,8 +175,8 @@ def raise_http_exception(e: Exception, msg: str = None, data: Any = None):
     if isinstance(e, NotAcceptableException):
         raise NotAcceptableException(msg=msg or e.msg, data=data or e.data)
 
-    # if isinstance(e, DuplicateUserException):
-    #     raise DuplicateUserException(msg=msg or e.msg, data=data or e.data)
+    if isinstance(e, DuplicateUserException):
+        raise DuplicateUserException(msg=msg or e.msg, data=data or e.data)
     
     if isinstance(e, UnprocessableClientException):
         raise UnprocessableClientException(msg=msg or e.msg, data=data or e.data)
