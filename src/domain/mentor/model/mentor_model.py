@@ -2,6 +2,7 @@ from ...user.model.common_model import (
     ProfessionDTO, ProfessionListVO,
 )
 from ...user.model.user_model import *
+from .experience_model import ExperienceVO
 from ....config.conf import *
 from ....config.constant import *
 
@@ -21,6 +22,7 @@ class MentorProfileVO(ProfileVO):
     about: Optional[str] = ""
     seniority_level: Optional[str] = ""
     expertises: Optional[ProfessionListVO] = None
+    experiences: Optional[List[ExperienceVO]] = []
 
 
 class TimeSlotDTO(BaseModel):
