@@ -42,10 +42,8 @@ async def upsert_mentor_profile(
     # user_id 在此 API 可省略，但因為給前端的 API swagger doc 已固定，所以保留
     if user_id != body.user_id:
         raise ForbiddenException(msg='user_id not match')
-    # MentorProfileVO 中的 ExperienceVO.category(ExperienceCategory) 屬於 enum，
-    # 故在此處不轉換為 MentorProfileVO，直接回傳 dict
-    res_data: Dict = await _mentor_service.upsert_mentor_profile(body)
-    return res_success(data=res_data)
+    res: mentor.MentorProfileVO = await _mentor_service.upsert_mentor_profile(body)
+    return res_success(data=res.model_dump())
 
 
 @router.get('/{user_id}/{language}/profile',

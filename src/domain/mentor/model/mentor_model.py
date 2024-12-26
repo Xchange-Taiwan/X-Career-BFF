@@ -10,22 +10,17 @@ log.basicConfig(filemode='w', level=log.INFO)
 
 
 class MentorProfileDTO(ProfileDTO):
-    personal_statement: Optional[str] = ''
-    about: Optional[str] = ''
+    personal_statement: Optional[str]
+    about: Optional[str]
     # TODO: enum
-    seniority_level: Optional[str] = SeniorityLevel.NO_REVEAL.value
+    seniority_level: Optional[str] = []
     expertises: Optional[List[ProfessionDTO]] = []
-
-    def to_request(self) -> Dict[str, Any]:
-        dict: Dict = self.model_dump()
-        req: Dict = {key: val for key, val in dict.items() if dict[key] is not None}
-        return req
 
 
 class MentorProfileVO(ProfileVO):
     personal_statement: Optional[str] = ""
     about: Optional[str] = ""
-    seniority_level: Optional[str] = ''
+    seniority_level: Optional[str] = ""
     expertises: Optional[ProfessionListVO] = None
     experiences: Optional[List[ExperienceVO]] = []
 
