@@ -1,11 +1,14 @@
 # Distribution / packaging
 .serverless
+.github
+.idea
+.vscode
 node_modules
 venv
 **/**__pycache__
 **.db
 
-test2/
+test*/
 
 **/**.sh
 **.env*
@@ -14,6 +17,5 @@ test2/
 !dev-env-deploy.sh
 !.env.example
 
-.idea/**
 
 *.py~
