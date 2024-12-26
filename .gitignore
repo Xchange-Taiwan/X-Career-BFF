@@ -1,6 +1,5 @@
 # Distribution / packaging
 .serverless
-.github
 .idea
 .vscode
 node_modules
