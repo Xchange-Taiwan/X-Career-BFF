@@ -91,6 +91,7 @@ functions:
       - "!package.json"
       - "!package-lock.json"
       - "!.serverless/**"
+      - "!.github/**"
       - "!.idea/**"
       - "!.vscode/**"
       - "!venv/**"
