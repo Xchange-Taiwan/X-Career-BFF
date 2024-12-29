@@ -7,6 +7,8 @@ from fastapi import (
     Request, Depends,
     Header, Path, Query, Body, Form
 )
+from fastapi.encoders import jsonable_encoder
+
 from ...domain.user.model import (
     common_model as common,
     user_model as user,
@@ -38,8 +40,8 @@ async def upsert_profile(
     # user_id 在此 API 可省略，但因為給前端的 API swagger doc 已固定，所以保留
     if user_id != body.user_id:
         raise ForbiddenException(msg='user_id not match')
-    data: user.ProfileVO = await user_service.upsert_user_profile(body)
-    return res_success(data=data.model_dump())
+    data: user.ProfileVO = await user_service.upsert_user_profile(user_id, body)
+    return res_success(data=jsonable_encoder(data))
 
 
 @router.get('/{user_id}/{language}/profile',
@@ -49,7 +51,7 @@ async def get_profile(
         language: Language = Path(...),
 ):
     data: user.ProfileVO = await user_service.get_user_profile(user_id, language.value)
-    return res_success(data=data.model_dump())
+    return res_success(data=jsonable_encoder(data))
 
 
 @router.get('/{language}/interests',
@@ -59,7 +61,7 @@ async def get_interests(
         interest: InterestCategory = Query(...),
 ):
     data: Dict = await user_service.get_interests(language, interest)
-    return res_success(data=data)
+    return res_success(data=jsonable_encoder(data))
 
 
 @router.get('/{language}/industries',
@@ -68,7 +70,7 @@ async def get_industries(
         language: Language = Path(...)
 ):
     data: Dict = await user_service.get_industries(language)
-    return res_success(data=data)
+    return res_success(data=jsonable_encoder(data))
 
 
 @router.get('/{user_id}/reservations',

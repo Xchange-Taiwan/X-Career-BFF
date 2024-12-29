@@ -1,5 +1,6 @@
 import boto3
 from fastapi import File, UploadFile, APIRouter
+from fastapi.encoders import jsonable_encoder
 from fastapi.params import Depends
 
 from src.config.exception import ForbiddenException
@@ -28,23 +29,23 @@ def validate_image(file: UploadFile = File(...)):
 @router.post('/', responses=idempotent_response('upload_avatar', FileInfoListVO))
 async def upload_avatar(file: UploadFile = Depends(validate_image), user_id: int = -1):
     res: FileInfoListVO = await _obj_store.upload_avatar(file, user_id)
-    return res_success(data=res.model_dump())
+    return res_success(data=jsonable_encoder(res))
 
 
 @router.delete('/avatar', responses=idempotent_response('delete_avatar', bool))
 async def delete_avatar(user_id: int = -1):
     res: bool = await _obj_store.delete_avatar(user_id)
-    return res_success(data=res)
+    return res_success(data=jsonable_encoder(res))
 
 
 # this endpoint is available for deleting any file
 @router.delete('/', responses=idempotent_response('delete_file', bool))
 async def delete_file(user_id: int = -1, file_name: str = ''):
     res: bool = await _obj_store.delete_file(user_id, file_name)
-    return res_success(data=res)
+    return res_success(data=jsonable_encoder(res))
 
 
 @router.get('/size', responses=idempotent_response('get_bucket_size', FileInfoListVO))
 async def get_bucket_size(user_id: int = -1):
     res: int = _obj_store.get_user_storage_size(user_id)
-    return res_success(data=res)
+    return res_success(data=jsonable_encoder(res))
