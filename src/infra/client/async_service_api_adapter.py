@@ -45,16 +45,14 @@ def check_response_code(method: str, expected_code: int = 200):
             data = res_body.get('data', None)
 
             if status_code == status.HTTP_422_UNPROCESSABLE_ENTITY:
-                detail = res_body.get('detail', [])
-                log.error(f"service request fail, [%s]: %s, body:%s, params:%s, headers:%s, \
-                        status_code:%s, err_msg: %s \n response:%s \n 422 detail:%s",
-                    method, url, body, params, headers, status_code, msg, res_body, detail)
-                raise_http_exception_by_status_code(status_code, 'client input error', detail)
+                data = res_body.get('detail', [])
+                msg = 'client input error (422: unprocessable client exception)'
 
             log.error(f"service request fail, [%s]: %s, body:%s, params:%s, headers:%s, \
-                    status_code:%s, err_msg: %s \n response:%s",
-                method, url, body, params, headers, status_code, msg, res_body)
+                        status_code:%s, err_msg: %s \n response:%s \n  data/422_detail:%s",
+                method, url, body, params, headers, status_code, msg, res_body, data)
             raise_http_exception_by_status_code(status_code, msg, data)
+
 
         return wrapper_check_response_code
 
