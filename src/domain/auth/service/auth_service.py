@@ -222,7 +222,7 @@ class AuthService:
 
     async def __init_user_profile(self, user_id: int):
         try:
-            user_service_url = f"{USER_SERVICE_URL}/v1/users/{user_id}/profile"
+            user_service_url = f"{USER_SERVICE_URL}/v1/{USERS}/profile"
             user_res = await self.req.simple_put(
                 url=user_service_url,
                 json={'user_id': user_id}
@@ -330,7 +330,6 @@ class AuthService:
         auth_res = self.apply_token(auth_res)
         # 育志看一下這 API
         user_res = await self.__get_user_profile(user_id, language)
-        user_res.update({'on_boarding': False})
         auth_res = self.filter_auth_res(auth_res)
         return {
             'auth': auth_res,
@@ -340,7 +339,7 @@ class AuthService:
 
     async def __req_login(self, body: LoginDTO):
         auth_res = await self.req.simple_post(
-            f'{AUTH_SERVICE_URL}/v1/login', json=body.dict())
+            f'{AUTH_SERVICE_URL}/v1/login', json=body.model_dump())
         if not auth_res or not 'user_id' in auth_res:
             raise UnauthorizedException(msg='Invalid user.')
         return auth_res
@@ -519,8 +518,8 @@ class AuthService:
 
     async def __req_update_password(self, body: UpdatePasswordDTO):
         return await self.req.simple_put(
-            f'{AUTH_SERVICE_URL}/v1/password/update', json=body.dict())
+            f'{AUTH_SERVICE_URL}/v1/password/update', json=body.model_dump())
 
     async def __req_reset_password(self, body: ResetPasswordDTO):
         return await self.req.simple_put(
-            f'{AUTH_SERVICE_URL}/v1/password/update', json=body.dict())
+            f'{AUTH_SERVICE_URL}/v1/password/update', json=body.model_dump())

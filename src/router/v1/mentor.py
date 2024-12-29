@@ -37,10 +37,10 @@ _mentor_service = MentorService(
 @router.put('/{user_id}/profile',
             responses=idempotent_response('upsert_mentor_profile', mentor.MentorProfileVO))
 async def upsert_mentor_profile(
-        request: Request,
         user_id: int = Path(...),
         body: mentor.MentorProfileDTO = Body(...),
 ):
+    # user_id 在此 API 可省略，但因為給前端的 API swagger doc 已固定，所以保留
     if user_id != body.user_id:
         raise ForbiddenException(msg='user_id not match')
     res: mentor.MentorProfileVO = await _mentor_service.upsert_mentor_profile(body)
