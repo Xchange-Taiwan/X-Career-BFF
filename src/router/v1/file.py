@@ -1,6 +1,7 @@
 import logging as log
 
 from fastapi import APIRouter, Path
+from fastapi.encoders import jsonable_encoder
 from fastapi.params import Body
 
 from src.domain.file.model.file_info_model import FileInfoVO, FileInfoListVO, FileInfoDTO
@@ -24,7 +25,7 @@ async def get_file_info_by_id(
         file_id: str = Path(...),
 ):
     res: FileInfoVO = await file_service_singleton.get_file_by_id(user_id, file_id)
-    return res_success(data=res.json())
+    return res_success(data=jsonable_encoder(res))
 
 
 @router.get('/{user_id}',
@@ -32,7 +33,7 @@ async def get_file_info_by_id(
 async def get_file_info_by_user_id(
         user_id: int = Path(...)):
     res: FileInfoListVO = await file_service_singleton.get_file_info_by_user_id(user_id)
-    return res_success(data=res.json())
+    return res_success(data=jsonable_encoder(res))
 
 
 @router.post('/',
@@ -40,7 +41,7 @@ async def get_file_info_by_user_id(
 async def create_file_info(
         body: FileInfoDTO = Body(...)):
     res: FileInfoVO = await file_service_singleton.create_file_info(body)
-    return res_success(data=res.json())
+    return res_success(data=jsonable_encoder(res))
 
 
 @router.put('/{user_id}',
@@ -49,7 +50,7 @@ async def update_file_info(
         user_id: int = Path(...),
         body: FileInfoDTO = Body(...)):
     res: FileInfoVO = await file_service_singleton.update_file_info(user_id, body)
-    return res_success(data=res.json())
+    return res_success(data=jsonable_encoder(res))
 
 
 @router.delete('/{user_id}/{file_name}',

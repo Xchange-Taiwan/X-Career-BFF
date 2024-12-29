@@ -1,5 +1,7 @@
 # Distribution / packaging
 .serverless
+.idea
+.vscode
 node_modules
 venv
 **/**__pycache__
@@ -14,6 +16,6 @@ test2/
 !dev-env-deploy.sh
 !.env.example
 
-.idea/**
 
 *.py~
+src/router/.DS_Store

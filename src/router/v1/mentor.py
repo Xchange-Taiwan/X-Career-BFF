@@ -4,6 +4,7 @@ from fastapi import (
     APIRouter,
     Path, Body
 )
+from fastapi.encoders import jsonable_encoder
 
 from ...app.template.service_response import ServiceApiResponse
 from ..res.response import *
@@ -31,14 +32,14 @@ router = APIRouter(
 @router.put('/{user_id}/profile',
             responses=idempotent_response('upsert_mentor_profile', mentor.MentorProfileVO))
 async def upsert_mentor_profile(
-        request: Request,
         user_id: int = Path(...),
         body: mentor.MentorProfileDTO = Body(...),
 ):
+    # user_id 在此 API 可省略，但因為給前端的 API swagger doc 已固定，所以保留
     if user_id != body.user_id:
         raise ForbiddenException(msg='user_id not match')
     res: mentor.MentorProfileVO = await _mentor_service.upsert_mentor_profile(body)
-    return res_success(data=res)
+    return res_success(data=jsonable_encoder(res))
 
 
 @router.get('/{user_id}/{language}/profile',
@@ -60,7 +61,7 @@ async def upsert_experience(
 ):
 
     res: experience.ExperienceVO = await _mentor_service.upsert_experience(body, user_id, experience_type.value)
-    return res_success(data=res.json())
+    return res_success(data=jsonable_encoder(res))
 
 
 @router.delete('/{user_id}/experiences/{experience_type}/{experience_id}',
@@ -72,7 +73,7 @@ async def delete_experience(
 ):
 
     res: bool = await _mentor_service.delete_experience(user_id, experience_id, experience_type.value)
-    return res_success(data=res)
+    return res_success(data=jsonable_encoder(res))
 
 
 @router.get('/{language}/expertises',
@@ -83,7 +84,7 @@ async def get_expertises(
          # category : ProfessionCategory.EXPERTISE = Query(...),
 ):
     res: Dict = await _mentor_service.get_expertises(language)
-    return res_success(data=res)
+    return res_success(data=jsonable_encoder(res))
 
 
 @router.put('/{user_id}/schedule',

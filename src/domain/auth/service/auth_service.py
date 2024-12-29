@@ -222,7 +222,7 @@ class AuthService:
 
     async def __init_user_profile(self, user_id: int):
         try:
-            user_service_url = f"{USER_SERVICE_URL}/v1/users/{user_id}/profile"
+            user_service_url = f"{USER_SERVICE_URL}/v1/{USERS}/profile"
             user_res = await self.req.simple_put(
                 url=user_service_url,
                 json={'user_id': user_id}
