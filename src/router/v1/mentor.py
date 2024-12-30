@@ -54,7 +54,8 @@ async def get_mentor_profile(
         user_id: int = Path(...),
         language: Language = Path(...),
 ):
-    return await _mentor_service.get_mentor_profile(user_id, language.value)
+    res = await _mentor_service.get_mentor_profile(user_id, language.value)
+    return res_success(data=jsonable_encoder(res))
 
 
 @router.put('/{user_id}/experiences/{experience_type}',

@@ -1,11 +1,11 @@
 import logging as log
-from typing import Optional, Dict
+from typing import Optional, Dict, Any
 
 from src.app.template.service_response import ServiceApiResponse
 from src.config.cache import gw_cache
 from src.config.conf import USER_SERVICE_URL
 from src.config.constant import Language, InterestCategory, USERS
-from src.config.exception import raise_http_exception
+from src.config.exception import NotFoundException, raise_http_exception
 from src.domain.cache import ICache
 from src.domain.user.model.common_model import InterestListVO, ProfessionListVO
 from src.domain.user.model.user_model import ProfileDTO, ProfileVO
@@ -22,8 +22,10 @@ class UserService:
 
     async def get_user_profile(self, user_id: int, language: str = 'zh_TW') -> ProfileVO:
         req_url = f"{USER_SERVICE_URL}/v1/{USERS}/{user_id}/{language}/profile"
-        res: Optional[ServiceApiResponse] = await self.service_api.get(url=req_url)
-        return ProfileVO(**res.data)
+        res: Optional[Dict[str, Any]] = await self.service_api.simple_get(url=req_url)
+        if not res:
+            raise NotFoundException(msg='Profile not found')
+        return res
 
     async def upsert_user_profile(self, data: ProfileDTO) -> ProfileVO:
         req_url = f"{USER_SERVICE_URL}/v1/{USERS}/profile"

@@ -1,5 +1,5 @@
 import logging as log
-from typing import Optional, Dict
+from typing import Optional, Dict, Any
 
 from src.domain.cache import ICache
 from .model.experience_model import ExperienceVO, ExperienceDTO
@@ -24,10 +24,10 @@ class MentorService:
 
         req_url = f"{USER_SERVICE_URL}/v1/{MENTORS}/{user_id}/{language}/mentor_profile"
 
-        res: Optional[ServiceApiResponse] = await self.service_api.get(url=req_url)
+        res: Optional[Dict[str, Any]] = await self.service_api.simple_get(url=req_url)
         if not res:
             raise NotFoundException(msg='Mentor profile not found')
-        return MentorProfileVO(**res.data)
+        return res
 
     async def upsert_mentor_profile(self, data: MentorProfileDTO) -> MentorProfileVO:
         req_url = f"{USER_SERVICE_URL}/v1/{MENTORS}/mentor_profile"
