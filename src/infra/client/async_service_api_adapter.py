@@ -2,8 +2,8 @@ import functools
 from fastapi import status
 from typing import Dict, Optional
 import httpx
-from ...app.template.service_response import ServiceApiResponse
-from ...app.template.service_api import IServiceApi
+from ...infra.template.service_response import ServiceApiResponse
+from ...infra.template.service_api import IServiceApi
 from ...config.exception import *
 import logging
 

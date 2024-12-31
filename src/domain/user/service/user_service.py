@@ -1,15 +1,15 @@
 import logging as log
 from typing import Optional, Dict, Any
 
-from src.app.template.service_response import ServiceApiResponse
+from src.infra.template.service_response import ServiceApiResponse
 from src.config.cache import gw_cache
 from src.config.conf import USER_SERVICE_URL
 from src.config.constant import Language, InterestCategory, USERS
 from src.config.exception import NotFoundException, raise_http_exception
-from src.domain.cache import ICache
 from src.domain.user.model.common_model import InterestListVO, ProfessionListVO
 from src.domain.user.model.user_model import ProfileDTO, ProfileVO
 from src.infra.client.async_service_api_adapter import AsyncServiceApiAdapter
+from src.infra.template.cache import ICache
 
 log.basicConfig(filemode='w', level=log.INFO)
 
