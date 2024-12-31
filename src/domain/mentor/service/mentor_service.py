@@ -63,7 +63,7 @@ class MentorService:
 
 
     async def get_schedules(self, user_id: int, dt_year: int, dt_month: int, query: Optional[Dict] = None) -> MentorScheduleVO:
-        req_url = f'{USER_SERVICE_URL}/v1/{MENTORS}/{user_id}/schedule/{dt_year}/{dt_month}'
+        req_url = f'{USER_SERVICE_URL}/v1/{MENTORS}/{user_id}/schedule/y/{dt_year}/m/{dt_month}'
         res: Optional[ServiceApiResponse] = await self.service_api.get(url=req_url, params=query)
         return MentorScheduleVO(**res.data)
 

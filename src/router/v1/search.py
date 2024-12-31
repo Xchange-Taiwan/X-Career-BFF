@@ -69,7 +69,7 @@ async def get_mentor(
     return res_success(data=None)
 
 
-@router.get('/{user_id}/schedule/{dt_year}/{dt_month}',
+@router.get('/{user_id}/schedule/y/{dt_year}/m/{dt_month}',
             responses=idempotent_response('get_mentor_schedule_list', mentor.MentorScheduleVO))
 async def get_schedules(
         user_id: int = Path(...),
