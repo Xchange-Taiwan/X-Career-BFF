@@ -1,17 +1,14 @@
 from typing import List
-
 from fastapi import (
     APIRouter,
     Path, Body
 )
 from fastapi.encoders import jsonable_encoder
 
-from src.infra.client.async_service_api_adapter import AsyncServiceApiAdapter
 from ..res.response import *
-from ...config.cache import gw_cache
 from ...config.constant import ExperienceCategory, Language
 from ...config.exception import *
-from ...domain.mentor.mentor_service import MentorService
+from ...app._di.injection import _mentor_service
 from ...domain.mentor.model import (
     mentor_model as mentor,
     experience_model as experience,
@@ -27,10 +24,6 @@ router = APIRouter(
     tags=['Mentor'],
     responses={404: {'description': 'Not found'}},
 )
-_mentor_service = MentorService(
-    AsyncServiceApiAdapter(),
-    gw_cache
-)
 
 
 # Resquest obj is used to access router path
@@ -44,7 +37,7 @@ async def upsert_mentor_profile(
     if user_id != body.user_id:
         raise ForbiddenException(msg='user_id not match')
     res: mentor.MentorProfileVO = await _mentor_service.upsert_mentor_profile(body)
-    return res_success(data=jsonable_encoder(res))
+    return res_success(data=res)
 
 
 @router.get('/{user_id}/{language}/profile',
@@ -54,7 +47,8 @@ async def get_mentor_profile(
         user_id: int = Path(...),
         language: Language = Path(...),
 ):
-    return await _mentor_service.get_mentor_profile(user_id, language.value)
+    res = await _mentor_service.get_mentor_profile(user_id, language.value)
+    return res_success(data=jsonable_encoder(res))
 
 
 @router.put('/{user_id}/experiences/{experience_type}',
