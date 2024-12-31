@@ -7,6 +7,11 @@ from src.config.constant import Language, InterestCategory, USERS
 from src.config.exception import NotFoundException, raise_http_exception
 from src.domain.user.model.common_model import InterestListVO, ProfessionListVO
 from src.domain.user.model.user_model import ProfileDTO, ProfileVO
+from src.domain.user.model.reservation_model import (
+    ReservationQueryDTO, 
+    UpdateReservationDTO, 
+    ReservationDTO,
+)
 from src.infra.client.async_service_api_adapter import AsyncServiceApiAdapter
 from src.infra.template.cache import ICache
 
@@ -48,3 +53,18 @@ class UserService:
         except Exception as e:
             log.error(e)
             raise_http_exception(e, 'Internal Server Error')
+
+    async def get_reservation_list(self, user_id: int, query: ReservationQueryDTO) -> Dict:
+        req_url = f"{USER_SERVICE_URL}/v1/{USERS}/{user_id}/reservations"
+        res: Dict = await self.service_api.simple_get(url=req_url, params=query.model_dump())
+        return res
+
+    async def new_booking(self, body: ReservationDTO) -> Dict:
+        req_url = f"{USER_SERVICE_URL}/v1/{USERS}/{body.my_user_id}/reservations"
+        res: Dict = await self.service_api.simple_post(url=req_url, json=body.model_dump())
+        return res
+
+    async def update_reservation_status(self, reservation_id: int, body: UpdateReservationDTO) -> Dict:
+        req_url = f"{USER_SERVICE_URL}/v1/{USERS}/{body.my_user_id}/reservations/{reservation_id}"
+        res: Dict = await self.service_api.simple_put(url=req_url, json=body.model_dump())
+        return res
