@@ -32,8 +32,8 @@ class MentorService:
     async def upsert_mentor_profile(self, data: MentorProfileDTO) -> MentorProfileVO:
         req_url = f"{USER_SERVICE_URL}/v1/{MENTORS}/mentor_profile"
 
-        res: Optional[ServiceApiResponse] = await self.service_api.put(url=req_url, json=data.model_dump())
-        return MentorProfileVO(**res.data)
+        res: Optional[Dict[str, Any]] = await self.service_api.simple_put(url=req_url, json=data.model_dump())
+        return res
 
     async def upsert_experience(self, data: ExperienceDTO, user_id: int, experience_type: str) -> ExperienceVO:
         req_url = f"{USER_SERVICE_URL}/v1/{MENTORS}/{user_id}/experiences/{experience_type}"

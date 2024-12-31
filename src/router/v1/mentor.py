@@ -44,7 +44,7 @@ async def upsert_mentor_profile(
     if user_id != body.user_id:
         raise ForbiddenException(msg='user_id not match')
     res: mentor.MentorProfileVO = await _mentor_service.upsert_mentor_profile(body)
-    return res_success(data=jsonable_encoder(res))
+    return res_success(data=res)
 
 
 @router.get('/{user_id}/{language}/profile',
