@@ -142,7 +142,9 @@ class GlobalObjectStorage:
             if self.get_user_storage_size(user_id) + len(avatar)+len(minor_avatar) > MAX_STORAGE_SIZE:
                 log.error(f'upload_avatar {avatar_name} [file size too large] ')
                 raise HTTPException(status_code=400, detail="File size too large")
-
+            is_delete_avatar_success: bool = await self.delete_avatar(user_id)
+            if not is_delete_avatar_success:
+                raise NotFoundException(msg=f'upload_avatar error, avatar delete fail')
             avatar_dto = \
                 await self.__upload_avatar_and_info(avatar,
                                                     avatar_key,
@@ -187,6 +189,8 @@ class GlobalObjectStorage:
     async def delete_avatar(self, user_id: int) -> bool:
         try:
             profile_vo: ProfileVO = await user_service.get_user_profile(user_id)
+            if profile_vo.avatar is None or profile_vo.avatar == '':
+                return True
             avatar_name: str = profile_vo.avatar.split('/')[-1]
             minor_avatar_name: str = 'minor_' + avatar_name
             delete_tasks = [
@@ -206,6 +210,7 @@ class GlobalObjectStorage:
 
     async def __upload_avatar_and_info(self, avatar: bytes, avatar_key: str, file_name: str, content_type: str,
                                        user_id: int):
+
         # Upload file to S3
         self.s3.Bucket(XC_BUCKET).put_object(
             Key=avatar_key,
@@ -214,7 +219,7 @@ class GlobalObjectStorage:
         )
         avatar_url: str = self.__get_obj_url(file_name, user_id, LOCAL_REGION)
         file_dto = FileInfoDTO(
-            file_name=file_name,
+            file_name=''.join(file_name.split('.')[:-1]),
             file_size=len(avatar),
             content_type=content_type,
             create_user_id=user_id,
