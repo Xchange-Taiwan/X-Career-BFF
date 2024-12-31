@@ -3,8 +3,8 @@ import functools
 from fastapi import status
 from typing import Dict, Optional
 import httpx
-from ...app.template.service_response import ServiceApiResponse
-from ...app.template.service_api import IServiceApi
+from ...infra.template.service_response import ServiceApiResponse
+from ...infra.template.service_api import IServiceApi
 from ...config.exception import *
 import logging
 
@@ -23,10 +23,10 @@ def check_response_code(method: str, expected_code: int = 200):
         async def wrapper_check_response_code(*args, **kwargs):
             # request params
             function_name: str = func.__name__
-            url = kwargs.get('url', None)
-            params = kwargs.get('params', None)
-            body = kwargs.get('json', None)
-            headers = kwargs.get('headers', None)
+            url = kwargs.get('url', args[1] if len(args) > 1 else None)
+            params = kwargs.get('params', args[2] if len(args) > 2 else None)
+            body = kwargs.get('json', args[2] if len(args) > 2 else None)
+            headers = kwargs.get('headers', args[3] if len(args) > 3 else None)
             
             # response params
             status_code: int = 0
@@ -45,12 +45,14 @@ def check_response_code(method: str, expected_code: int = 200):
             data = res_body.get('data', None)
 
             if status_code == status.HTTP_422_UNPROCESSABLE_ENTITY:
-                data = res_body.get('detail', [])
                 msg = 'client input error (422: unprocessable client exception)'
+                data = res_body.get('detail', [])
 
-            log.error(f"service request fail, [%s]: %s, body:%s, params:%s, headers:%s, \
-                        status_code:%s, err_msg: %s \n response:%s \n  data/422_detail:%s",
-                method, url, body, params, headers, status_code, msg, res_body, data)
+            log.error(
+                f'service request fail,\n [%s]: %s;\n BODY: %s;\n PARAMS: %s;\n HEADERS: %s;\n \
+                STATUS_CODE: %s;\n RESP_BODY: %s;\n ERR_MSG: %s;\n  DATA/422_DETAIL: %s\n',
+                method, url, body, params, headers, 
+                status_code, res_body, msg, data)
             raise_http_exception_by_status_code(status_code, msg, data)
 
 

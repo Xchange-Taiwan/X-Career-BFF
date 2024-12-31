@@ -1,15 +1,14 @@
 import logging as log
-from typing import Optional, Dict
+from typing import Optional, Dict, Any
 
-from src.app.template.service_response import ServiceApiResponse
-from src.config.cache import gw_cache
+from src.infra.template.service_response import ServiceApiResponse
 from src.config.conf import USER_SERVICE_URL
 from src.config.constant import Language, InterestCategory, USERS
-from src.config.exception import raise_http_exception
-from src.domain.cache import ICache
+from src.config.exception import NotFoundException, raise_http_exception
 from src.domain.user.model.common_model import InterestListVO, ProfessionListVO
 from src.domain.user.model.user_model import ProfileDTO, ProfileVO
 from src.infra.client.async_service_api_adapter import AsyncServiceApiAdapter
+from src.infra.template.cache import ICache
 
 log.basicConfig(filemode='w', level=log.INFO)
 
@@ -22,14 +21,15 @@ class UserService:
 
     async def get_user_profile(self, user_id: int, language: str = 'zh_TW') -> ProfileVO:
         req_url = f"{USER_SERVICE_URL}/v1/{USERS}/{user_id}/{language}/profile"
-        res: Optional[ServiceApiResponse] = await self.service_api.get(url=req_url)
-        return ProfileVO(**res.data)
+        res: Optional[Dict[str, Any]] = await self.service_api.simple_get(url=req_url)
+        if not res:
+            raise NotFoundException(msg='Profile not found')
+        return res
 
-    async def upsert_user_profile(self, user_id: int, data: ProfileDTO) -> ProfileVO:
-        req_url = f"{USER_SERVICE_URL}/v1/{USERS}/{user_id}/profile"
-
-        res: Optional[ServiceApiResponse] = await self.service_api.put(url=req_url, json=data.model_dump())
-        return ProfileVO(**res.data)
+    async def upsert_user_profile(self, data: ProfileDTO) -> Optional[Dict[str, Any]]:
+        req_url = f"{USER_SERVICE_URL}/v1/{USERS}/profile"
+        res: Optional[Dict[str, Any]] = await self.service_api.simple_put(url=req_url, json=data.model_dump())
+        return res
 
     async def get_interests(self, language: Language, interest: InterestCategory) -> Dict:
         try:
@@ -48,6 +48,3 @@ class UserService:
         except Exception as e:
             log.error(e)
             raise_http_exception(e, 'Internal Server Error')
-
-
-user_service: UserService = UserService(AsyncServiceApiAdapter(), gw_cache)

@@ -13,16 +13,11 @@ from ..req.auth_validation import *
 from ..req.authorization import *
 from ..res.response import *
 from ...config.exception import *
-from ...config.service_client import service_client
-from ...config.cache import gw_cache
+from ...app._di.injection import _auth_service
 import logging as log
 
 log.basicConfig(filemode='w', level=log.INFO)
 
-_auth_service = AuthService(
-    service_client, 
-    gw_cache,
-)
 
 router = APIRouter(
     prefix='/auth',

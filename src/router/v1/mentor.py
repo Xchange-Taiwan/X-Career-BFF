@@ -6,11 +6,10 @@ from fastapi import (
 )
 from fastapi.encoders import jsonable_encoder
 
-from ...app.template.service_response import ServiceApiResponse
 from ..res.response import *
 from ...config.constant import ExperienceCategory, Language
 from ...config.exception import *
-from ...domain.mentor.mentor_service import _mentor_service
+from ...app._di.injection import _mentor_service
 from ...domain.mentor.model import (
     mentor_model as mentor,
     experience_model as experience,
@@ -38,8 +37,8 @@ async def upsert_mentor_profile(
     # user_id 在此 API 可省略，但因為給前端的 API swagger doc 已固定，所以保留
     if user_id != body.user_id:
         raise ForbiddenException(msg='user_id not match')
-    res: mentor.MentorProfileVO = await _mentor_service.upsert_mentor_profile(body)
-    return res_success(data=jsonable_encoder(res))
+    res = await _mentor_service.upsert_mentor_profile(body)
+    return res_success(data=res)
 
 
 @router.get('/{user_id}/{language}/profile',
@@ -49,7 +48,8 @@ async def get_mentor_profile(
         user_id: int = Path(...),
         language: Language = Path(...),
 ):
-    return await _mentor_service.get_mentor_profile(user_id, language.value)
+    res = await _mentor_service.get_mentor_profile(user_id, language.value)
+    return res_success(data=jsonable_encoder(res))
 
 
 @router.put('/{user_id}/experiences/{experience_type}',
