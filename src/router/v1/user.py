@@ -20,7 +20,7 @@ from ...config.exception import *
 import logging as log
 
 from ...domain.user.model.common_model import InterestListVO
-from ...domain.user.service.user_service import user_service, UserService
+from ...app._di.injection import _user_service
 
 log.basicConfig(filemode='w', level=log.INFO)
 
@@ -40,7 +40,7 @@ async def upsert_profile(
     # user_id 在此 API 可省略，但因為給前端的 API swagger doc 已固定，所以保留
     if user_id != body.user_id:
         raise ForbiddenException(msg='user_id not match')
-    data: user.ProfileVO = await user_service.upsert_user_profile(body)
+    data: user.ProfileVO = await _user_service.upsert_user_profile(body)
     return res_success(data=data)
 
 
@@ -50,7 +50,7 @@ async def get_profile(
         user_id: int = Path(...),
         language: Language = Path(...),
 ):
-    data: user.ProfileVO = await user_service.get_user_profile(user_id, language.value)
+    data: user.ProfileVO = await _user_service.get_user_profile(user_id, language.value)
     return res_success(data=jsonable_encoder(data))
 
 
@@ -60,7 +60,7 @@ async def get_interests(
         language: Language = Path(...),
         interest: InterestCategory = Query(...),
 ):
-    data: Dict = await user_service.get_interests(language, interest)
+    data: Dict = await _user_service.get_interests(language, interest)
     return res_success(data=jsonable_encoder(data))
 
 
@@ -69,7 +69,7 @@ async def get_interests(
 async def get_industries(
         language: Language = Path(...)
 ):
-    data: Dict = await user_service.get_industries(language)
+    data: Dict = await _user_service.get_industries(language)
     return res_success(data=jsonable_encoder(data))
 
 

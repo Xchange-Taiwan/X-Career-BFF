@@ -1,7 +1,6 @@
 import logging as log
 from typing import Optional
 
-from src.config.cache import gw_cache
 from src.config.conf import USER_SERVICE_URL
 from src.config.constant import FILE
 from src.domain.file.model.file_info_model import FileInfoVO, FileInfoDTO, FileInfoListVO
@@ -42,9 +41,3 @@ class FileService:
         req_url = f"{USER_SERVICE_URL}/v1/{FILE}/{user_id}/{file_id}"
         res: Optional[ServiceApiResponse] = await self.service_api.delete(url=req_url)
         return res.data
-
-
-file_service_singleton = FileService(
-    AsyncServiceApiAdapter(),
-    gw_cache
-)

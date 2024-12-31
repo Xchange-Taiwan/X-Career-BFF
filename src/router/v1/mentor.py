@@ -1,17 +1,14 @@
 from typing import List
-
 from fastapi import (
     APIRouter,
     Path, Body
 )
 from fastapi.encoders import jsonable_encoder
 
-from src.infra.client.async_service_api_adapter import AsyncServiceApiAdapter
 from ..res.response import *
-from ...config.cache import gw_cache
 from ...config.constant import ExperienceCategory, Language
 from ...config.exception import *
-from ...domain.mentor.mentor_service import MentorService
+from ...app._di.injection import _mentor_service
 from ...domain.mentor.model import (
     mentor_model as mentor,
     experience_model as experience,
@@ -26,10 +23,6 @@ router = APIRouter(
     prefix='/mentors',
     tags=['Mentor'],
     responses={404: {'description': 'Not found'}},
-)
-_mentor_service = MentorService(
-    AsyncServiceApiAdapter(),
-    gw_cache
 )
 
 

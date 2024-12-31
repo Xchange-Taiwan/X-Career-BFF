@@ -2,7 +2,6 @@ import logging as log
 from typing import Optional, Dict, Any
 
 from src.infra.template.service_response import ServiceApiResponse
-from src.config.cache import gw_cache
 from src.config.conf import USER_SERVICE_URL
 from src.config.constant import Language, InterestCategory, USERS
 from src.config.exception import NotFoundException, raise_http_exception
@@ -49,6 +48,3 @@ class UserService:
         except Exception as e:
             log.error(e)
             raise_http_exception(e, 'Internal Server Error')
-
-
-user_service: UserService = UserService(AsyncServiceApiAdapter(), gw_cache)
