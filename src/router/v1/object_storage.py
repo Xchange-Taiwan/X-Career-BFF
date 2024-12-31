@@ -5,12 +5,12 @@ from fastapi.params import Depends
 
 from src.config.exception import ForbiddenException
 from src.domain.file.model.file_info_model import FileInfoListVO
-from src.domain.file.service.file_service import file_service_singleton
+from src.app._di.injection import _file_service
 from src.infra.storage.global_object_storage import GlobalObjectStorage
 from src.router.res.response import idempotent_response, res_success
 
 _s3 = boto3.resource('s3')
-_obj_store = GlobalObjectStorage(_s3, file_service_singleton)
+_obj_store = GlobalObjectStorage(_s3, _file_service)
 
 router = APIRouter(
     prefix='/storage',

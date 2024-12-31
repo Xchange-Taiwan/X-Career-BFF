@@ -10,6 +10,10 @@ from ...domain.mentor.model import (
 from ...domain.search.model import (
     search_model as search,
 )
+from ...app._di.injection import (
+    _mentor_service,
+    _search_service,
+)
 from ..res.response import *
 from ...config.conf import *
 from ...config.constant import *

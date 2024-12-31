@@ -1,15 +1,15 @@
 import logging as log
-from typing import Optional, Dict
+from typing import Optional, Dict, Any
 
-from src.domain.cache import ICache
-from .model.experience_model import ExperienceVO, ExperienceDTO
-from .model.mentor_model import MentorProfileDTO, MentorProfileVO
-from ..user.model.common_model import ProfessionListVO
-from ...app.template.service_response import ServiceApiResponse
-from ...config.conf import USER_SERVICE_URL
-from ...config.constant import MENTORS, ExperienceCategory, Language
-from ...config.exception import NotFoundException, raise_http_exception
-from ...infra.client.async_service_api_adapter import AsyncServiceApiAdapter
+from src.infra.template.cache import ICache
+from ..model.experience_model import ExperienceVO, ExperienceDTO
+from ..model.mentor_model import MentorProfileDTO, MentorProfileVO
+from ...user.model.common_model import ProfessionListVO
+from ....config.conf import USER_SERVICE_URL
+from ....config.constant import MENTORS, ExperienceCategory, Language
+from ....config.exception import NotFoundException, raise_http_exception
+from ....infra.template.service_response import ServiceApiResponse
+from ....infra.client.async_service_api_adapter import AsyncServiceApiAdapter
 
 log.basicConfig(filemode='w', level=log.INFO)
 
@@ -24,16 +24,16 @@ class MentorService:
 
         req_url = f"{USER_SERVICE_URL}/v1/{MENTORS}/{user_id}/{language}/mentor_profile"
 
-        res: Optional[ServiceApiResponse] = await self.service_api.get(url=req_url)
+        res: Optional[Dict[str, Any]] = await self.service_api.simple_get(url=req_url)
         if not res:
             raise NotFoundException(msg='Mentor profile not found')
-        return MentorProfileVO(**res.data)
+        return res
 
     async def upsert_mentor_profile(self, data: MentorProfileDTO) -> MentorProfileVO:
         req_url = f"{USER_SERVICE_URL}/v1/{MENTORS}/mentor_profile"
 
-        res: Optional[ServiceApiResponse] = await self.service_api.put(url=req_url, json=data.model_dump())
-        return MentorProfileVO(**res.data)
+        res: Optional[Dict[str, Any]] = await self.service_api.simple_put(url=req_url, json=data.model_dump())
+        return res
 
     async def upsert_experience(self, data: ExperienceDTO, user_id: int, experience_type: str) -> ExperienceVO:
         req_url = f"{USER_SERVICE_URL}/v1/{MENTORS}/{user_id}/experiences/{experience_type}"
