@@ -5,7 +5,7 @@ from pydantic import HttpUrl, BaseModel, UUID4
 
 
 class FileInfoDTO(BaseModel):
-    file_id: Optional[str] # uuid
+    file_id: Optional[str] = None# uuid
     file_name: str
     file_size: int
     create_user_id: int
