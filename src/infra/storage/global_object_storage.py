@@ -197,7 +197,7 @@ class GlobalObjectStorage:
 
             profile_dto = ProfileDTO.from_vo(profile_vo)
             profile_dto.avatar = ''
-            await user_service.upsert_user_profile(user_id, profile_dto)
+            await user_service.upsert_user_profile(data=profile_dto)
             return True
         except (NoCredentialsError, PartialCredentialsError) as e:
             raise HTTPException(status_code=400, detail="AWS credentials not found or incomplete")

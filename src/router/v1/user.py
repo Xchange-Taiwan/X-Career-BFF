@@ -37,8 +37,10 @@ async def upsert_profile(
         user_id: int = Path(...),
         body: user.ProfileDTO = Body(...),
 ):
-    body.user_id = user_id
-    data: user.ProfileVO = await user_service.upsert_user_profile(user_id, body)
+    # user_id 在此 API 可省略，但因為給前端的 API swagger doc 已固定，所以保留
+    if user_id != body.user_id:
+        raise ForbiddenException(msg='user_id not match')
+    data: user.ProfileVO = await user_service.upsert_user_profile(body)
     return res_success(data=jsonable_encoder(data))
 
 
