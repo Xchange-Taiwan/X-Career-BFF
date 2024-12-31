@@ -12,8 +12,7 @@ from ...config.conf import XC_BUCKET, LOCAL_REGION, MAX_STORAGE_SIZE, MAX_WIDTH,
 from ...config.exception import ServerException, NotFoundException
 from ...domain.file.service.file_service import FileService
 from ...domain.user.model.user_model import ProfileVO, ProfileDTO
-from ...domain.user.service import user_service
-from ...domain.user.service.user_service import user_service
+from ...app._di.injection import _user_service
 
 log.basicConfig(filemode='w', level=log.INFO)
 
@@ -183,7 +182,7 @@ class GlobalObjectStorage:
 
     async def delete_avatar(self, user_id: int) -> bool:
         try:
-            profile_vo: ProfileVO = await user_service.get_user_profile(user_id)
+            profile_vo: ProfileVO = await _user_service.get_user_profile(user_id)
             avatar_name: str = profile_vo.avatar.split('/')[-1]
             minor_avatar_name: str = 'minor_' + avatar_name
             delete_tasks = [
@@ -194,7 +193,7 @@ class GlobalObjectStorage:
 
             profile_dto = ProfileDTO.from_vo(profile_vo)
             profile_dto.avatar = ''
-            await user_service.upsert_user_profile(data=profile_dto)
+            await _user_service.upsert_user_profile(data=profile_dto)
             return True
         except (NoCredentialsError, PartialCredentialsError) as e:
             raise HTTPException(status_code=400, detail="AWS credentials not found or incomplete")

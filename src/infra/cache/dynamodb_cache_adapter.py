@@ -3,7 +3,7 @@ import time
 import json
 from datetime import datetime, timedelta
 from typing import Any, List, Set, Optional
-from ...domain.cache import ICache
+from ..template.cache import ICache
 from ...config.dynamodb import dynamodb
 from ...config.conf import TABLE_CACHE
 from ...config.exception import ServerException

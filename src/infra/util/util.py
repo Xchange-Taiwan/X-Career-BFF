@@ -4,7 +4,7 @@ from typing import Dict
 
 from starlette import status
 
-from ...domain.cache import ICache
+from ..template.cache import ICache
 from ...config.constant import SERIAL_KEY
 from ...config.exception import ServerException, ClientException, UnauthorizedException, ForbiddenException, \
     NotFoundException, NotAcceptableException
