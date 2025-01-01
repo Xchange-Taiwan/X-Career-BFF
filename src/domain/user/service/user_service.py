@@ -1,5 +1,6 @@
 import logging as log
 from typing import Optional, Dict, Any
+from fastapi.encoders import jsonable_encoder
 
 from src.infra.template.service_response import ServiceApiResponse
 from src.config.conf import USER_SERVICE_URL
@@ -61,10 +62,12 @@ class UserService:
 
     async def new_booking(self, body: ReservationDTO) -> Dict:
         req_url = f"{USER_SERVICE_URL}/v1/{USERS}/{body.my_user_id}/reservations"
-        res: Dict = await self.service_api.simple_post(url=req_url, json=body.model_dump())
+        payload = jsonable_encoder(body)
+        res: Dict = await self.service_api.simple_post(url=req_url, json=payload)
         return res
 
     async def update_reservation_status(self, reservation_id: int, body: UpdateReservationDTO) -> Dict:
         req_url = f"{USER_SERVICE_URL}/v1/{USERS}/{body.my_user_id}/reservations/{reservation_id}"
-        res: Dict = await self.service_api.simple_put(url=req_url, json=body.model_dump())
+        payload = jsonable_encoder(body)
+        res: Dict = await self.service_api.simple_put(url=req_url, json=payload)
         return res

@@ -79,6 +79,8 @@ async def reservation_list(
         user_id: int = Path(...),
         query: reservation.ReservationQueryDTO = Query(...),
 ):
+    query.batch = query.batch or 1
+    query.next_dtend = query.next_dtend or 0
     res: Dict = await _user_service.get_reservation_list(user_id, query)
     return res_success(data=res)
 
