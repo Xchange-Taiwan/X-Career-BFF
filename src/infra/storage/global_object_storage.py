@@ -139,8 +139,11 @@ class GlobalObjectStorage:
             minor_avatar_key = self.__get_obj_key(minor_avatar_name, user_id)
 
             if self.get_user_storage_size(user_id) + len(avatar)+len(minor_avatar) > MAX_STORAGE_SIZE:
+                log.error(f'upload_avatar {avatar_name} [file size too large] ')
                 raise HTTPException(status_code=400, detail="File size too large")
-
+            is_delete_avatar_success: bool = await self.delete_avatar(user_id)
+            if not is_delete_avatar_success:
+                raise NotFoundException(msg=f'upload_avatar error, avatar delete fail')
             avatar_dto = \
                 await self.__upload_avatar_and_info(avatar,
                                                     avatar_key,
@@ -154,15 +157,17 @@ class GlobalObjectStorage:
                                                     content_type,
                                                     user_id)
 
-            res = await asyncio.gather(avatar_dto, minor_avatar_dto)
+            res = [avatar_dto, minor_avatar_dto]
             # Return file info
             res = list(res)
             res.sort(key=lambda x: x.file_size)
             return FileInfoListVO(file_info_vo_list=res)
 
         except (NoCredentialsError, PartialCredentialsError) as e:
+            log.error(f'upload_avatar [AWS credentials error] {e.__str__()}')
             raise HTTPException(status_code=400, detail="AWS credentials not found or incomplete")
         except Exception as e:
+            log.error(f'upload_avatar [An error occurred during file upload] {e.__str__()}')
             raise HTTPException(status_code=500, detail="An error occurred during file upload_avatar")
 
     async def delete_file(self, user_id: int, file_name: str) -> bool:
@@ -202,6 +207,7 @@ class GlobalObjectStorage:
 
     async def __upload_avatar_and_info(self, avatar: bytes, avatar_key: str, file_name: str, content_type: str,
                                        user_id: int):
+
         # Upload file to S3
         self.s3.Bucket(XC_BUCKET).put_object(
             Key=avatar_key,
@@ -210,13 +216,13 @@ class GlobalObjectStorage:
         )
         avatar_url: str = self.__get_obj_url(file_name, user_id, LOCAL_REGION)
         file_dto = FileInfoDTO(
-            file_name=file_name,
+            file_name=''.join(file_name.split('.')[:-1]),
             file_size=len(avatar),
             content_type=content_type,
             create_user_id=user_id,
             url=avatar_url
         )
-        avatar_dto = self.file_service.create_file_info(file_dto)
+        avatar_dto = await self.file_service.create_file_info(file_dto)
         return avatar_dto
 
     def __get_obj_key(self, file_name: str, user_id: int) -> str:
@@ -253,9 +259,6 @@ class GlobalObjectStorage:
             # Iterate over objects filtered by the prefix
             for obj in bucket.objects.filter(Prefix=prefix):
                 total_size += obj.size
-
-            if 0 == total_size:
-                raise HTTPException(status_code=404, detail="No files found under the specified directory.")
 
             return total_size
 
