@@ -6,7 +6,7 @@ from ..model.mentor_model import (
     MentorProfileDTO, 
     MentorProfileVO,
     MentorScheduleVO,
-    TimeSlotDTO,
+    MentorScheduleDTO,
 )
 from ...user.model.common_model import ProfessionListVO
 from ....config.conf import USER_SERVICE_URL
@@ -68,9 +68,13 @@ class MentorService:
         return MentorScheduleVO(**res.data)
 
 
-    async def save_schedules(self, user_id: int, data: List[TimeSlotDTO]) -> MentorScheduleVO:
+    async def save_schedules(self, user_id: int, data: MentorScheduleDTO) -> MentorScheduleVO:
         req_url = f'{USER_SERVICE_URL}/v1/{MENTORS}/{user_id}/schedule'
-        req_json = [d.model_dump() for d in data]
+        timeslots = [d.model_dump() for d in data.timeslots]
+        req_json = {
+            "until": data.until,
+            "timeslots": timeslots,
+        }
         res: Optional[ServiceApiResponse] = await self.service_api.put(url=req_url, json=req_json)
         return MentorScheduleVO(**res.data)
 
