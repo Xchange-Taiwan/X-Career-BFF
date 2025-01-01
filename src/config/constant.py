@@ -57,11 +57,6 @@ class Sorting(Enum):
     DESC = -1
 
 
-class SchedulesType(Enum):
-    ALLOW = "ALLOW"
-    FORBIDDEN = "FORBIDDEN"
-
-
 # serial_key is a field of the collection in the user's cache
 SERIAL_KEY = 'created_at'
 
@@ -75,8 +70,3 @@ MENTORS = 'mentors'
 FILE = 'file'
 USERS = 'users'
 PROFILE = 'profile'
-
-
-# schedule event types: AVAILABLE, UNAVAILABLE
-AVAILABLE_EVT = 'AVAILABLE'
-UNAVAILABLE_EVT = 'UNAVAILABLE'
