@@ -1,3 +1,4 @@
+import json
 import functools
 from fastapi import status
 from typing import Dict, Optional
@@ -43,10 +44,17 @@ def check_response_code(method: str, expected_code: int = 200):
             msg = res_body.get('msg', None)
             data = res_body.get('data', None)
 
+            if status_code == status.HTTP_422_UNPROCESSABLE_ENTITY:
+                msg = 'client input error (422: unprocessable client exception)'
+                data = res_body.get('detail', [])
+
             log.error(
-                f"service request fail, \n[%s]: %s, \nbody/params:%s, \nheaders:%s, \nstatus_code:%s, \nerr_msg: %s \n response:%s",
-                method, url, body or params, headers, status_code, msg, res_body)
+                f'service request fail,\n [%s]: %s;\n BODY: %s;\n PARAMS: %s;\n HEADERS: %s;\n \
+                STATUS_CODE: %s;\n RESP_BODY: %s;\n ERR_MSG: %s;\n  DATA/422_DETAIL: %s\n',
+                method, url, body, params, headers, 
+                status_code, res_body, msg, data)
             raise_http_exception_by_status_code(status_code, msg, data)
+
 
         return wrapper_check_response_code
 
@@ -74,9 +82,11 @@ class AsyncServiceApiAdapter(IServiceApi):
                 result = ServiceApiResponse.parse(response)
 
         except Exception as e:
+            err_msg = getattr(e, 'msg', str(e))
+            err_data = getattr(e, 'data', None)
             log.error(f"simple_get request error, url:%s, params:%s, headers:%s, resp:%s, err:%s",
-                      url, params, headers, response, e.__str__())
-            raise ServerException(msg='get_connection_error')
+                      url, params, headers, response, err_msg)
+            raise_http_exception(e=e, msg=err_msg, data=err_data)
 
         return result
 
@@ -99,9 +109,11 @@ class AsyncServiceApiAdapter(IServiceApi):
                 result = ServiceApiResponse.parse(response)
 
         except Exception as e:
+            err_msg = getattr(e, 'msg', str(e))
+            err_data = getattr(e, 'data', None)
             log.error(f"simple_post request error, url:%s, json:%s, headers:%s, resp:%s, err:%s",
-                      url, json, headers, response, e.__str__())
-            raise ServerException(msg='post_connection_error')
+                      url, json, headers, response, err_msg)
+            raise_http_exception(e=e, msg=err_msg, data=err_data)
 
         return result
 
@@ -124,9 +136,11 @@ class AsyncServiceApiAdapter(IServiceApi):
                 result = ServiceApiResponse.parse(response)
 
         except Exception as e:
+            err_msg = getattr(e, 'msg', str(e))
+            err_data = getattr(e, 'data', None)
             log.error(f"simple_put request error, url:%s, json:%s, headers:%s, resp:%s, err:%s",
-                      url, json, headers, response, e.__str__())
-            raise ServerException(msg='put_connection_error')
+                      url, json, headers, response, err_msg)
+            raise_http_exception(e=e, msg=err_msg, data=err_data)
 
         return result
 
@@ -149,8 +163,10 @@ class AsyncServiceApiAdapter(IServiceApi):
                 result = ServiceApiResponse.parse(response)
 
         except Exception as e:
+            err_msg = getattr(e, 'msg', str(e))
+            err_data = getattr(e, 'data', None)
             log.error(f"simple_delete request error, url:%s, params:%s, headers:%s, resp:%s, err:%s",
-                      url, params, headers, response, e.__str__())
-            raise ServerException(msg='delete_connection_error')
+                      url, params, headers, response, err_msg)
+            raise_http_exception(e=e, msg=err_msg, data=err_data)
 
         return result
