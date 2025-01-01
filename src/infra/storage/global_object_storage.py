@@ -2,6 +2,7 @@ import asyncio
 import io
 import json
 import logging as log
+from typing import Optional, Dict, Any
 
 from PIL import Image
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError, ClientError
@@ -159,7 +160,6 @@ class GlobalObjectStorage:
 
             res = [avatar_dto, minor_avatar_dto]
             # Return file info
-            res = list(res)
             res.sort(key=lambda x: x.file_size)
             return FileInfoListVO(file_info_vo_list=res)
 
@@ -187,9 +187,12 @@ class GlobalObjectStorage:
 
     async def delete_avatar(self, user_id: int) -> bool:
         try:
-            profile_vo: ProfileVO = await _user_service.get_user_profile(user_id)
-            avatar_name: str = profile_vo.avatar.split('/')[-1]
+            profile_vo: Optional[Dict[str, Any]] = await _user_service.get_user_profile(user_id)
+            if not profile_vo.get('avatar') :
+                return True
+            avatar_name: str = profile_vo.get('avatar').split('/')[-1]
             minor_avatar_name: str = 'minor_' + avatar_name
+
             delete_tasks = [
                 self.delete_file(user_id, avatar_name),
                 self.delete_file(user_id, minor_avatar_name)
