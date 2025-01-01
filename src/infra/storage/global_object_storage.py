@@ -235,24 +235,28 @@ class GlobalObjectStorage:
         return f'https://{XC_BUCKET}.s3.{region}.amazonaws.com/{self.__get_obj_key(file_name, user_id)}'
 
     def __get_resized_obj(self, content: bytes, content_type: str = 'jpeg') -> bytes:
-        image = Image.open(io.BytesIO(content))
+        try:
+            image = Image.open(io.BytesIO(content))
 
-        # Resize the image to the specified dimensions
-        width, height = image.size
-        if width > MAX_WIDTH or height > MAX_HEIGHT:
-            new_width, new_height = MAX_WIDTH, MAX_HEIGHT
-            if width > height:
-                new_height = int(height * MAX_WIDTH / width)
-            else:
-                new_width = int(width * MAX_HEIGHT / height)
-            image = image.resize((new_width, new_height))
+            # Resize the image to the specified dimensions
+            width, height = image.size
+            if width > MAX_WIDTH or height > MAX_HEIGHT:
+                new_width, new_height = MAX_WIDTH, MAX_HEIGHT
+                if width > height:
+                    new_height = int(height * MAX_WIDTH / width)
+                else:
+                    new_width = int(width * MAX_HEIGHT / height)
+                image = image.resize((new_width, new_height))
 
-        # Save the resized image to a BytesIO buffer
-        buffer = io.BytesIO()
-        image.save(buffer, format=content_type.lower())
-        buffer.seek(0)
+            # Save the resized image to a BytesIO buffer
+            buffer = io.BytesIO()
+            image.save(buffer, format=content_type)
+            buffer.seek(0)
 
-        return buffer.getvalue()
+            return buffer.getvalue()
+        except Exception as e:
+            log.error(f'__get_resized_obj [resize image error] {e.__str__()}')
+            raise ValueError(f"Invalid image content: {e}")
 
     def __get_total_file_size(self, bucket_name, prefix):
         try:
