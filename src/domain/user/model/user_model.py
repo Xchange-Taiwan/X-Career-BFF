@@ -20,7 +20,7 @@ class ProfileVO(BaseModel):
     interested_positions: Optional[InterestListVO] = None
     skills: Optional[InterestListVO] = None
     topics: Optional[InterestListVO] = None
-    industries: Optional[ProfessionListVO] = None
+    industry: Optional[ProfessionVO] = None
     on_boarding: Optional[bool] = False
     language: Optional[str] = 'zh_TW'
 
@@ -39,7 +39,7 @@ class ProfileDTO(BaseModel):
     interested_positions: Optional[List[Union[str]]] = []
     skills: Optional[List[Union[str]]] = []
     topics: Optional[List[Union[str]]] = []
-    industries: Optional[List[str]] = []
+    industry: Optional[str] = ''
     language: Optional[str] = 'zh_TW'
 
     @staticmethod
