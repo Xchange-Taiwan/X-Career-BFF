@@ -43,7 +43,7 @@ class ProfileDTO(BaseModel):
     language: Optional[str] = 'zh_TW'
 
     @staticmethod
-    def from_vo(vo: ProfileVO) -> "ProfileDTO":
+    def from_vo(vo: Dict) -> "ProfileDTO":
         """
         Converts a ProfileVO object to a ProfileDTO object.
 
