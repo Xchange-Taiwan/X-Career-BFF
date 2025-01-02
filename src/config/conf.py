@@ -6,6 +6,7 @@ STAGE = os.getenv('STAGE', 'local')
 TESTING = os.getenv('TESTING', 'local')
 
 XC_BUCKET = os.getenv('XC_BUCKET', 'x-career-user-dev-serverlessdeploymentbucket-bmz2uc2exezm')
+XC_USER_BUCKET = os.getenv('XC_USER_BUCK', 'x-career-multimedia')
 
 BATCH = int(os.getenv('BATCH', '10'))
 
@@ -48,6 +49,6 @@ USER_SERVICE_URL = os.getenv('USER_SERVICE_URL', 'http://127.0.0.1:8010/user-ser
 SEARCH_SERVICE_URL = os.getenv('SEARCH_SERVICE_URL', 'http://127.0.0.1:8012/search-service/api')
 
 # storage
-MAX_WIDTH = os.getenv('MAX_WIDTH', 300)
-MAX_HEIGHT = os.getenv('MAX_HEIGHT', 300)
+MAX_WIDTH = int(os.getenv('MAX_WIDTH', 300))
+MAX_HEIGHT = int(os.getenv('MAX_HEIGHT', 300))
 MAX_STORAGE_SIZE = int(os.getenv('MAX_STORAGE_SIZE', 15 * 1024 * 1024))  # give 15 MB to users

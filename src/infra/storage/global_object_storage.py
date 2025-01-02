@@ -2,13 +2,14 @@ import asyncio
 import io
 import json
 import logging as log
+from typing import Optional, Dict, Any
 
 from PIL import Image
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError, ClientError
 from fastapi import UploadFile, File, HTTPException
 
 from src.domain.file.model.file_info_model import FileInfoDTO, FileInfoListVO
-from ...config.conf import XC_BUCKET, LOCAL_REGION, MAX_STORAGE_SIZE, MAX_WIDTH, MAX_HEIGHT
+from ...config.conf import XC_BUCKET, LOCAL_REGION, MAX_STORAGE_SIZE, MAX_WIDTH, MAX_HEIGHT, XC_USER_BUCKET
 from ...config.exception import ServerException, NotFoundException
 from ...domain.file.service.file_service import FileService
 from ...domain.user.model.user_model import ProfileVO, ProfileDTO
@@ -159,7 +160,6 @@ class GlobalObjectStorage:
 
             res = [avatar_dto, minor_avatar_dto]
             # Return file info
-            res = list(res)
             res.sort(key=lambda x: x.file_size)
             return FileInfoListVO(file_info_vo_list=res)
 
@@ -172,7 +172,7 @@ class GlobalObjectStorage:
 
     async def delete_file(self, user_id: int, file_name: str) -> bool:
         try:
-            self.s3.Object(XC_BUCKET, self.__get_obj_key(file_name, user_id)).delete()
+            self.s3.Object(XC_USER_BUCKET, self.__get_obj_key(file_name, user_id)).delete()
             res = await self.file_service.delete_file_info(user_id, file_name)
             if not res:
                 raise NotFoundException(msg=f'file:{file_name} not found in db')
@@ -187,9 +187,12 @@ class GlobalObjectStorage:
 
     async def delete_avatar(self, user_id: int) -> bool:
         try:
-            profile_vo: ProfileVO = await _user_service.get_user_profile(user_id)
-            avatar_name: str = profile_vo.avatar.split('/')[-1]
+            profile_vo: Optional[Dict[str, Any]] = await _user_service.get_user_profile(user_id)
+            if not profile_vo.get('avatar') :
+                return True
+            avatar_name: str = profile_vo.get('avatar').split('/')[-1]
             minor_avatar_name: str = 'minor_' + avatar_name
+
             delete_tasks = [
                 self.delete_file(user_id, avatar_name),
                 self.delete_file(user_id, minor_avatar_name)
@@ -209,7 +212,7 @@ class GlobalObjectStorage:
                                        user_id: int):
 
         # Upload file to S3
-        self.s3.Bucket(XC_BUCKET).put_object(
+        self.s3.Bucket(XC_USER_BUCKET).put_object(
             Key=avatar_key,
             Body=avatar,
             ContentType=content_type
@@ -229,27 +232,31 @@ class GlobalObjectStorage:
         return 'files/' + str(user_id) + '/' + file_name
 
     def __get_obj_url(self, file_name: str, user_id: int, region: str) -> str:
-        return f'https://{XC_BUCKET}.s3.{region}.amazonaws.com/{self.__get_obj_key(file_name, user_id)}'
+        return f'https://{XC_USER_BUCKET}.s3.{region}.amazonaws.com/{self.__get_obj_key(file_name, user_id)}'
 
     def __get_resized_obj(self, content: bytes, content_type: str = 'jpeg') -> bytes:
-        image = Image.open(io.BytesIO(content))
+        try:
+            image = Image.open(io.BytesIO(content))
 
-        # Resize the image to the specified dimensions
-        width, height = image.size
-        if width > MAX_WIDTH or height > MAX_HEIGHT:
-            new_width, new_height = MAX_WIDTH, MAX_HEIGHT
-            if width > height:
-                new_height = int(height * MAX_WIDTH / width)
-            else:
-                new_width = int(width * MAX_HEIGHT / height)
-            image = image.resize((new_width, new_height))
+            # Resize the image to the specified dimensions
+            width, height = image.size
+            if width > MAX_WIDTH or height > MAX_HEIGHT:
+                new_width, new_height = MAX_WIDTH, MAX_HEIGHT
+                if width > height:
+                    new_height = int(height * MAX_WIDTH / width)
+                else:
+                    new_width = int(width * MAX_HEIGHT / height)
+                image = image.resize((new_width, new_height))
 
-        # Save the resized image to a BytesIO buffer
-        buffer = io.BytesIO()
-        image.save(buffer, format=content_type.lower())
-        buffer.seek(0)
+            # Save the resized image to a BytesIO buffer
+            buffer = io.BytesIO()
+            image.save(buffer, format=content_type)
+            buffer.seek(0)
 
-        return buffer.getvalue()
+            return buffer.getvalue()
+        except Exception as e:
+            log.error(f'__get_resized_obj [resize image error] {e.__str__()}')
+            raise ValueError(f"Invalid image content: {e}")
 
     def __get_total_file_size(self, bucket_name, prefix):
         try:
@@ -266,4 +273,4 @@ class GlobalObjectStorage:
             raise HTTPException(status_code=500, detail=f"Error interacting with S3: {e.response['Error']['Message']}")
 
     def get_user_storage_size(self, user_id: int):
-        return self.__get_total_file_size(XC_BUCKET, f'files/{user_id}/')
+        return self.__get_total_file_size(XC_USER_BUCKET, f'files/{user_id}/')
