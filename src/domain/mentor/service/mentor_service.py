@@ -5,7 +5,7 @@ from src.infra.template.cache import ICache
 from ..model.experience_model import ExperienceVO, ExperienceDTO
 from ..model.mentor_model import MentorProfileDTO, MentorProfileVO
 from ...user.model.common_model import ProfessionListVO
-from ....config.conf import USER_SERVICE_URL
+from ....config.conf import USER_SERVICE_URL, DEFAULT_LANGUAGE
 from ....config.constant import MENTORS, ExperienceCategory, Language
 from ....config.exception import NotFoundException, raise_http_exception
 from ....infra.template.service_response import ServiceApiResponse
@@ -20,7 +20,7 @@ class MentorService:
         self.service_api: AsyncServiceApiAdapter = service_api
         self.cache = cache
 
-    async def get_mentor_profile(self, user_id: int, language: str = 'zh_TW') -> MentorProfileVO:
+    async def get_mentor_profile(self, user_id: int, language: str = DEFAULT_LANGUAGE) -> MentorProfileVO:
 
         req_url = f"{USER_SERVICE_URL}/v1/{MENTORS}/{user_id}/{language}/mentor_profile"
 

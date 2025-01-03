@@ -13,6 +13,7 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 aws lambda update-function-configuration --function-name x-career-bff-dev-app --environment --profile $AWS_PROFILE "Variables={
+DEFAULT_LANGUAGE=zh_TW,
 STAGE=dev,
 TESTING=dev,
 XC_BUCKET=x-career-bff-dev-serverlessdeploymentbucket-zndkgowobwsz,
