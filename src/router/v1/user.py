@@ -17,6 +17,7 @@ from ...domain.user.model import (
 from ..res.response import *
 from ...config.constant import *
 from ...config.exception import *
+from ...infra.util.util import get_localized_territories_alpha_3
 import logging as log
 
 from ...domain.user.model.common_model import InterestListVO
@@ -71,6 +72,15 @@ async def get_industries(
 ):
     data: Dict = await _user_service.get_industries(language)
     return res_success(data=jsonable_encoder(data))
+
+
+@router.get('/{language}/countries',
+            responses=idempotent_response('get_countries', common.CountryListVO))
+async def get_countries(
+        language: Language = Path(...)
+):
+    data: Dict = get_localized_territories_alpha_3(language)
+    return res_success(data=data)
 
 
 @router.get('/{user_id}/reservations',
