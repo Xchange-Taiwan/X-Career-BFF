@@ -34,3 +34,11 @@ class ProfessionVO(ProfessionDTO):
 
 class ProfessionListVO(BaseModel):
     professions: List[ProfessionVO] = []
+
+
+class CountryVO(BaseModel):
+    country_code: str # alpha_3
+    country_name: str
+
+class CountryListVO(BaseModel):
+    countries: List[CountryVO] = []
