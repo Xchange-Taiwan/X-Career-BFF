@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Optional, Union
 from pydantic import BaseModel
 from .common_model import ProfessionVO, InterestListVO, ProfessionListVO
 from ....config.constant import *
+from ....config.conf import DEFAULT_LANGUAGE
 import logging as log
 
 log.basicConfig(filemode="w", level=log.INFO)
@@ -22,7 +23,7 @@ class ProfileVO(BaseModel):
     topics: Optional[InterestListVO] = None
     industry: Optional[ProfessionVO] = None
     on_boarding: Optional[bool] = False
-    language: Optional[str] = "zh_TW"
+    language: Optional[str] = DEFAULT_LANGUAGE
 
 
 class ProfileDTO(BaseModel):
@@ -39,7 +40,7 @@ class ProfileDTO(BaseModel):
     skills: Optional[List[Union[str]]] = []
     topics: Optional[List[Union[str]]] = []
     industry: Optional[str] = ""
-    language: Optional[str] = "zh_TW"
+    language: Optional[str] = DEFAULT_LANGUAGE
 
     @staticmethod
     def from_vo(vo: Dict) -> "ProfileDTO":
@@ -80,5 +81,5 @@ class ProfileDTO(BaseModel):
             skills=skill_subject_groups,
             topics=topic_subject_groups,
             industry=vo.get('industry', ''),
-            language=vo.get('language', 'zh_TW'),
+            language=vo.get('language', DEFAULT_LANGUAGE),
         )

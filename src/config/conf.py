@@ -1,7 +1,7 @@
 import os
 
 LOCAL_REGION = os.getenv('AWS_REGION', 'ap-northeast-1')
-AWS_PROFILE = os.getenv('AWS_PROFILE', 'default')  # xc default
+DEFAULT_LANGUAGE = os.getenv('DEFAULT_LANGUAGE', 'zh_TW')
 STAGE = os.getenv('STAGE', 'local')
 TESTING = os.getenv('TESTING', 'local')
 
