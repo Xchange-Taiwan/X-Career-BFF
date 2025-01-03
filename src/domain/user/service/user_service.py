@@ -2,7 +2,7 @@ import logging as log
 from typing import Optional, Dict, Any
 
 from src.infra.template.service_response import ServiceApiResponse
-from src.config.conf import USER_SERVICE_URL
+from src.config.conf import USER_SERVICE_URL, DEFAULT_LANGUAGE
 from src.config.constant import Language, InterestCategory, USERS
 from src.config.exception import NotFoundException, raise_http_exception
 from src.domain.user.model.common_model import InterestListVO, ProfessionListVO
@@ -19,7 +19,7 @@ class UserService:
         self.service_api: AsyncServiceApiAdapter = service_api
         self.cache = cache
 
-    async def get_user_profile(self, user_id: int, language: str = 'zh_TW') -> Optional[Dict[str, Any]]:
+    async def get_user_profile(self, user_id: int, language: str = DEFAULT_LANGUAGE) -> Optional[Dict[str, Any]]:
         req_url = f"{USER_SERVICE_URL}/v1/{USERS}/{user_id}/{language}/profile"
         res: Optional[Dict[str, Any]] = await self.service_api.simple_get(url=req_url)
         if not res:
