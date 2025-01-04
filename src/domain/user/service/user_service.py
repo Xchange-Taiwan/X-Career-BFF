@@ -2,7 +2,7 @@ import logging as log
 from typing import Optional, Dict, Any
 
 from src.infra.template.service_response import ServiceApiResponse
-from src.config.conf import USER_SERVICE_URL, DEFAULT_LANGUAGE
+from src.config.conf import USER_SERVICE_URL, DEFAULT_LANGUAGE, CACHE_TTL
 from src.config.constant import Language, InterestCategory, USERS
 from src.config.exception import NotFoundException, raise_http_exception
 from src.domain.user.model.common_model import InterestListVO, ProfessionListVO
@@ -33,18 +33,37 @@ class UserService:
 
     async def get_interests(self, language: Language, interest: InterestCategory) -> Dict:
         try:
+            cache_key = self.cache_key(f"interests:{interest.value}", language.value)
+            cache_val = await self.cache.get(cache_key)
+            if cache_val:
+                return cache_val
+
             req_url = f"{USER_SERVICE_URL}/v1/{USERS}/{language.value}/interests"
             res: Dict = await self.service_api.simple_get(url=req_url, params={'interest': interest.value})
+            # set cache
+            await self.cache.set(cache_key, res, CACHE_TTL)
             return res
+
         except Exception as e:
             log.error(e)
             raise_http_exception(e, 'Internal Server Error')
 
     async def get_industries(self, language: Language) -> Dict:
         try:
+            cache_key = self.cache_key(f"professions:INDUSTRY", language.value)
+            cache_val = await self.cache.get(cache_key)
+            if cache_val:
+                return cache_val
+            
             req_url = f"{USER_SERVICE_URL}/v1/{USERS}/{language.value}/industries"
             res: Dict = await self.service_api.simple_get(url=req_url)
+            # set cache
+            await self.cache.set(cache_key, res, CACHE_TTL)
             return res
+
         except Exception as e:
             log.error(e)
             raise_http_exception(e, 'Internal Server Error')
+
+    def cache_key(self, category: str, language: str):
+        return f"{category}:{language}"

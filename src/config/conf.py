@@ -29,6 +29,8 @@ AUTH_RESPONSE_FIELDS = os.getenv('AUTH_RESPONSE_FIELDS', 'email,account_type,reg
 AUTH_RESPONSE_FIELDS = AUTH_RESPONSE_FIELDS.strip().split(',')
 
 # cache
+# default cache ttl: 5 minutes
+CACHE_TTL = int(os.getenv('CACHE_TTL', 300))
 # dynamodb
 TABLE_CACHE = os.getenv('TABLE_CACHE', 'dev_x_career_bff_cache')
 # redis
