@@ -1,11 +1,12 @@
 import os
 
 LOCAL_REGION = os.getenv('AWS_REGION', 'ap-northeast-1')
-AWS_PROFILE = os.getenv('AWS_PROFILE', 'default')  # xc default
+DEFAULT_LANGUAGE = os.getenv('DEFAULT_LANGUAGE', 'zh_TW')
 STAGE = os.getenv('STAGE', 'local')
 TESTING = os.getenv('TESTING', 'local')
 
 XC_BUCKET = os.getenv('XC_BUCKET', 'x-career-user-dev-serverlessdeploymentbucket-bmz2uc2exezm')
+XC_USER_BUCKET = os.getenv('XC_USER_BUCK', 'x-career-multimedia')
 
 BATCH = int(os.getenv('BATCH', '10'))
 
@@ -28,6 +29,8 @@ AUTH_RESPONSE_FIELDS = os.getenv('AUTH_RESPONSE_FIELDS', 'email,account_type,reg
 AUTH_RESPONSE_FIELDS = AUTH_RESPONSE_FIELDS.strip().split(',')
 
 # cache
+# default cache ttl: 5 minutes
+CACHE_TTL = int(os.getenv('CACHE_TTL', 300))
 # dynamodb
 TABLE_CACHE = os.getenv('TABLE_CACHE', 'dev_x_career_bff_cache')
 # redis
@@ -43,6 +46,6 @@ USER_SERVICE_URL = os.getenv('USER_SERVICE_URL', 'http://127.0.0.1:8010/user-ser
 SEARCH_SERVICE_URL = os.getenv('SEARCH_SERVICE_URL', 'http://127.0.0.1:8012/search-service/api')
 
 # storage
-MAX_WIDTH = os.getenv('MAX_WIDTH', 300)
-MAX_HEIGHT = os.getenv('MAX_HEIGHT', 300)
+MAX_WIDTH = int(os.getenv('MAX_WIDTH', 300))
+MAX_HEIGHT = int(os.getenv('MAX_HEIGHT', 300))
 MAX_STORAGE_SIZE = int(os.getenv('MAX_STORAGE_SIZE', 15 * 1024 * 1024))  # give 15 MB to users

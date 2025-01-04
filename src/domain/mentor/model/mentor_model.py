@@ -17,7 +17,7 @@ class MentorProfileDTO(ProfileDTO):
     about: Optional[str]
     # TODO: enum
     seniority_level: Optional[str] = "NO REVEAL"
-    expertises: Optional[List[ProfessionDTO]] = []
+    expertises: Optional[List[str]] = []
 
 
 class MentorProfileVO(ProfileVO):
