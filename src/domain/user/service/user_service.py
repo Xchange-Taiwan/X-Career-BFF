@@ -71,6 +71,9 @@ class UserService:
             log.error(e)
             raise_http_exception(e, 'Internal Server Error')
 
+    def cache_key(self, category: str, language: str):
+        return f"{category}:{language}"
+
 
     async def get_reservation_list(self, user_id: int, query: ReservationQueryDTO) -> Dict:
         req_url = f"{USER_SERVICE_URL}/v1/{USERS}/{user_id}/reservations"
@@ -88,8 +91,3 @@ class UserService:
         payload = jsonable_encoder(body)
         res: Dict = await self.service_api.simple_put(url=req_url, json=payload)
         return res
-
-
-    def cache_key(self, category: str, language: str):
-        return f"{category}:{language}"
-
