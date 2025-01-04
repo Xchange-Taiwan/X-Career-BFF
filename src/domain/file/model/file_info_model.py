@@ -5,7 +5,7 @@ from pydantic import HttpUrl, BaseModel, UUID4
 
 
 class FileInfoDTO(BaseModel):
-    file_id: Optional[str] # uuid
+    file_id: Optional[str] = None# uuid
     file_name: str
     file_size: int
     create_user_id: int
@@ -21,9 +21,8 @@ class FileInfoVO(BaseModel):
     url: Optional[Union[str, HttpUrl]] = "http://example.com"  # Validates URL if provided
     create_time: Optional[datetime] = datetime.now(timezone.utc)
     update_time: Optional[datetime] = datetime.now(timezone.utc)
+    create_user_id: int
     is_deleted: bool = False
 
-class FileInfoListVO(BaseModel):
-    file_info_vo_list: List[FileInfoVO]
 class FileInfoListVO(BaseModel):
     file_info_vo_list: List[FileInfoVO]

@@ -5,7 +5,7 @@ from src.infra.template.cache import ICache
 from ..model.experience_model import ExperienceVO, ExperienceDTO
 from ..model.mentor_model import MentorProfileDTO, MentorProfileVO
 from ...user.model.common_model import ProfessionListVO
-from ....config.conf import USER_SERVICE_URL
+from ....config.conf import USER_SERVICE_URL, DEFAULT_LANGUAGE, CACHE_TTL
 from ....config.constant import MENTORS, ExperienceCategory, Language
 from ....config.exception import NotFoundException, raise_http_exception
 from ....infra.template.service_response import ServiceApiResponse
@@ -20,7 +20,7 @@ class MentorService:
         self.service_api: AsyncServiceApiAdapter = service_api
         self.cache = cache
 
-    async def get_mentor_profile(self, user_id: int, language: str = 'zh_TW') -> MentorProfileVO:
+    async def get_mentor_profile(self, user_id: int, language: str = DEFAULT_LANGUAGE) -> MentorProfileVO:
 
         req_url = f"{USER_SERVICE_URL}/v1/{MENTORS}/{user_id}/{language}/mentor_profile"
 
@@ -53,6 +53,21 @@ class MentorService:
         return res.data
 
     async def get_expertises(self, language: Language) -> ProfessionListVO:
-        req_url = f"{USER_SERVICE_URL}/v1/{MENTORS}/{language.value}/expertises"
-        res: Dict = await self.service_api.simple_get(url=req_url)
-        return res
+        try:
+            cache_key = self.cache_key(f"professions:EXPERTISE", language.value)
+            cache_val = await self.cache.get(cache_key)
+            if cache_val:
+                return cache_val
+
+            req_url = f"{USER_SERVICE_URL}/v1/{MENTORS}/{language.value}/expertises"
+            res: Dict = await self.service_api.simple_get(url=req_url)
+            # set cache
+            await self.cache.set(cache_key, res, CACHE_TTL)
+            return res
+
+        except Exception as e:
+            log.error(e)
+            raise_http_exception(e, 'Internal Server Error')
+
+    def cache_key(self, category: str, language: str):
+        return f"{category}:{language}"
