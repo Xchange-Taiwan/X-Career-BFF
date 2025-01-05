@@ -14,10 +14,11 @@ log.basicConfig(filemode='w', level=log.INFO)
 
 
 class UserService:
-    def __init__(self, service_api: AsyncServiceApiAdapter, cache: ICache):
+    def __init__(self, service_api: AsyncServiceApiAdapter, cache: ICache, local_cache: ICache):
         self.__cls_name = self.__class__.__name__
         self.service_api: AsyncServiceApiAdapter = service_api
         self.cache = cache
+        self.local_cache = local_cache
 
     async def get_user_profile(self, user_id: int, language: str = DEFAULT_LANGUAGE) -> Optional[Dict[str, Any]]:
         req_url = f"{USER_SERVICE_URL}/v1/{USERS}/{user_id}/{language}/profile"
@@ -34,14 +35,14 @@ class UserService:
     async def get_interests(self, language: Language, interest: InterestCategory) -> Dict:
         try:
             cache_key = self.cache_key(f"interests:{interest.value}", language.value)
-            cache_val = await self.cache.get(cache_key)
+            cache_val = await self.local_cache.get(cache_key)
             if cache_val:
                 return cache_val
 
             req_url = f"{USER_SERVICE_URL}/v1/{USERS}/{language.value}/interests"
             res: Dict = await self.service_api.simple_get(url=req_url, params={'interest': interest.value})
             # set cache
-            await self.cache.set(cache_key, res, CACHE_TTL)
+            await self.local_cache.set(cache_key, res, CACHE_TTL)
             return res
 
         except Exception as e:
@@ -51,14 +52,14 @@ class UserService:
     async def get_industries(self, language: Language) -> Dict:
         try:
             cache_key = self.cache_key(f"professions:INDUSTRY", language.value)
-            cache_val = await self.cache.get(cache_key)
+            cache_val = await self.local_cache.get(cache_key)
             if cache_val:
                 return cache_val
             
             req_url = f"{USER_SERVICE_URL}/v1/{USERS}/{language.value}/industries"
             res: Dict = await self.service_api.simple_get(url=req_url)
             # set cache
-            await self.cache.set(cache_key, res, CACHE_TTL)
+            await self.local_cache.set(cache_key, res, CACHE_TTL)
             return res
 
         except Exception as e:
