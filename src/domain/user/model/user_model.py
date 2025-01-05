@@ -23,6 +23,7 @@ class ProfileVO(BaseModel):
     topics: Optional[InterestListVO] = None
     industry: Optional[ProfessionVO] = None
     onboarding: Optional[bool] = False
+    is_mentor: Optional[bool] = False
     language: Optional[str] = DEFAULT_LANGUAGE
 
 
