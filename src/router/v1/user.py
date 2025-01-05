@@ -84,33 +84,42 @@ async def get_countries(
 
 
 @router.get('/{user_id}/reservations',
-            responses=idempotent_response('reservation_list', reservation.ReservationListVO))
+            responses=idempotent_response('reservation_list', reservation.ReservationInfoListVO))
 async def reservation_list(
         user_id: int = Path(...),
-        state: ReservationListState = Query(...),
-        batch: int = Query(...),
-        next_id: int = Query(None),
+        query: reservation.ReservationQueryDTO = Query(...),
 ):
-    # TODO: implement
-    return res_success(data=None)
+    query.batch = query.batch or 1
+    query.next_dtend = query.next_dtend or 0
+    res: Dict = await _user_service.get_reservation_list(user_id, query)
+    return res_success(data=res)
 
 
+############################################################################################
+# NOTE: 如何改預約時段? 重新建立後再 cancel 舊的。 (status_code: 201)
+# 用戶可能有很多memtor/memtee預約；為方便檢查時間衝突，要重新建立後再 cancel 舊的。
+# ReservationDTO.previous_reserve 可紀錄前一次的[reserve_id]，以便找到同樣的討論串/變更原因歷史。
+# 如果 "previous_reserve" 不為空，則表示這是一次變更預約的操作 => 新增後，將舊的預約設為 cancel。
+############################################################################################
 @router.post('/{user_id}/reservations',
              responses=post_response('new_booking', reservation.ReservationVO))
 async def new_booking(
         user_id: int = Path(...),
         body: reservation.ReservationDTO = Body(...),
 ):
-    # TODO: implement
-    return res_success(data=None)
+    body.my_user_id = user_id
+    body.my_status = BookingStatus.ACCEPT
+    res: Dict = await _user_service.new_booking(body)
+    return res_success(data=res)
 
 
 @router.put('/{user_id}/reservations/{reservation_id}',
-            responses=idempotent_response('update_or_delete_booking', reservation.ReservationVO))
-async def update_or_delete_booking(
+            responses=idempotent_response('update_reservation_status', reservation.ReservationVO))
+async def update_reservation_status(
         user_id: int = Path(...),
         reservation_id: int = Path(...),
-        body: reservation.ReservationDTO = Body(...),
+        body: reservation.UpdateReservationDTO = Body(...),
 ):
-    # TODO: implement
-    return res_success(data=None)
+    body.my_user_id = user_id
+    res: Dict = await _user_service.update_reservation_status(reservation_id, body)
+    return res_success(data=res)

@@ -1,5 +1,6 @@
 import logging as log
 from typing import Optional, Dict, Any
+from fastapi.encoders import jsonable_encoder
 
 from src.infra.template.service_response import ServiceApiResponse
 from src.config.conf import USER_SERVICE_URL, DEFAULT_LANGUAGE, CACHE_TTL
@@ -7,6 +8,11 @@ from src.config.constant import Language, InterestCategory, USERS
 from src.config.exception import NotFoundException, raise_http_exception
 from src.domain.user.model.common_model import InterestListVO, ProfessionListVO
 from src.domain.user.model.user_model import ProfileDTO, ProfileVO
+from src.domain.user.model.reservation_model import (
+    ReservationQueryDTO, 
+    UpdateReservationDTO, 
+    ReservationDTO,
+)
 from src.infra.client.async_service_api_adapter import AsyncServiceApiAdapter
 from src.infra.template.cache import ICache
 
@@ -68,3 +74,21 @@ class UserService:
 
     def cache_key(self, category: str, language: str):
         return f"{category}:{language}"
+
+
+    async def get_reservation_list(self, user_id: int, query: ReservationQueryDTO) -> Dict:
+        req_url = f"{USER_SERVICE_URL}/v1/{USERS}/{user_id}/reservations"
+        res: Dict = await self.service_api.simple_get(url=req_url, params=query.model_dump())
+        return res
+
+    async def new_booking(self, body: ReservationDTO) -> Dict:
+        req_url = f"{USER_SERVICE_URL}/v1/{USERS}/{body.my_user_id}/reservations"
+        payload = jsonable_encoder(body)
+        res: Dict = await self.service_api.simple_post(url=req_url, json=payload)
+        return res
+
+    async def update_reservation_status(self, reservation_id: int, body: UpdateReservationDTO) -> Dict:
+        req_url = f"{USER_SERVICE_URL}/v1/{USERS}/{body.my_user_id}/reservations/{reservation_id}"
+        payload = jsonable_encoder(body)
+        res: Dict = await self.service_api.simple_put(url=req_url, json=payload)
+        return res
