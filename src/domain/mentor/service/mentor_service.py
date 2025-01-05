@@ -20,10 +20,11 @@ log.basicConfig(filemode='w', level=log.INFO)
 
 
 class MentorService:
-    def __init__(self, service_api: AsyncServiceApiAdapter, cache: ICache):
+    def __init__(self, service_api: AsyncServiceApiAdapter, cache: ICache, local_cache: ICache):
         self.__cls_name = self.__class__.__name__
         self.service_api: AsyncServiceApiAdapter = service_api
         self.cache = cache
+        self.local_cache = local_cache
 
     async def get_mentor_profile(self, user_id: int, language: str = DEFAULT_LANGUAGE) -> MentorProfileVO:
 
@@ -59,14 +60,14 @@ class MentorService:
     async def get_expertises(self, language: Language) -> ProfessionListVO:
         try:
             cache_key = self.cache_key(f"professions:EXPERTISE", language.value)
-            cache_val = await self.cache.get(cache_key)
+            cache_val = await self.local_cache.get(cache_key)
             if cache_val:
                 return cache_val
 
             req_url = f"{USER_SERVICE_URL}/v1/{MENTORS}/{language.value}/expertises"
             res: Dict = await self.service_api.simple_get(url=req_url)
             # set cache
-            await self.cache.set(cache_key, res, CACHE_TTL)
+            await self.local_cache.set(cache_key, res, CACHE_TTL)
             return res
 
         except Exception as e:
