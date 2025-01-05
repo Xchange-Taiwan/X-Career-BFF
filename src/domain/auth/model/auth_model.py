@@ -16,7 +16,7 @@ class SignupDTO(BaseModel):
 
     @field_validator('confirm_password')
     def passwords_match(cls, v, values: ValidationInfo):
-        if hasattr(values.data, 'password') and v != values.data.password:
+        if 'password' in values.data and v != values.data['password']:
             raise ClientException(msg='passwords do not match')
         return v
 
@@ -81,7 +81,7 @@ class ResetPasswordDTO(BaseModel):
 
     @field_validator('confirm_password')
     def passwords_match(cls, v, values: ValidationInfo):
-        if hasattr(values.data, 'password') and v != values.data.password:
+        if 'password' in values.data and v != values.data['password']:
             raise ClientException(msg='passwords do not match')
         return v
 

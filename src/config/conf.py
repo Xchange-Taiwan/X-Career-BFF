@@ -39,11 +39,6 @@ REDIS_PORT = int(os.getenv('REDIS_PORT', '6379'))
 REDIS_USER = os.getenv('REDIS_USERNAME', None)
 REDIS_PASS = os.getenv('REDIS_PASSWORD', None)
 
-# schedule
-SCHEDULE_YEAR = int(os.getenv('SCHEDULE_YEAR', '-1'))
-SCHEDULE_MONTH = int(os.getenv('SCHEDULE_MONTH', '-1'))
-SCHEDULE_DAY_OF_MONTH = int(os.getenv('SCHEDULE_DAY_OF_MONTH', '-1'))
-SCHEDULE_DAY_OF_WEEK = int(os.getenv('SCHEDULE_DAY_OF_WEEK', '-1'))
 
 # micro service
 AUTH_SERVICE_URL = os.getenv('AUTH_SERVICE_URL', 'http://127.0.0.1:8008/auth-service/api')

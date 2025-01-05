@@ -1,23 +1,27 @@
-from typing import List
+from typing import List, Optional
+
 from fastapi import (
     APIRouter,
     Path, Body
 )
 from fastapi.encoders import jsonable_encoder
 
-from ..res.response import *
-from ...config.constant import ExperienceCategory, Language
-from ...config.exception import *
-from ...app._di.injection import _mentor_service
-from ...domain.mentor.model import (
+from src.app._di.injection import _mentor_service
+from src.domain.mentor.model import (
     mentor_model as mentor,
     experience_model as experience,
 )
-from ...domain.user.model import (
+from src.domain.user.model import (
     common_model as common,
 )
+from src.router.res.response import *
+from src.config.constant import ExperienceCategory, Language
+from src.config.exception import *
+from src.infra.template.service_response import ServiceApiResponse
+import logging as log
 
 log.basicConfig(filemode='w', level=log.INFO)
+
 
 router = APIRouter(
     prefix='/mentors',
@@ -36,7 +40,7 @@ async def upsert_mentor_profile(
     # user_id 在此 API 可省略，但因為給前端的 API swagger doc 已固定，所以保留
     if user_id != body.user_id:
         raise ForbiddenException(msg='user_id not match')
-    res: mentor.MentorProfileVO = await _mentor_service.upsert_mentor_profile(body)
+    res = await _mentor_service.upsert_mentor_profile(body)
     return res_success(data=res)
 
 
@@ -90,17 +94,18 @@ async def get_expertises(
             responses=idempotent_response('upsert_mentor_schedule', mentor.MentorScheduleVO))
 async def upsert_mentor_schedule(
         user_id: int = Path(...),
-        body: List[mentor.TimeSlotDTO] = Body(...),
+        body: mentor.MentorScheduleDTO = Body(...),
 ):
-    # TODO: implement
-    return res_success(data=None)
+    res: mentor.MentorScheduleVO = await _mentor_service.save_schedules(user_id, body)
+    return res_success(data=res.model_dump())
 
 
 @router.delete('/{user_id}/schedule/{schedule_id}',
-               responses=idempotent_response('delete_mentor_schedule', mentor.MentorScheduleVO))
+               responses=idempotent_response('delete_mentor_schedule', int))
 async def delete_mentor_schedule(
         user_id: int = Path(...),
         schedule_id: int = Path(...),
 ):
-    # TODO: implement
-    return res_success(data=None)
+    res: ServiceApiResponse = await _mentor_service.delete_schedule(user_id, schedule_id)
+    return res_success(data=res.data, msg=res.msg, code=res.code)
+
