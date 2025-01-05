@@ -29,7 +29,6 @@ class AuthService:
         self.cache = cache
         self.ttl_secs = {'ttl_secs': REQUEST_INTERVAL_TTL}
 
-
     @staticmethod
     def auth_response(data: Dict, msg='ok', code='0'):
         auth: Dict = data.get('auth', None)
@@ -61,7 +60,6 @@ class AuthService:
 
         return response
 
-
     '''
     signup
     '''
@@ -80,12 +78,32 @@ class AuthService:
             data.update({'token': token})
         return data
 
+    async def signup_oauth_google(self, body: SignupOauthDTO):
+        # TODO: Initialize user profile
+        auth_res = await self.req.simple_post(f'{AUTH_SERVICE_URL}/v1/signup/oauth/GOOGLE',
+                                              json={
+                                                  'region': LOCAL_REGION,
+                                                  'email': body.email,
+                                                  'oauth_id': body.oauth_id,
+                                                  'access_token': body.access_token
+                                              })
+        if auth_res.get('oauth_id'):
+            token_res = self.apply_token(auth_res)
+            token = token_res['token']
+            data = self.ttl_secs.copy()
+            if STAGE == TESTING:
+                data.update({'token': token})
+            return data
+        else:
+            raise ServerException(msg='signup fail', data=self.ttl_secs)
+
     async def __cache_check_for_signup(self, email: str):
         data = await self.cache.get(email, True)
         if data and data.get('ttl', 0) > current_seconds():
             log.error(f'{self.__cls_name}.__cache_check_for_signup:[too many reqeusts error],\
                 email:%s, cache data:%s', email, data)
-            raise TooManyRequestsException(msg='frequently request', data=self.ttl_secs)
+            raise TooManyRequestsException(
+                msg='frequently request', data=self.ttl_secs)
 
         if data:
             await self.cache.delete(email)
@@ -96,7 +114,7 @@ class AuthService:
     async def __req_send_signup_confirm_email(self, email: str):
         try:
             auth_res = await self.req.simple_post(
-                f'{AUTH_SERVICE_URL}/v1/signup/email', 
+                f'{AUTH_SERVICE_URL}/v1/signup/email',
                 json={
                     'email': email,
                     'exist': False,
@@ -105,13 +123,15 @@ class AuthService:
 
         except NotAcceptableException or DuplicateUserException as e:
             await self.cache.set(email, {}, ex=REQUEST_INTERVAL_TTL)
-            raise DuplicateUserException(msg='Email registered.', data=self.ttl_secs)
+            raise DuplicateUserException(
+                msg='Email registered.', data=self.ttl_secs)
 
         except Exception as e:
             log.error(f'{self.__cls_name}.__req_send_signup_confirm_email:[request exception], \
                 host:%s, email:%s, error:%s', AUTH_SERVICE_URL, email, e)
             await self.cache.set(email, {}, ex=REQUEST_INTERVAL_TTL)
-            raise_http_exception(e, 'Email could not be delivered.', data=self.ttl_secs)
+            raise_http_exception(
+                e, 'Email could not be delivered.', data=self.ttl_secs)
 
     async def __cache_signup_token(self, email: EmailStr, password: str, token: str):
         # TODO: region 記錄在???
@@ -131,7 +151,8 @@ class AuthService:
         if data and data.get('ttl', 0) > current_seconds():
             log.error(f'{self.__cls_name}.__cache_check_for_resend:[too many reqeusts error],\
                 email:%s, cache data:%s', email, data)
-            raise TooManyRequestsException(msg='Frequently request.', data=self.ttl_secs)
+            raise TooManyRequestsException(
+                msg='Frequently request.', data=self.ttl_secs)
 
         if not data or not 'token' in data:
             log.error(f'{self.__cls_name}.__cache_check_for_resend:[no token error],\
@@ -312,7 +333,6 @@ class AuthService:
     def login_preload_by_email_and_password(self, body: LoginDTO):
         pass
 
-
     '''
     login
     有了 login preload process, login 可一律視為本地登入
@@ -325,7 +345,7 @@ class AuthService:
         # cache auth data
         await self.cache_auth_res(
             str(user_id),
-            auth_res, 
+            auth_res,
             removed_fields={'refresh_token'})
         auth_res = self.apply_token(auth_res)
         # 育志看一下這 API
@@ -336,6 +356,20 @@ class AuthService:
             'user': user_res,
         }
 
+    async def login_oauth_google(self, body: LoginOauthDTO, language: str):
+        # TODO: Get user profile
+        auth_res = await self.req.simple_post(
+            f'{AUTH_SERVICE_URL}/v1/login/oauth/GOOGLE', json=body.model_dump())
+        if not auth_res or not 'user_id' in auth_res:
+            raise UnauthorizedException(msg='Invalid user.')
+        # user_id = auth_res.get('user_id')
+        auth_res = self.apply_token(auth_res)
+        # user_res = await self.__get_user_profile(user_id, language)
+        auth_res = self.filter_auth_res(auth_res)
+        return {
+            'auth': auth_res,
+            # 'user': user_res,
+        }
 
     async def __req_login(self, body: LoginDTO):
         auth_res = await self.req.simple_post(
@@ -343,7 +377,6 @@ class AuthService:
         if not auth_res or not 'user_id' in auth_res:
             raise UnauthorizedException(msg='Invalid user.')
         return auth_res
-
 
     async def __get_user_profile(self, user_id: int, language: str):
         try:
@@ -355,7 +388,6 @@ class AuthService:
             log.error(f'{self.__cls_name}.__get_user_profile:[request exception], \
                 user_id:%s, error:%s', user_id, e)
             raise_http_exception(e, 'User not found.')
- 
 
     async def cache_auth_res(self, user_id_key: str, auth_res: Dict, removed_fields: Set = set()):
         auth_res.update({
@@ -374,7 +406,6 @@ class AuthService:
         removed_fields.add('aid')
         for field in removed_fields:
             auth_res.pop(field, None)
-
 
     '''
     gen new token and refresh_token
@@ -481,7 +512,8 @@ class AuthService:
         if data and data.get('ttl', 0) > current_seconds():
             log.error(f'{self.__cls_name}.__cache_check_for_reset_password:[too many reqeusts error],\
                 email:%s, cache data:%s', email, data)
-            raise TooManyRequestsException(msg='frequently request', data=self.ttl_secs)
+            raise TooManyRequestsException(
+                msg='frequently request', data=self.ttl_secs)
 
         if data:
             await self.cache.delete(f'reset_pw:{email}')

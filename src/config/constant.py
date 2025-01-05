@@ -62,6 +62,10 @@ class SchedulesType(Enum):
     FORBIDDEN = "FORBIDDEN"
 
 
+class OauthType(Enum):
+    GOOGLE = 'GOOGLE'
+
+
 # serial_key is a field of the collection in the user's cache
 SERIAL_KEY = 'created_at'
 
@@ -75,5 +79,3 @@ MENTORS = 'mentors'
 FILE = 'file'
 USERS = 'users'
 PROFILE = 'profile'
-
-
