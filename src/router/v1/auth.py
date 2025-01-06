@@ -6,6 +6,7 @@ from fastapi import (
     Cookie, Header, Path, Query, Body, Form
 )
 
+from ...config.conf import DEFAULT_LANGUAGE_ENUM
 from ...config.constant import Language
 from ...domain.auth.model.auth_model import *
 from ...domain.auth.service.auth_service import AuthService
@@ -35,19 +36,6 @@ async def signup(
     return post_success(data=data, msg='email_sent')
 
 
-# @router.post('/signup/oauth/{auth_type}', status_code=201)
-# async def signup_oauth(
-#     body: SignupOauthDTO = Body(...),
-#     auth_type: OauthType = Path(...)
-# ):
-
-#     if auth_type == OauthType.GOOGLE:
-#         data = await _auth_service.signup_oauth_google(body)
-#     else:
-#         raise ServerException('Invalid oauth type')
-#     return post_success(data=data, msg='Account signup successfully!')
-
-
 @router.post('/email/resend', status_code=201)
 async def signup_email_resend(
     email: EmailStr = Body(..., embed=True),
@@ -74,24 +62,10 @@ async def confirm_signup(
              status_code=201)
 async def login(
     body: LoginDTO = Depends(login_check_body),
-    language: Language = Query(default=Language.EN_US)
+    language: Language = Query(default=DEFAULT_LANGUAGE_ENUM)
 ):
     data = await _auth_service.login(body, language.value)
     return AuthService.auth_response(data=data)
-
-
-# @router.post('/login/oauth/{auth_type}', status_code=201)
-# async def login_oauth(
-#     body: LoginOauthDTO = Body(...),
-#     auth_type: OauthType = Path(...),
-#     language: Language = Query(default=Language.EN_US)
-# ):
-
-#     if auth_type == OauthType.GOOGLE:
-#         data = await _auth_service.login_oauth_google(body, language)
-#     else:
-#         raise ServerException('Invalid oauth type')
-#     return post_success(data=data, msg='Account login successfully!')
 
 
 @router.post('/token',

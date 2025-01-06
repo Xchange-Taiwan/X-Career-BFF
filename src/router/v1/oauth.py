@@ -6,8 +6,8 @@ from fastapi import (
     Cookie, Header, Path, Query, Body, Form
 )
 
-from ...config.conf import DEFAULT_LANGUAGE
-from ...config.constant import OauthType
+from ...config.conf import DEFAULT_LANGUAGE_ENUM
+from ...config.constant import Language, OauthType
 from ...config.exception import *
 from ...domain.auth.model.auth_model import *
 from ...domain.auth.service.auth_service import AuthService
@@ -41,10 +41,10 @@ async def signup_oauth(
 async def login_oauth(
     auth_type: OauthType = Path(...),
     body: LoginOauthDTO = Body(...),
-    language: str = Query(default=DEFAULT_LANGUAGE)
+    language: Language = Query(default=DEFAULT_LANGUAGE_ENUM)
 ):
     if auth_type == OauthType.GOOGLE:
-        data = await _oauth_service.login_oauth_google(body, language)
+        data = await _oauth_service.login_oauth_google(body, language.value)
     else:
         raise ServerException(msg='Invalid auth type', data=self.ttl_secs)
     return post_success(data=data, msg='Account login successfully!')
