@@ -20,7 +20,7 @@ log.basicConfig(filemode="w", level=log.INFO)
 
 class OAuthService(AuthService):
     def __init__(self, req: IServiceApi, cache: ICache):
-        self.__cls_name = self.__class__.__name__
+        self.cls_name = self.__class__.__name__
         self.req = req
         self.cache = cache
         self.ttl_secs = {"ttl_secs": REQUEST_INTERVAL_TTL}
@@ -40,7 +40,7 @@ class OAuthService(AuthService):
             raise ServerException(msg="signup fail", data=self.ttl_secs)
         
         # Initialize user profile
-        await self.__init_user_profile(user_id)
+        await self.init_user_profile(user_id)
         # cache auth data
         await self.cache_auth_res(str(user_id), auth_res)
         auth_res = self.apply_token(auth_res)
@@ -59,7 +59,7 @@ class OAuthService(AuthService):
             str(user_id), auth_res, removed_fields={"refresh_token"}
         )
         auth_res = self.apply_token(auth_res)
-        user_res = await self.__get_user_profile(user_id, language)
+        user_res = await self.get_user_profile(user_id, language)
         auth_res = self.filter_auth_res(auth_res)
         return {
             "auth": auth_res,

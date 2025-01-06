@@ -19,7 +19,7 @@ log.basicConfig(filemode='w', level=log.INFO)
 
 class AuthService:
     def __init__(self, req: IServiceApi, cache: ICache):
-        self.__cls_name = self.__class__.__name__
+        self.cls_name = self.__class__.__name__
         self.req = req
         self.cache = cache
         self.ttl_secs = {'ttl_secs': REQUEST_INTERVAL_TTL}
@@ -95,7 +95,7 @@ class AuthService:
     async def __cache_check_for_signup(self, email: str):
         data = await self.cache.get(email, True)
         if data and data.get('ttl', 0) > current_seconds():
-            log.error(f'{self.__cls_name}.__cache_check_for_signup:[too many reqeusts error],\
+            log.error(f'{self.cls_name}.__cache_check_for_signup:[too many reqeusts error],\
                 email:%s, cache data:%s', email, data)
             raise TooManyRequestsException(
                 msg='frequently request', data=self.ttl_secs)
@@ -122,7 +122,7 @@ class AuthService:
                 msg='Email registered.', data=self.ttl_secs)
 
         except Exception as e:
-            log.error(f'{self.__cls_name}.__req_send_signup_confirm_email:[request exception], \
+            log.error(f'{self.cls_name}.__req_send_signup_confirm_email:[request exception], \
                 host:%s, email:%s, error:%s', AUTH_SERVICE_URL, email, e)
             await self.cache.set(email, {}, ex=REQUEST_INTERVAL_TTL)
             raise_http_exception(
@@ -144,13 +144,13 @@ class AuthService:
     async def __cache_check_for_token(self, email: str):
         data = await self.cache.get(email, True)
         if data and data.get('ttl', 0) > current_seconds():
-            log.error(f'{self.__cls_name}.__cache_check_for_resend:[too many reqeusts error],\
+            log.error(f'{self.cls_name}.__cache_check_for_resend:[too many reqeusts error],\
                 email:%s, cache data:%s', email, data)
             raise TooManyRequestsException(
                 msg='Frequently request.', data=self.ttl_secs)
 
         if not data or not 'token' in data:
-            log.error(f'{self.__cls_name}.__cache_check_for_resend:[no token error],\
+            log.error(f'{self.cls_name}.__cache_check_for_resend:[no token error],\
                 email:%s, cache data:%s', email, data)
             raise NotFoundException(msg='Email not found.')
 
@@ -229,7 +229,7 @@ class AuthService:
         if user_id is None:
             raise ServerException(msg="signup fail", data=self.ttl_secs)
 
-        await self.__init_user_profile(user_id)
+        await self.init_user_profile(user_id)
         # cache auth data
         await self.cache_auth_res(str(user_id), auth_res)
         auth_res = self.apply_token(auth_res)
@@ -238,7 +238,7 @@ class AuthService:
             'auth': auth_res,
         }
 
-    async def __init_user_profile(self, user_id: int):
+    async def init_user_profile(self, user_id: int):
         try:
             user_service_url = f"{USER_SERVICE_URL}/v1/{USERS}/profile"
             user_res = await self.req.simple_put(
@@ -248,7 +248,7 @@ class AuthService:
             return user_res
 
         except Exception as e:
-            log.error(f'{self.__cls_name}.__init_user_profile:[request exception], \
+            log.error(f'{self.cls_name}.init_user_profile:[request exception], \
                 user_id:%s, error:%s', user_id, e)
             # FIXME: remove user in auth service
             raise_http_exception(e, 'Unable to initial user profile.')
@@ -346,7 +346,7 @@ class AuthService:
             removed_fields={'refresh_token'})
         auth_res = self.apply_token(auth_res)
         # 育志看一下這 API
-        user_res = await self.__get_user_profile(user_id, language)
+        user_res = await self.get_user_profile(user_id, language)
         auth_res = self.filter_auth_res(auth_res)
         return {
             'auth': auth_res,
@@ -361,7 +361,7 @@ class AuthService:
     #         raise UnauthorizedException(msg='Invalid user.')
     #     # user_id = auth_res.get('user_id')
     #     auth_res = self.apply_token(auth_res)
-    #     # user_res = await self.__get_user_profile(user_id, language)
+    #     # user_res = await self.get_user_profile(user_id, language)
     #     auth_res = self.filter_auth_res(auth_res)
     #     return {
     #         'auth': auth_res,
@@ -375,14 +375,14 @@ class AuthService:
             raise UnauthorizedException(msg='Invalid user.')
         return auth_res
 
-    async def __get_user_profile(self, user_id: int, language: str):
+    async def get_user_profile(self, user_id: int, language: str):
         try:
             user_service_url = f"{USER_SERVICE_URL}/v1/{USERS}/{user_id}/{language}/profile"
             # 育志看一下這 API
             return await self.req.simple_get(user_service_url)
 
         except Exception as e:
-            log.error(f'{self.__cls_name}.__get_user_profile:[request exception], \
+            log.error(f'{self.cls_name}.get_user_profile:[request exception], \
                 user_id:%s, error:%s', user_id, e)
             raise_http_exception(e, 'User not found.')
 
@@ -394,7 +394,7 @@ class AuthService:
         updated = await self.cache.set(
             user_id_key, auth_res, ex=LONG_TERM_TTL)
         if not updated:
-            log.error(f'{self.__cls_name}.__cache_auth_res fail: [cache set],\
+            log.error(f'{self.cls_name}.__cache_auth_res fail: [cache set],\
                 user_id_key:%s, auth_res:%s, ex:%s, cache data:%s',
                       user_id_key, auth_res, LONG_TERM_TTL, updated)
             raise ServerException(msg='server_error')
@@ -472,7 +472,7 @@ class AuthService:
         updated = await self.cache.set(
             user_id_key, user_logout_status, ex=LONG_TERM_TTL)
         if not updated:
-            log.error(f'{self.__cls_name}.__cache_logout_status fail: [cache set],\
+            log.error(f'{self.cls_name}.__cache_logout_status fail: [cache set],\
                 user_id_key:%s, user_logout_status:%s, ex:%s, cache data:%s',
                       user_id_key, user_logout_status, LONG_TERM_TTL, updated)
             raise ServerException(msg='server_error')
@@ -507,7 +507,7 @@ class AuthService:
     async def __cache_check_for_reset_password(self, email: EmailStr):
         data = await self.cache.get(f'reset_pw:{email}', True)
         if data and data.get('ttl', 0) > current_seconds():
-            log.error(f'{self.__cls_name}.__cache_check_for_reset_password:[too many reqeusts error],\
+            log.error(f'{self.cls_name}.__cache_check_for_reset_password:[too many reqeusts error],\
                 email:%s, cache data:%s', email, data)
             raise TooManyRequestsException(
                 msg='frequently request', data=self.ttl_secs)
@@ -535,7 +535,7 @@ class AuthService:
         try:
             return await self.req.simple_get(f'{AUTH_SERVICE_URL}/v1/password/reset/email', params={'email': email})
         except Exception as e:
-            log.error(f'{self.__cls_name}.__req_send_reset_password_comfirm_email:[request exception], \
+            log.error(f'{self.cls_name}.__req_send_reset_password_comfirm_email:[request exception], \
                 host:%s, email:%s, error:%s', AUTH_SERVICE_URL, email, e)
             return None
 
