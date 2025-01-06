@@ -35,17 +35,17 @@ async def signup(
     return post_success(data=data, msg='email_sent')
 
 
-@router.post('/signup/oauth/{auth_type}', status_code=201)
-async def signup_oauth(
-    body: SignupOauthDTO = Body(...),
-    auth_type: OauthType = Path(...)
-):
+# @router.post('/signup/oauth/{auth_type}', status_code=201)
+# async def signup_oauth(
+#     body: SignupOauthDTO = Body(...),
+#     auth_type: OauthType = Path(...)
+# ):
 
-    if auth_type == OauthType.GOOGLE:
-        data = await _auth_service.signup_oauth_google(body)
-    else:
-        raise ServerException('Invalid oauth type')
-    return post_success(data=data, msg='Account signup successfully!')
+#     if auth_type == OauthType.GOOGLE:
+#         data = await _auth_service.signup_oauth_google(body)
+#     else:
+#         raise ServerException('Invalid oauth type')
+#     return post_success(data=data, msg='Account signup successfully!')
 
 
 @router.post('/email/resend', status_code=201)
@@ -80,18 +80,18 @@ async def login(
     return AuthService.auth_response(data=data)
 
 
-@router.post('/login/oauth/{auth_type}', status_code=201)
-async def login_oauth(
-    body: LoginOauthDTO = Body(...),
-    auth_type: OauthType = Path(...),
-    language: Language = Query(default=Language.EN_US)
-):
+# @router.post('/login/oauth/{auth_type}', status_code=201)
+# async def login_oauth(
+#     body: LoginOauthDTO = Body(...),
+#     auth_type: OauthType = Path(...),
+#     language: Language = Query(default=Language.EN_US)
+# ):
 
-    if auth_type == OauthType.GOOGLE:
-        data = await _auth_service.login_oauth_google(body, language)
-    else:
-        raise ServerException('Invalid oauth type')
-    return post_success(data=data, msg='Account login successfully!')
+#     if auth_type == OauthType.GOOGLE:
+#         data = await _auth_service.login_oauth_google(body, language)
+#     else:
+#         raise ServerException('Invalid oauth type')
+#     return post_success(data=data, msg='Account login successfully!')
 
 
 @router.post('/token',

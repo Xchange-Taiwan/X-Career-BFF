@@ -5,7 +5,6 @@ from ....router.req.authorization import (
     gen_refresh_token,
     valid_refresh_token,
 )
-import logging as log
 
 from ..model.auth_model import *
 from ....infra.template.cache import ICache
@@ -13,11 +12,7 @@ from ....infra.template.service_api import IServiceApi
 from ....config.conf import *
 from ....config.exception import *
 from ....infra.util.time_util import current_seconds
-from ....router.req.authorization import (
-    gen_token,
-    gen_refresh_token,
-    valid_refresh_token,
-)
+import logging as log
 
 log.basicConfig(filemode='w', level=log.INFO)
 
@@ -78,24 +73,24 @@ class AuthService:
             data.update({'token': token})
         return data
 
-    async def signup_oauth_google(self, body: SignupOauthDTO):
-        # TODO: Initialize user profile
-        auth_res = await self.req.simple_post(f'{AUTH_SERVICE_URL}/v1/signup/oauth/GOOGLE',
-                                              json={
-                                                  'region': LOCAL_REGION,
-                                                  'email': body.email,
-                                                  'oauth_id': body.oauth_id,
-                                                  'access_token': body.access_token
-                                              })
-        if auth_res.get('oauth_id'):
-            token_res = self.apply_token(auth_res)
-            token = token_res['token']
-            data = self.ttl_secs.copy()
-            if STAGE == TESTING:
-                data.update({'token': token})
-            return data
-        else:
-            raise ServerException(msg='signup fail', data=self.ttl_secs)
+    # async def signup_oauth_google(self, body: SignupOauthDTO):
+    #     # TODO: Initialize user profile
+    #     auth_res = await self.req.simple_post(f'{AUTH_SERVICE_URL}/v1/signup/oauth/GOOGLE',
+    #                                           json={
+    #                                               'region': LOCAL_REGION,
+    #                                               'email': body.email,
+    #                                               'oauth_id': body.oauth_id,
+    #                                               'access_token': body.access_token
+    #                                           })
+    #     if auth_res.get('oauth_id'):
+    #         token_res = self.apply_token(auth_res)
+    #         token = token_res['token']
+    #         data = self.ttl_secs.copy()
+    #         if STAGE == TESTING:
+    #             data.update({'token': token})
+    #         return data
+    #     else:
+    #         raise ServerException(msg='signup fail', data=self.ttl_secs)
 
     async def __cache_check_for_signup(self, email: str):
         data = await self.cache.get(email, True)
@@ -230,9 +225,11 @@ class AuthService:
                                               })
 
         # init user profile
-        user_id = auth_res.get('user_id')
-        await self.__init_user_profile(user_id)
+        user_id = auth_res.get('user_id', None)
+        if user_id is None:
+            raise ServerException(msg="signup fail", data=self.ttl_secs)
 
+        await self.__init_user_profile(user_id)
         # cache auth data
         await self.cache_auth_res(str(user_id), auth_res)
         auth_res = self.apply_token(auth_res)
@@ -338,7 +335,7 @@ class AuthService:
     有了 login preload process, login 可一律視為本地登入
     '''
 
-    async def login(self, body: LoginDTO, language: str):
+    async def login(self, body: LoginDTO, language: str = DEFAULT_LANGUAGE):
         auth_res = await self.__req_login(body)
         user_id = auth_res.get('user_id')
 
@@ -356,20 +353,20 @@ class AuthService:
             'user': user_res,
         }
 
-    async def login_oauth_google(self, body: LoginOauthDTO, language: str):
-        # TODO: Get user profile
-        auth_res = await self.req.simple_post(
-            f'{AUTH_SERVICE_URL}/v1/login/oauth/GOOGLE', json=body.model_dump())
-        if not auth_res or not 'user_id' in auth_res:
-            raise UnauthorizedException(msg='Invalid user.')
-        # user_id = auth_res.get('user_id')
-        auth_res = self.apply_token(auth_res)
-        # user_res = await self.__get_user_profile(user_id, language)
-        auth_res = self.filter_auth_res(auth_res)
-        return {
-            'auth': auth_res,
-            # 'user': user_res,
-        }
+    # async def login_oauth_google(self, body: LoginOauthDTO, language: str):
+    #     # TODO: Get user profile
+    #     auth_res = await self.req.simple_post(
+    #         f'{AUTH_SERVICE_URL}/v1/login/oauth/GOOGLE', json=body.model_dump())
+    #     if not auth_res or not 'user_id' in auth_res:
+    #         raise UnauthorizedException(msg='Invalid user.')
+    #     # user_id = auth_res.get('user_id')
+    #     auth_res = self.apply_token(auth_res)
+    #     # user_res = await self.__get_user_profile(user_id, language)
+    #     auth_res = self.filter_auth_res(auth_res)
+    #     return {
+    #         'auth': auth_res,
+    #         # 'user': user_res,
+    #     }
 
     async def __req_login(self, body: LoginDTO):
         auth_res = await self.req.simple_post(

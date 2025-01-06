@@ -57,11 +57,6 @@ class Sorting(Enum):
     DESC = -1
 
 
-class SchedulesType(Enum):
-    ALLOW = "ALLOW"
-    FORBIDDEN = "FORBIDDEN"
-
-
 class OauthType(Enum):
     GOOGLE = 'GOOGLE'
 
