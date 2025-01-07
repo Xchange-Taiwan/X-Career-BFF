@@ -61,8 +61,8 @@ class AuthService:
 
     async def signup(self, body: SignupDTO):
         email = body.email
-        await self.__cache_check_for_signup(email)
-        auth_res = await self.__req_send_signup_confirm_email(email)
+        await self.cache_check_for_signup(email)
+        auth_res = await self.req_send_signup_confirm_email(email)
         if not 'token' in auth_res:
             raise ServerException(msg='signup fail', data=self.ttl_secs)
 
@@ -74,10 +74,10 @@ class AuthService:
         return data
 
 
-    async def __cache_check_for_signup(self, email: str):
+    async def cache_check_for_signup(self, email: str):
         data = await self.cache.get(email, True)
         if data and data.get('ttl', 0) > current_seconds():
-            log.error(f'{self.cls_name}.__cache_check_for_signup:[too many reqeusts error],\
+            log.error(f'{self.cls_name}.cache_check_for_signup:[too many reqeusts error],\
                 email:%s, cache data:%s', email, data)
             raise TooManyRequestsException(
                 msg='frequently request', data=self.ttl_secs)
@@ -88,7 +88,7 @@ class AuthService:
                 await self.cache.delete(data.get('token'))
 
     # return status_code, msg, err
-    async def __req_send_signup_confirm_email(self, email: str):
+    async def req_send_signup_confirm_email(self, email: str):
         try:
             auth_res = await self.req.simple_post(
                 f'{AUTH_SERVICE_URL}/v1/signup/email',
@@ -104,7 +104,7 @@ class AuthService:
                 msg='Email registered.', data=self.ttl_secs)
 
         except Exception as e:
-            log.error(f'{self.cls_name}.__req_send_signup_confirm_email:[request exception], \
+            log.error(f'{self.cls_name}.req_send_signup_confirm_email:[request exception], \
                 host:%s, email:%s, error:%s', AUTH_SERVICE_URL, email, e)
             await self.cache.set(email, {}, ex=REQUEST_INTERVAL_TTL)
             raise_http_exception(
@@ -112,11 +112,11 @@ class AuthService:
 
     async def __cache_signup_token(self, email: EmailStr, password: str, token: str):
         # TODO: region 記錄在???
-        email_playload = {
+        email_payload = {
             'email': email,
             'password': password,
         }
-        await self.cache.set(token, email_playload, ex=REQUEST_INTERVAL_TTL)
+        await self.cache.set(token, email_payload, ex=REQUEST_INTERVAL_TTL)
         await self.cache.set(email, {'token': token}, ex=REQUEST_INTERVAL_TTL)
 
     '''
@@ -144,7 +144,7 @@ class AuthService:
 
     async def signup_email_resend(self, email: EmailStr):
         old_token = await self.__cache_check_for_token(email)
-        auth_res = await self.__req_send_signup_confirm_email(email)
+        auth_res = await self.req_send_signup_confirm_email(email)
         if not 'token' in auth_res:
             raise ServerException(msg='Signup fail', data=self.ttl_secs)
 
@@ -181,12 +181,12 @@ class AuthService:
 
     async def __cache_confirmcode(self, email: EmailStr, password: str, code: str):
         # TODO: region 記錄在???
-        email_playload = {
+        email_payload = {
             'email': email,
             'password': password,
             'code': code,
         }
-        await self.cache.set(email, email_playload, ex=REQUEST_INTERVAL_TTL)
+        await self.cache.set(email, email_payload, ex=REQUEST_INTERVAL_TTL)
 
     '''
     confirm_signup
@@ -195,7 +195,7 @@ class AuthService:
     async def confirm_signup(self, token: str):
         # token: {email, passowrd}
         user = await self.cache.get(token)
-        await self.__verify_confirm_token(token, user)
+        await self.verify_confirm_token(token, user)
 
         # 'registering': empty data
         email = user.get('email', None)
@@ -235,7 +235,7 @@ class AuthService:
             # FIXME: remove user in auth service
             raise_http_exception(e, 'Unable to initial user profile.')
 
-    async def __verify_confirm_token(self, token: str, user: Dict):
+    async def verify_confirm_token(self, token: str, user: Dict):
         if not user or not 'email' in user:
             raise ClientException(msg='Invalid or expired token.')
 
