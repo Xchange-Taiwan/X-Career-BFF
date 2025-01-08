@@ -32,7 +32,7 @@ class OAuthService(AuthService):
         await self.cache_check_for_signup(email)
         # check google oauth token
         tokeninfo = await self.__get_google_tokeninfo(body.access_token)
-        if email != tokeninfo.get("email"):
+        if email != tokeninfo.get("email", None):
             raise ServerException(msg="Invalid Google email")
 
         auth_res = await self.req_send_signup_confirm_email(email)
@@ -45,31 +45,6 @@ class OAuthService(AuthService):
         if STAGE == TESTING:
             data.update({"token": token})
         return data
-
-    async def confirm_signup_oauth_google(self, token: str):
-        # email_payload: {email, oauth_id}
-        email_payload = await self.cache.get(token)
-        await self.verify_confirm_token(token, email_payload)
-
-        # email_payload: {email, oauth_id, region}
-        email_payload.update({"region": LOCAL_REGION})
-        auth_res = await self.req.simple_post(
-            f"{AUTH_SERVICE_URL}/v1/signup/oauth/GOOGLE",
-            json=email_payload,
-        )
-        user_id = auth_res.get("user_id", None)
-        if user_id is None:
-            raise ServerException(msg="signup fail", data=self.ttl_secs)
-
-        # Initialize user profile
-        await self.init_user_profile(user_id)
-        # cache auth data
-        await self.cache_auth_res(str(user_id), auth_res)
-        auth_res = self.apply_token(auth_res)
-        auth_res = self.filter_auth_res(auth_res)
-        return {
-            "auth": auth_res,
-        }
 
 
     async def login_oauth_google(self, body: LoginOauthDTO, language: str):
@@ -111,6 +86,7 @@ class OAuthService(AuthService):
         email_payload = {
             "email": email,
             "oauth_id": oauth_id,
+            'auth_route': '/v1/signup/oauth/GOOGLE',
         }
         await self.cache.set(token, email_payload, ex=REQUEST_INTERVAL_TTL)
         await self.cache.set(email, {"token": token}, ex=REQUEST_INTERVAL_TTL)

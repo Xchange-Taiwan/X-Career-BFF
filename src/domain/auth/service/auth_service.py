@@ -107,14 +107,15 @@ class AuthService:
             log.error(f'{self.cls_name}.req_send_signup_confirm_email:[request exception], \
                 host:%s, email:%s, error:%s', AUTH_SERVICE_URL, email, e)
             await self.cache.set(email, {}, ex=REQUEST_INTERVAL_TTL)
-            raise_http_exception(
-                e, 'Email could not be delivered.', data=self.ttl_secs)
+            err_msg = getattr(e, 'msg', 'Email could not be delivered.')
+            raise_http_exception(e, err_msg, data=self.ttl_secs)
 
     async def __cache_signup_token(self, email: EmailStr, password: str, token: str):
         # TODO: region 記錄在???
         email_payload = {
             'email': email,
             'password': password,
+            'auth_route': '/v1/signup',
         }
         await self.cache.set(token, email_payload, ex=REQUEST_INTERVAL_TTL)
         await self.cache.set(email, {'token': token}, ex=REQUEST_INTERVAL_TTL)
@@ -169,42 +170,45 @@ class AuthService:
         data.update({'token': new_token})
         await self.cache.set(email, data, ex=REQUEST_INTERVAL_TTL)
 
-    # return status_code, msg, err
-    async def __req_send_confirmcode_by_email(self, email: str, code: str):
-        auth_res = await self.req.simple_post(f'{AUTH_SERVICE_URL}/v1/sendcode/email', json={
-            'email': email,
-            'code': code,
-            'exist': False,
-        })
+    # # return status_code, msg, err
+    # async def __req_send_confirmcode_by_email(self, email: str, code: str):
+    #     auth_res = await self.req.simple_post(f'{AUTH_SERVICE_URL}/v1/sendcode/email', json={
+    #         'email': email,
+    #         'code': code,
+    #         'exist': False,
+    #     })
 
-        return auth_res
+    #     return auth_res
 
-    async def __cache_confirmcode(self, email: EmailStr, password: str, code: str):
-        # TODO: region 記錄在???
-        email_payload = {
-            'email': email,
-            'password': password,
-            'code': code,
-        }
-        await self.cache.set(email, email_payload, ex=REQUEST_INTERVAL_TTL)
+    # async def __cache_confirmcode(self, email: EmailStr, password: str, code: str):
+    #     # TODO: region 記錄在???
+    #     email_payload = {
+    #         'email': email,
+    #         'password': password,
+    #         'code': code,
+    #     }
+    #     await self.cache.set(email, email_payload, ex=REQUEST_INTERVAL_TTL)
 
     '''
     confirm_signup
     '''
 
     async def confirm_signup(self, token: str):
-        # token: {email, passowrd}
-        user = await self.cache.get(token)
-        await self.verify_confirm_token(token, user)
+        # xc email-payload: {email, password, region, auth_route}
+        # google email-payload: {email, oauth_id, region, auth_route}
+        email_payload: Dict = await self.cache.get(token)
+        await self.verify_confirm_token(token, email_payload)
 
-        # 'registering': empty data
-        email = user.get('email', None)
-        auth_res = await self.req.simple_post(f'{AUTH_SERVICE_URL}/v1/signup',
-                                              json={
-                                                  'region': LOCAL_REGION,
-                                                  'email': email,
-                                                  'password': user['password'],
-                                              })
+        auth_route = email_payload.pop('auth_route', None)
+        if not auth_route:
+            raise NotFoundException(msg='Auth route not found.')
+
+        auth_url =  f'{AUTH_SERVICE_URL}{auth_route}'
+        email_payload.update({"region": LOCAL_REGION})
+        auth_res = await self.req.simple_post(
+            url=auth_url,
+            json=email_payload,
+        )
 
         # init user profile
         user_id = auth_res.get('user_id', None)

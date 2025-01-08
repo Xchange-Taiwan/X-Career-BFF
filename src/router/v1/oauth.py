@@ -38,23 +38,6 @@ async def signup_oauth(
     return post_success(data=data, msg='Account signup successfully!')
 
 
-@router.post('/signup/{auth_type}/confirm',
-             responses=post_response('confirm_signup_oauth', SignupResponseVO),
-             status_code=201)
-async def confirm_signup_oauth(
-    auth_type: OauthType = Path(...),
-    token: str = Body(..., embed=True),
-):
-    if auth_type == OauthType.GOOGLE:
-        data = await _oauth_service.confirm_signup_oauth_google(token)
-    else:
-        raise ServerException(msg='Invalid auth type', data=self.ttl_secs)
-    return AuthService.auth_response(
-        data=data,
-        msg='Confirming successful signup.',
-    )
-
-
 @router.post('/login/{auth_type}', 
              responses=post_response('login_oauth', LoginResponseVO),
              status_code=201)
