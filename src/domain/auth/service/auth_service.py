@@ -236,8 +236,8 @@ class AuthService:
         except Exception as e:
             log.error(f'{self.cls_name}.init_user_profile:[request exception], \
                 user_id:%s, error:%s', user_id, e)
-            # FIXME: remove user in auth service
-            raise_http_exception(e, 'Unable to initial user profile.')
+            err_msg = getattr(e, 'msg', 'Unable to initial user profile.')
+            raise_http_exception(e, err_msg)
 
     async def verify_confirm_token(self, token: str, user: Dict):
         if not user or not 'email' in user:
@@ -356,7 +356,8 @@ class AuthService:
         except Exception as e:
             log.error(f'{self.cls_name}.get_user_profile:[request exception], \
                 user_id:%s, error:%s', user_id, e)
-            raise_http_exception(e, 'User not found.')
+            err_msg = getattr(e, 'msg', 'User not found.')
+            raise_http_exception(e, err_msg)
 
     async def cache_auth_res(self, user_id_key: str, auth_res: Dict, removed_fields: Set = set()):
         auth_res.update({
