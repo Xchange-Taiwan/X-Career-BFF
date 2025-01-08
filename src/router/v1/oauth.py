@@ -7,7 +7,7 @@ from fastapi import (
 )
 
 from ...config.conf import DEFAULT_LANGUAGE_ENUM
-from ...config.constant import Language, OauthType
+from ...config.constant import Language, AccountType
 from ...config.exception import *
 from ...domain.auth.model.auth_model import *
 from ...domain.auth.service.auth_service import AuthService
@@ -28,10 +28,10 @@ router = APIRouter(
 
 @router.post('/signup/{auth_type}', status_code=201)
 async def signup_oauth(
-    auth_type: OauthType = Path(...),
+    auth_type: AccountType = Path(...),
     body: SignupOauthDTO = Body(...),
 ):
-    if auth_type == OauthType.GOOGLE:
+    if auth_type == AccountType.GOOGLE:
         data = await _oauth_service.signup_oauth_google_and_send_email(body)
     else:
         raise ServerException(msg='Invalid auth type', data=self.ttl_secs)
@@ -42,11 +42,11 @@ async def signup_oauth(
              responses=post_response('login_oauth', LoginResponseVO),
              status_code=201)
 async def login_oauth(
-    auth_type: OauthType = Path(...),
+    auth_type: AccountType = Path(...),
     body: LoginOauthDTO = Body(...),
     language: Language = Query(default=DEFAULT_LANGUAGE_ENUM)
 ):
-    if auth_type == OauthType.GOOGLE:
+    if auth_type == AccountType.GOOGLE:
         data = await _oauth_service.login_oauth_google(body, language.value)
     else:
         raise ServerException(msg='Invalid auth type', data=self.ttl_secs)

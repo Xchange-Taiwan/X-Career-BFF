@@ -57,8 +57,10 @@ class Sorting(Enum):
     DESC = -1
 
 
-class OauthType(Enum):
+class AccountType(Enum):
+    XC = 'XC'
     GOOGLE = 'GOOGLE'
+    LINKEDIN = 'LINKEDIN'
 
 
 # serial_key is a field of the collection in the user's cache

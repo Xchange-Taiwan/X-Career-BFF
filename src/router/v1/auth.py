@@ -14,7 +14,6 @@ from ..req.auth_validation import *
 from ..req.authorization import *
 from ..res.response import *
 from ...config.exception import *
-from ...config.constant import OauthType
 from ...app._di.injection import _auth_service
 import logging as log
 
