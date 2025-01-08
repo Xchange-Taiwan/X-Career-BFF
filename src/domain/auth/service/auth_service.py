@@ -96,12 +96,14 @@ class AuthService:
                     'email': email,
                     'exist': False,
                 })
+            if auth_res is None:
+                raise ServerException(msg='Connect to auth service fail.')
             return auth_res
 
         except NotAcceptableException or DuplicateUserException as e:
             await self.cache.set(email, {}, ex=REQUEST_INTERVAL_TTL)
-            raise DuplicateUserException(
-                msg='Email registered.', data=self.ttl_secs)
+            err_msg = getattr(e, 'msg', 'Email registered.')
+            raise DuplicateUserException(msg=err_msg, data=self.ttl_secs)
 
         except Exception as e:
             log.error(f'{self.cls_name}.req_send_signup_confirm_email:[request exception], \
