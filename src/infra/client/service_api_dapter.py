@@ -2,7 +2,7 @@ import requests as RequestsHTTPLibrary
 from fastapi import status
 from requests.models import Response
 from typing import Dict, Union, Any, Optional
-from ...app.template.service_api import IServiceApi
+from ...infra.template.service_api import IServiceApi
 from ...config.exception import \
     ClientException, UnauthorizedException, ForbiddenException, NotFoundException, NotAcceptableException,\
     ServerException
@@ -391,14 +391,3 @@ class ServiceApiAdapter(IServiceApi):
         log.error(f'cannot find err msg, resp_json:{resp_json}')
         return 'service reqeust error'
 
-
-def get_service_requests():
-    try:
-        requests_lib = RequestsHTTPLibrary
-        service_requests = ServiceApiAdapter(requests_lib)
-        yield service_requests
-    except Exception as e:
-        log.error(e.__str__())
-        raise
-    finally:
-        pass

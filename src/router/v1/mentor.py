@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from fastapi import (
     APIRouter,
-    Path, Body
+    Header, Path, Body,
 )
 from fastapi.encoders import jsonable_encoder
 
@@ -58,25 +58,29 @@ async def get_mentor_profile(
 @router.put('/{user_id}/experiences/{experience_type}',
             responses=idempotent_response('upsert_experience', experience.ExperienceVO))
 async def upsert_experience(
+        is_mentor: bool = Header(False),
         user_id: int = Path(...),
         experience_type: ExperienceCategory = Path(...),
         body: experience.ExperienceDTO = Body(...),
 ):
-
-    res: experience.ExperienceVO = await _mentor_service.upsert_experience(body, user_id, experience_type.value)
+    res: experience.ExperienceVO = await _mentor_service.upsert_experience(
+        body, user_id, experience_type.value, is_mentor
+    )
     return res_success(data=jsonable_encoder(res))
 
 
 @router.delete('/{user_id}/experiences/{experience_type}/{experience_id}',
                responses=idempotent_response('delete_experience', experience.ExperienceVO))
 async def delete_experience(
+        is_mentor: bool = Header(False),
         user_id: int = Path(...),
-        experience_id: int = Path(...),
         experience_type: ExperienceCategory = Path(...),
+        experience_id: int = Path(...),
 ):
-
-    res: bool = await _mentor_service.delete_experience(user_id, experience_id, experience_type.value)
-    return res_success(data=jsonable_encoder(res))
+    res: bool = await _mentor_service.delete_experience(
+        user_id, experience_type.value, experience_id, is_mentor
+    )
+    return res_success(data=res)
 
 
 @router.get('/{language}/expertises',

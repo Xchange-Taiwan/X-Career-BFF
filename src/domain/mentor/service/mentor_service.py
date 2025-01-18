@@ -1,5 +1,6 @@
 import logging as log
 from typing import List, Optional, Dict, Any
+from fastapi.encoders import jsonable_encoder
 
 from ..model.experience_model import ExperienceVO, ExperienceDTO
 from ..model.mentor_model import (
@@ -40,21 +41,29 @@ class MentorService:
         res: Optional[Dict[str, Any]] = await self.service_api.simple_put(url=req_url, json=data.model_dump())
         return res
 
-    async def upsert_experience(self, data: ExperienceDTO, user_id: int, experience_type: str) -> ExperienceVO:
+    async def upsert_experience(self, data: ExperienceDTO, user_id: int, experience_type: str, is_mentor: bool) -> ExperienceVO:
         req_url = f"{USER_SERVICE_URL}/v1/{MENTORS}/{user_id}/experiences/{experience_type}"
 
-        res: Optional[ServiceApiResponse] = await self.service_api.put(url=req_url, json=data.model_dump())
+        payload = data.model_dump()
+        payload.update({"category": experience_type})
+        headers = {"is_mentor": str(is_mentor).lower()}
+        res: Optional[ServiceApiResponse] = await self.service_api.put(
+            url=req_url, json=payload, headers=headers
+        )
         res_data = res.data
 
         return ExperienceVO.of(res_data.get('id'),
-                               res_data.get('desc'),
-                               res_data.get('order'),
-                               ExperienceCategory(res_data.get('category')))
+                               ExperienceCategory(res_data.get('category')),
+                               res_data.get('mentor_experiences_metadata'),
+                               res_data.get('order'))
 
-    async def delete_experience(self, user_id: int, exp_id: int, exp_cate: str) -> bool:
+    async def delete_experience(self, user_id: int, exp_cate: str, exp_id: int, is_mentor: bool) -> bool:
         req_url = f"{USER_SERVICE_URL}/v1/{MENTORS}/{user_id}/experiences/{exp_cate}/{exp_id}"
 
-        res: Optional[ServiceApiResponse] = await self.service_api.delete(url=req_url)
+        headers = {"is_mentor": str(is_mentor).lower()}
+        res: Optional[ServiceApiResponse] = await self.service_api.delete(
+            url=req_url, headers=headers
+        )
         return res.data
 
     async def get_expertises(self, language: Language) -> ProfessionListVO:

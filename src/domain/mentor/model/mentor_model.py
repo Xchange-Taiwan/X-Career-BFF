@@ -13,8 +13,8 @@ log.basicConfig(filemode="w", level=log.INFO)
 
 
 class MentorProfileDTO(ProfileDTO):
-    personal_statement: Optional[str]
-    about: Optional[str]
+    personal_statement: Optional[str] = ""
+    about: Optional[str] = ""
     # TODO: enum
     seniority_level: Optional[str] = "NO REVEAL"
     expertises: Optional[List[str]] = []

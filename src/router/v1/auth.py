@@ -6,6 +6,7 @@ from fastapi import (
     Cookie, Header, Path, Query, Body, Form
 )
 
+from ...config.conf import DEFAULT_LANGUAGE_ENUM
 from ...config.constant import Language
 from ...domain.auth.model.auth_model import *
 from ...domain.auth.service.auth_service import AuthService
@@ -50,7 +51,7 @@ async def confirm_signup(
 ):
     data = await _auth_service.confirm_signup(token)
     return AuthService.auth_response(
-        data=data, 
+        data=data,
         msg='Confirming successful signup.',
     )
 
@@ -60,7 +61,7 @@ async def confirm_signup(
              status_code=201)
 async def login(
     body: LoginDTO = Depends(login_check_body),
-    language: Language = Query(default=Language.EN_US)
+    language: Language = Query(default=DEFAULT_LANGUAGE_ENUM)
 ):
     data = await _auth_service.login(body, language.value)
     return AuthService.auth_response(data=data)

@@ -30,6 +30,21 @@ class SignupDTO(BaseModel):
         }
 
 
+class SignupOauthDTO(BaseModel):
+    email: EmailStr
+    oauth_id: str
+    access_token: str
+
+    class Config:
+        json_schema_extra = {
+            'example': {
+                'email': 'user@example.com',
+                'oauth_id': 'oauth_id',
+                'access_token': 'access_token',
+            },
+        }
+
+
 class SignupConfirmDTO(BaseModel):
     region: Optional[str] = 'jp'
     email: EmailStr
@@ -54,6 +69,19 @@ class LoginDTO(BaseModel):
             'example': {
                 'email': 'user@example.com',
                 'password': 'secret',
+            },
+        }
+
+
+class LoginOauthDTO(BaseModel):
+    oauth_id: str
+    access_token: str
+
+    class Config:
+        json_schema_extra = {
+            'example': {
+                'oauth_id': 'oauth_id',
+                'access_token': 'access_token',
             },
         }
 

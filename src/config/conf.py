@@ -1,7 +1,10 @@
 import os
+from src.config.constant import Language
 
-LOCAL_REGION = os.getenv('AWS_REGION', 'ap-northeast-1')
 DEFAULT_LANGUAGE = os.getenv('DEFAULT_LANGUAGE', 'zh_TW')
+DEFAULT_LANGUAGE_ENUM = Language(DEFAULT_LANGUAGE)
+LOCAL_REGION = os.getenv('AWS_REGION', 'ap-northeast-1')
+S3_REGION = os.getenv('S3_REGION', 'ap-northeast-1')
 STAGE = os.getenv('STAGE', 'local')
 TESTING = os.getenv('TESTING', 'local')
 
