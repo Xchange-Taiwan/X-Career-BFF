@@ -44,3 +44,6 @@ class CountryVO(BaseModel):
 
 class CountryListVO(BaseModel):
     countries: List[CountryVO] = []
+
+class UniversityListVO(BaseModel):
+    universities: List[str] = []
