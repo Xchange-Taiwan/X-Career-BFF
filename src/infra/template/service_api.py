@@ -11,6 +11,11 @@ class IServiceApi(ABC):
     @abstractmethod
     async def get(self, url: str, params: Dict = None, headers: Dict = None) -> Optional[ServiceApiResponse]:
         pass
+    
+    # NOTE: retrun native response
+    @abstractmethod
+    async def get_req(self, url: str, params: Dict = None, headers: Dict = None) -> Any:
+        pass
 
     @abstractmethod
     async def simple_post(self, url: str, json: Dict, headers: Dict = None) -> Optional[Dict[str, Any]]:
@@ -18,6 +23,11 @@ class IServiceApi(ABC):
 
     @abstractmethod
     async def post(self, url: str, json: Dict, headers: Dict = None) -> Optional[ServiceApiResponse]:
+        pass
+    
+    # NOTE: retrun native response
+    @abstractmethod
+    async def post_req(self, url: str, json: Dict, headers: Dict = None) -> Any:
         pass
 
     @abstractmethod
