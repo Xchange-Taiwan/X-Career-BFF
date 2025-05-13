@@ -9,6 +9,8 @@ from mangum import Mangum
 from src.config import exception
 from src.router.v1 import (
     auth,
+    oauth,
+    google_oauth,
     user,
     mentor,
     search, file, object_storage,
@@ -28,13 +30,18 @@ app.add_middleware(
 
 router_v1 = APIRouter(prefix='/api/v1')
 router_v1.include_router(auth.router)
+router_v1.include_router(oauth.router)
 router_v1.include_router(user.router)
 router_v1.include_router(mentor.router)
 router_v1.include_router(search.router)
 router_v1.include_router(file.router)
 router_v1.include_router(object_storage.router)
 
+router_v2 = APIRouter(prefix='/api/v2')
+router_v2.include_router(google_oauth.router)
+
 app.include_router(router_v1)
+app.include_router(router_v2)
 
 exception.include_app(app)
 
