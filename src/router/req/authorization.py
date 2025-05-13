@@ -36,14 +36,14 @@ async def parse_token_from_request(request: Request):
     return parse_token(credentials)
 
 
-def __get_secret(user_id):
-    return f'secret{str(user_id)[::-1]}' # if user_id != None else JWT_SECRET
+def __get_secret(pattern: Any):
+    return f'secret{str(pattern)[::-1]}' # if user_id != None else JWT_SECRET
 
-def gen_token(data: dict, fields: List):
+def gen_token(data: dict, fields: List = []):
     public_info = {}
     if not 'user_id' in data:
         log.error(f'gen_token fail: [\'user_id\' is required in data], data:{data}, fields:{fields}')
-        raise ServerException(msg='internal server error')
+        raise ServerException(msg='user_id not found in data')
     
     secret = __get_secret(data['user_id'])
     for field in fields:
@@ -51,6 +51,12 @@ def gen_token(data: dict, fields: List):
         public_info[field] = val
 
     public_info.update({ 'exp': expiration_time() })
+    return jwt_util.encode(payload=public_info, key=secret, algorithm=JWT_ALGORITHM)
+
+
+def gen_token_by_pattern(pattern: Any):
+    secret = __get_secret(pattern)
+    public_info = { 'exp': expiration_time() }
     return jwt_util.encode(payload=public_info, key=secret, algorithm=JWT_ALGORITHM)
 
 

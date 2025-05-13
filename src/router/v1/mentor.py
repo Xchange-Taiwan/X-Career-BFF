@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from fastapi import (
     APIRouter,
-    Header, Path, Body,
+    Header, Path, Query, Body,
 )
 from fastapi.encoders import jsonable_encoder
 
@@ -17,6 +17,7 @@ from src.domain.user.model import (
 from src.router.res.response import *
 from src.config.constant import ExperienceCategory, Language
 from src.config.exception import *
+from ...infra.util.util import get_universities_by_country
 from src.infra.template.service_response import ServiceApiResponse
 import logging as log
 
@@ -53,6 +54,19 @@ async def get_mentor_profile(
 ):
     res = await _mentor_service.get_mentor_profile(user_id, language.value)
     return res_success(data=jsonable_encoder(res))
+
+
+@router.get('/{language}/universities',
+            responses=idempotent_response('get_universities', common.UniversityListVO))
+async def get_universities(
+        language: Language = Path(...),
+        country_name: str = Query(...),
+):
+    data: List[str] = get_universities_by_country(country_name)
+    if not data:
+        raise ClientException(msg='There are no universities in this country!')
+    res = common.UniversityListVO(universities=data).model_dump()
+    return res_success(data=res)
 
 
 @router.put('/{user_id}/experiences/{experience_type}',

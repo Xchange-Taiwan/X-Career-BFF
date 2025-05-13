@@ -1,6 +1,7 @@
 import functools
 import time
-from typing import Dict
+import httpx
+from typing import Dict, List
 
 import pycountry
 from babel import Locale
@@ -60,3 +61,41 @@ def get_localized_territories_alpha_3(language: Language):
 
     except KeyError:
         return f"Invalid locale {language.value}."
+
+
+country_to_universities = {}
+
+
+def parse_country_name(country_name: str) -> str:
+    country_name = country_name.lower()
+    if country_name.startswith('taiwan'):
+        country_name = 'taiwan, province of china'
+        
+    elif country_name.startswith('korea'):
+        country_name = 'korea, republic of'
+        
+    return country_name
+
+"""
+Get a list of universities by country name:
+Use 'Hipo Labs University API'
+"""
+def get_universities_by_country(country_name: str) -> List[str]:
+    country_name = parse_country_name(country_name)
+    if country_name in country_to_universities:
+        return country_to_universities[country_name]
+    
+    url = f"http://universities.hipolabs.com/search?country={country_name}"
+    try:
+        with httpx.Client() as client:
+            response = client.get(url)
+            response.raise_for_status()
+            universities_data: List[Dict] = response.json()
+            universities_names = list(x['name'] for x in universities_data if 'name' in x)
+            country_to_universities[country_name] = universities_names
+        return country_to_universities[country_name]
+
+    except httpx.HTTPError as e:
+        print(f"Error fetching university data: {e}")
+
+    return []

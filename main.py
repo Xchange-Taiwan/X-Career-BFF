@@ -10,6 +10,7 @@ from src.config import exception
 from src.router.v1 import (
     auth,
     oauth,
+    google_oauth,
     user,
     mentor,
     search, file, object_storage,
@@ -36,7 +37,11 @@ router_v1.include_router(search.router)
 router_v1.include_router(file.router)
 router_v1.include_router(object_storage.router)
 
+router_v2 = APIRouter(prefix='/api/v2')
+router_v2.include_router(google_oauth.router)
+
 app.include_router(router_v1)
+app.include_router(router_v2)
 
 exception.include_app(app)
 
