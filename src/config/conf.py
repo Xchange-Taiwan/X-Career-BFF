@@ -52,3 +52,9 @@ SEARCH_SERVICE_URL = os.getenv('SEARCH_SERVICE_URL', 'http://127.0.0.1:8012/sear
 MAX_WIDTH = int(os.getenv('MAX_WIDTH', 300))
 MAX_HEIGHT = int(os.getenv('MAX_HEIGHT', 300))
 MAX_STORAGE_SIZE = int(os.getenv('MAX_STORAGE_SIZE', 15 * 1024 * 1024))  # give 15 MB to users
+
+# Google OAuth2 setup
+GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID', 'google-client-id')
+GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET', 'google-client-secret')
+API_BASE_URL = os.getenv('API_BASE_URL', 'http://127.0.0.1:8006')
+REDICRECT_URI = os.getenv('REDICRECT_URI', '/api/v2/oauth/google/callback')

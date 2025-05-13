@@ -89,6 +89,20 @@ class AsyncServiceApiAdapter(IServiceApi):
             raise_http_exception(e=e, msg=err_msg, data=err_data)
 
         return result
+    
+    # NOTE: retrun native response
+    async def get_req(self, url: str, params: Dict = None, headers: Dict = None) -> Any:
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(url, params=params, headers=headers)
+                response.raise_for_status()
+                return response.json()
+        except Exception as e:
+            err_msg = getattr(e, 'msg', str(e))
+            err_data = getattr(e, 'data', None)
+            log.error(f"get_req request error, url:%s, params:%s, headers:%s, resp:%s, err:%s",
+                      url, params, headers, response, err_msg)
+            raise_http_exception(e=e, msg=err_msg, data=err_data)
 
     """
     return response body only
@@ -116,6 +130,21 @@ class AsyncServiceApiAdapter(IServiceApi):
             raise_http_exception(e=e, msg=err_msg, data=err_data)
 
         return result
+
+    # NOTE: retrun native response
+    async def post_req(self, url: str, json: Dict, headers: Dict = None) -> Any:
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(url, json=json, headers=headers)
+                response.raise_for_status()
+                return response.json()
+
+        except Exception as e:
+            err_msg = getattr(e, 'msg', str(e))
+            err_data = getattr(e, 'data', None)
+            log.error(f"post_req request error, url:%s, json:%s, headers:%s, resp:%s, err:%s",
+                      url, json, headers, response, err_msg)
+            raise_http_exception(e=e, msg=err_msg, data=err_data)
 
     """
     return response body only
