@@ -28,7 +28,9 @@ class GoogleOAuthService(AuthService):
         # Google OAuth2 配置
         self.google_client_id = GOOGLE_CLIENT_ID
         self.google_client_secret = GOOGLE_CLIENT_SECRET
-        self.google_redirect_uri = f'{API_BASE_URL}{REDICRECT_URI}'
+
+        state = STAGE if STAGE != 'local' else ''
+        self.google_redirect_uri = f'{API_BASE_URL}/{state}{REDICRECT_URI}'
         self.google_auth_url = 'https://accounts.google.com/o/oauth2/v2/auth'
         self.google_token_url = 'https://oauth2.googleapis.com/token'
 
