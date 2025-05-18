@@ -1,9 +1,11 @@
 from typing import List, Dict, Any
+from datetime import datetime
 from fastapi import (
     APIRouter,
     Request, Depends,
     Header, Path, Query, Body, Form
 )
+from src.app._di.injection import _search_service
 from ...domain.mentor.model import (
     mentor_model as mentor,
 )
@@ -30,33 +32,30 @@ router = APIRouter(
 )
 
 
-# TODO: read from SEARCH service
 @router.get('',
             responses=idempotent_response('mentor_list', search.SearchMentorProfileListVO))
 async def mentor_list(
-    search_patterns: List[str] = Query(None),
+    search_pattern: str = Query(None),
     filter_positions: List[str] = Query(None),
     filter_skills: List[str] = Query(None),
     filter_topics: List[str] = Query(None),
     filter_expertises: List[str] = Query(None),
     filter_industries: List[str] = Query(None),
-    sorting_by: SortingBy = Query(SortingBy.UPDATED_TIME),
-    sorting: Sorting = Query(Sorting.DESC),
-    next_id: int = Query(None),
+    limit: int = Query(9),
+    cursor: datetime = Query(None),
 ):
-    # TODO: implement
     query = search.SearchMentorProfileDTO(
-        search_patterns=search_patterns,
+        search_pattern=search_pattern,
         filter_positions=filter_positions,
         filter_skills=filter_skills,
         filter_topics=filter_topics,
         filter_expertises=filter_expertises,
         filter_industries=filter_industries,
-        sorting_by=sorting_by,
-        sorting=sorting,
-        next_id=next_id,
+        limit=limit,
+        cursor=cursor,
     )
-    return res_success(data=None)
+    data = await _search_service.search_mentor(query=query)
+    return res_success(data)
 
 
 # TODO: read from professional service
