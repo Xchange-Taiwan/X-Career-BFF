@@ -26,11 +26,19 @@ router = APIRouter(
     responses={404: {'description': 'Not found'}},
 )
 
-@router.post('/authorize', status_code=201)
-async def oauth_authorize(
+@router.post('/authorize/signup', status_code=201)
+async def oauth_authorize_signup(
     body: GoogleAuthorizeDTO = Body(...),
 ):
-    data = await _google_oauth_service.get_authorization_url(body.email)
+    data = await _google_oauth_service.get_authorization_url_by_signup(body.email)
+    return post_success(data=data, msg='Authorization URL generated successfully!')
+
+
+@router.post('/authorize/login', status_code=201)
+async def oauth_authorize_login(
+    body: GoogleAuthorizeDTO = Body(...),
+):
+    data = await _google_oauth_service.get_authorization_url_by_login(body.email)
     return post_success(data=data, msg='Authorization URL generated successfully!')
 
 
@@ -41,23 +49,3 @@ async def oauth_callback(
 ):
     data = await _google_oauth_service.handle_callback(code, state)
     return res_success(data=data, msg='Authorization successful!')
-
-
-@router.post('/signup', status_code=201)
-async def oauth_signup(
-    body: SignupOauthDTO = Body(...),
-):
-    data = await _google_oauth_service.signup_oauth_and_send_email(body)
-    return post_success(data=data, msg='Account signup successfully!')
-
-
-@router.post('/login', 
-             responses=post_response('login_oauth', LoginResponseVO),
-             status_code=201)
-async def oauth_login(
-    body: LoginOauthDTO = Body(...),
-    language: Language = Query(default=DEFAULT_LANGUAGE_ENUM)
-):
-    data = await _google_oauth_service.login_oauth(body, language.value)
-    return AuthService.auth_response(data=data)
-
