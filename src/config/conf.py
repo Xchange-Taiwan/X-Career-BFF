@@ -1,4 +1,5 @@
 import os
+
 from src.config.constant import Language
 
 DEFAULT_LANGUAGE = os.getenv('DEFAULT_LANGUAGE', 'zh_TW')

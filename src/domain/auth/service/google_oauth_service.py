@@ -1,22 +1,18 @@
-from fastapi.responses import JSONResponse
-from urllib.parse import urlencode
+import logging as log
 import secrets
 import string
+from typing import Dict
+from urllib.parse import urlencode
 
 from src.config.conf import *
-from src.config.exception import *
-from src.router.req.authorization import (
-    gen_token_by_pattern,
-)
 from src.config.constant import AuthorizeType
-from src.domain.auth.service.auth_service import AuthService
+from src.config.exception import *
 from src.domain.auth.model.auth_model import *
-from src.domain.auth.model.google_oauth_model import GoogleAuthorizeDTO
-from src.infra.util.time_util import current_seconds
+from src.domain.auth.service.auth_service import AuthService
 from src.infra.template.cache import ICache
 from src.infra.template.service_api import IServiceApi
 from src.infra.template.service_response import ServiceApiResponse
-import logging as log
+from src.infra.util.time_util import current_seconds
 
 log.basicConfig(filemode='w', level=log.INFO)
 

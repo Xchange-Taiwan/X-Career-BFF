@@ -1,6 +1,5 @@
 from fastapi import Request, Body
-from typing import Dict
-from ...config.exception import ClientException
+
 from ...domain.auth.model.auth_model import *
 
 

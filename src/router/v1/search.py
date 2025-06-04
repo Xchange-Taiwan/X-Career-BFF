@@ -1,26 +1,23 @@
-from typing import List, Dict, Any
+import logging as log
 from datetime import datetime
+from typing import List
+
 from fastapi import (
     APIRouter,
-    Request, Depends,
-    Header, Path, Query, Body, Form
+    Path, Query
 )
-from src.app._di.injection import _search_service
+
+from ..res.response import *
+from ...app._di.injection import (
+    _mentor_service,
+    _search_service,
+)
 from ...domain.mentor.model import (
     mentor_model as mentor,
 )
 from ...domain.search.model import (
     search_model as search,
 )
-from ...app._di.injection import (
-    _mentor_service,
-    _search_service,
-)
-from ..res.response import *
-from ...config.conf import *
-from ...config.constant import *
-from ...config.exception import *
-import logging as log
 
 log.basicConfig(filemode='w', level=log.INFO)
 

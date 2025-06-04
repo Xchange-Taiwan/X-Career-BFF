@@ -1,6 +1,7 @@
-import os
-from fastapi import HTTPException, status
 import logging as log
+import os
+
+from fastapi import HTTPException, status
 
 log.basicConfig(filemode='w', level=log.INFO)
 

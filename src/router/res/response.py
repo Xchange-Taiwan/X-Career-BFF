@@ -1,7 +1,9 @@
+from typing import Optional, Any, Dict
+
 from fastapi import status
 from fastapi.responses import JSONResponse
-from typing import Optional, Any, Dict
 from pydantic import create_model, BaseModel
+
 
 # ref: https://github.com/tiangolo/fastapi/issues/3737
 def idempotent_response(route: str, model: Any) -> (Dict):
