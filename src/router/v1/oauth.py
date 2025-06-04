@@ -1,21 +1,14 @@
-from typing import List, Dict, Any
-from pydantic import EmailStr
-from fastapi import (
-    APIRouter,
-    Request, Depends,
-    Cookie, Header, Path, Query, Body, Form
-)
+import logging as log
 
-from ...config.conf import DEFAULT_LANGUAGE_ENUM
-from ...config.constant import Language, OAuthType
-from ...config.exception import *
-from ...domain.auth.model.auth_model import *
-from ...domain.auth.service.auth_service import AuthService
+from fastapi import APIRouter, Query
+
 from ..req.auth_validation import *
 from ..req.authorization import *
 from ..res.response import *
 from ...app._di.injection import _oauth_service
-import logging as log
+from ...config.conf import DEFAULT_LANGUAGE_ENUM
+from ...config.constant import Language, OAuthType
+from ...domain.auth.service.auth_service import AuthService
 
 log.basicConfig(filemode='w', level=log.INFO)
 

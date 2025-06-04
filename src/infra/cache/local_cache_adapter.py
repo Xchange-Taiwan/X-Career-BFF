@@ -1,7 +1,8 @@
+import logging as log
 from typing import Any, Set, Dict, List, Optional
+
 from ..template.cache import ICache
 from ..util.time_util import current_seconds
-import logging as log
 
 log.basicConfig(filemode='w', level=log.INFO)
 

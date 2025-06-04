@@ -1,13 +1,12 @@
+import logging as log
 from typing import Optional, Dict, Any
-from src.infra.template.service_api import IServiceApi
-from src.infra.template.cache import ICache
+
 from src.config.conf import SEARCH_SERVICE_URL
+from src.infra.template.cache import ICache
+from src.infra.template.service_api import IServiceApi
 from ....domain.search.model import (
     search_model as search,
 )
-
-import logging as log
-
 
 log.basicConfig(filemode='w', level=log.INFO)
 
