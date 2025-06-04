@@ -27,18 +27,13 @@ router = APIRouter(
 )
 
 @router.post('/authorize/signup', status_code=201)
-async def oauth_authorize_signup(
-    body: GoogleAuthorizeDTO = Body(...),
-):
-    data = await _google_oauth_service.get_authorization_url_by_signup(body.email)
+async def oauth_authorize_signup():
+    data = await _google_oauth_service.get_authorization_url_by_signup()
     return post_success(data=data, msg='Authorization URL generated successfully!')
 
-
 @router.post('/authorize/login', status_code=201)
-async def oauth_authorize_login(
-    body: GoogleAuthorizeDTO = Body(...),
-):
-    data = await _google_oauth_service.get_authorization_url_by_login(body.email)
+async def oauth_authorize_login():
+    data = await _google_oauth_service.get_authorization_url_by_login()
     return post_success(data=data, msg='Authorization URL generated successfully!')
 
 

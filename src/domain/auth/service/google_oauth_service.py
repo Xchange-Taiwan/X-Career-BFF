@@ -1,12 +1,14 @@
 from fastapi.responses import JSONResponse
 from urllib.parse import urlencode
+import secrets
+import string
 
 from src.config.conf import *
 from src.config.exception import *
 from src.router.req.authorization import (
     gen_token_by_pattern,
 )
-from src.config.constant import AuthType
+from src.config.constant import AuthorizeType
 from src.domain.auth.service.auth_service import AuthService
 from src.domain.auth.model.auth_model import *
 from src.domain.auth.model.google_oauth_model import GoogleAuthorizeDTO
@@ -36,18 +38,19 @@ class GoogleOAuthService(AuthService):
         self.google_token_url = 'https://oauth2.googleapis.com/token'
 
 
-    async def get_authorization_url_by_signup(self, email: EmailStr) -> Dict[str, str]:
-        return await self.get_authorization_url(email, AuthType.SIGNUP)
+    async def get_authorization_url_by_signup(self) -> Dict[str, str]:
+        """生成 Google 授權 URL 用於註冊"""
+        return await self.get_authorization_url(AuthorizeType.SIGNUP)
+
+    async def get_authorization_url_by_login(self) -> Dict[str, str]:
+        """生成 Google 授權 URL 用於登入"""
+        return await self.get_authorization_url(AuthorizeType.LOGIN)
 
 
-    async def get_authorization_url_by_login(self, email: EmailStr) -> Dict[str, str]:
-        return await self.get_authorization_url(email, AuthType.LOGIN)
-
-
-    async def get_authorization_url(self, email: EmailStr, authType: AuthType) -> Dict[str, str]:
+    async def get_authorization_url(self, authType: AuthorizeType) -> Dict[str, str]:
         """生成 Google 授權 URL"""
         # 生成 state 參數（用於防止 CSRF 攻擊）
-        state = await self.__generate_state(email, authType)
+        state = await self.__generate_state(authType)
 
         # 構建授權 URL 參數
         params = {
@@ -89,33 +92,44 @@ class GoogleOAuthService(AuthService):
             'refresh_token': token_data.get('refresh_token')
         }
 
-        if state_data.get('authType') == AuthType.SIGNUP.value:
+        # 檢查用戶是否已存在
+        if state_data.get('auth_type') == AuthorizeType.SIGNUP.value:
             signup_body = SignupOauthDTO.model_validate(google_oauth_data)
             return await self.signup_oauth_and_send_email(signup_body)
         
-        elif state_data.get('authType') == AuthType.LOGIN.value:
+        if state_data.get('auth_type') == AuthorizeType.LOGIN.value:
             signin_body = LoginOauthDTO.model_validate(google_oauth_data)
             return await self.login_oauth(signin_body, language=DEFAULT_LANGUAGE)
-        else:
-            raise ServerException(msg='Invalid auth type')
+        
+        raise ServerException(msg='Invalid authorization type provided')
 
 
-    async def __generate_state(self, email: EmailStr, authType: AuthType) -> str:
-        """生成並存儲 state"""
-        state = gen_token_by_pattern(email)
+    async def __generate_state(self, authType: AuthorizeType) -> str:
+        """生成並存儲 state
+
+        使用 secrets 模組生成安全的隨機 token，包含：
+        - 32 個字符的隨機字符串
+        - 使用字母、數字和特殊字符
+        - 使用系統的加密隨機數生成器
+        """
+        # 定義字符集
+        alphabet = string.ascii_letters + string.digits + '-_'
+        # 生成 32 個字符的隨機字符串
+        state = ''.join(secrets.choice(alphabet) for _ in range(32))
+        
+        # 存儲 state 到緩存
         await self.cache.set(
             f'google_oauth_state:{state}',
             {
-                'email': email, 
-                'authType': authType.value,
                 'created_at': current_seconds(),
+                'auth_type': authType.value,
             },
             ex=CACHE_TTL
         )
         return state
 
     async def __verify_state(self, state: str) -> Optional[str]:
-        """驗證 state 並返回關聯的 email"""
+        """驗證 state 並返回關聯的數據"""
         state_data = await self.cache.get(f'google_oauth_state:{state}')
         if not state_data:
             return None

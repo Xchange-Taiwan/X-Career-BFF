@@ -68,7 +68,7 @@ class OAuthType(Enum):
     # LINKEDIN = 'LINKEDIN'
 
 
-class AuthType(Enum):
+class AuthorizeType(Enum):
     SIGNUP = 'SIGNUP'
     LOGIN = 'LOGIN'
 
