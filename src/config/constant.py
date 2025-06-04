@@ -68,6 +68,11 @@ class OAuthType(Enum):
     # LINKEDIN = 'LINKEDIN'
 
 
+class AuthorizeType(Enum):
+    SIGNUP = 'SIGNUP'
+    LOGIN = 'LOGIN'
+
+
 # serial_key is a field of the collection in the user's cache
 SERIAL_KEY = 'created_at'
 
