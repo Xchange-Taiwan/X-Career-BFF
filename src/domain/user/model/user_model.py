@@ -1,6 +1,6 @@
 import json
 from typing import Any, Dict, List, Optional, Union
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from .common_model import ProfessionVO, InterestListVO, ProfessionListVO
 from ....config.constant import *
 from ....config.conf import DEFAULT_LANGUAGE
@@ -11,13 +11,12 @@ log.basicConfig(filemode="w", level=log.INFO)
 
 class ProfileVO(BaseModel):
     user_id: int
-    name: Optional[str] = ""
-    avatar: Optional[str] = ""
-    job_title: Optional[str] = ""
-    company: Optional[str] = ""
-    years_of_experience: Optional[str] = "0"
-    location: Optional[str] = ""
-    linkedin_profile: Optional[str] = ""
+    name: Optional[str] = ''
+    avatar: Optional[str] = ''
+    job_title: Optional[str] = ''
+    company: Optional[str] = ''
+    years_of_experience: Optional[str] = '0'
+    location: Optional[str] = ''
     interested_positions: Optional[InterestListVO] = None
     skills: Optional[InterestListVO] = None
     topics: Optional[InterestListVO] = None
@@ -29,18 +28,16 @@ class ProfileVO(BaseModel):
 
 class ProfileDTO(BaseModel):
     user_id: Optional[int]
-    name: Optional[str] = ""
-    avatar: Optional[str] = ""
-
-    job_title: Optional[str] = ""
-    company: Optional[str] = ""
-    years_of_experience: Optional[str] = "0"
-    location: Optional[str] = ""
-    linkedin_profile: Optional[str] = ""
-    interested_positions: Optional[List[Union[str]]] = []
-    skills: Optional[List[Union[str]]] = []
-    topics: Optional[List[Union[str]]] = []
-    industry: Optional[str] = ""
+    name: Optional[str] = ''
+    avatar: Optional[str] = ''
+    job_title: Optional[str] = ''
+    company: Optional[str] = ''
+    years_of_experience: Optional[str] = '0'
+    location: Optional[str] = ''
+    interested_positions: Optional[List[str]] = Field(default_factory=list)
+    skills: Optional[List[str]] = Field(default_factory=list)
+    topics: Optional[List[str]] = Field(default_factory=list)
+    industry: Optional[str] = ''
     language: Optional[str] = DEFAULT_LANGUAGE
 
     @staticmethod
@@ -77,7 +74,6 @@ class ProfileDTO(BaseModel):
             company=vo.get('company', ''),
             years_of_experience=vo.get('years_of_experience', '0'),
             location=vo.get('location', ''),
-            linkedin_profile=vo.get('linkedin_profile', ''),
             interested_positions=interest_subject_groups,
             skills=skill_subject_groups,
             topics=topic_subject_groups,
