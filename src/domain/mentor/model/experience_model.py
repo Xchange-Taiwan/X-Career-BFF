@@ -10,7 +10,7 @@ log.basicConfig(filemode="w", level=log.INFO)
 
 class ExperienceDTO(BaseModel):
     id: Optional[int] = None
-    # category: ExperienceCategory => Path(...)
+    category: ExperienceCategory = None
     mentor_experiences_metadata: Dict = {}
     order: int = 0
 
