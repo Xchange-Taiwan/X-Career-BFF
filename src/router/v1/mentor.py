@@ -1,4 +1,5 @@
-from typing import List, Optional
+import logging as log
+from typing import List
 
 from fastapi import (
     APIRouter,
@@ -7,6 +8,8 @@ from fastapi import (
 from fastapi.encoders import jsonable_encoder
 
 from src.app._di.injection import _mentor_service
+from src.config.constant import ExperienceCategory, Language
+from src.config.exception import *
 from src.domain.mentor.model import (
     mentor_model as mentor,
     experience_model as experience,
@@ -14,12 +17,9 @@ from src.domain.mentor.model import (
 from src.domain.user.model import (
     common_model as common,
 )
-from src.router.res.response import *
-from src.config.constant import ExperienceCategory, Language
-from src.config.exception import *
-from ...infra.util.util import get_universities_by_country
 from src.infra.template.service_response import ServiceApiResponse
-import logging as log
+from src.router.res.response import *
+from ...infra.util.util import get_universities_by_country
 
 log.basicConfig(filemode='w', level=log.INFO)
 

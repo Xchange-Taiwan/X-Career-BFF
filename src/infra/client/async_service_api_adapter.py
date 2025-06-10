@@ -1,13 +1,14 @@
-import json
 import functools
-from fastapi import status
 from typing import Dict, Optional
-import httpx
-from ...infra.template.service_response import ServiceApiResponse
-from ...infra.template.service_api import IServiceApi
-from ...config.exception import *
+import functools
 import logging
+from typing import Dict, Optional
 
+import httpx
+
+from ...config.exception import *
+from ...infra.template.service_api import IServiceApi
+from ...infra.template.service_response import ServiceApiResponse
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)

@@ -1,18 +1,17 @@
 import logging as log
 from typing import Optional, Dict, Any
+
 from fastapi.encoders import jsonable_encoder
 
-from src.infra.template.service_response import ServiceApiResponse
 from src.config.conf import USER_SERVICE_URL, DEFAULT_LANGUAGE, CACHE_TTL
 from src.config.constant import Language, InterestCategory, USERS
 from src.config.exception import NotFoundException, raise_http_exception
-from src.domain.user.model.common_model import InterestListVO, ProfessionListVO
-from src.domain.user.model.user_model import ProfileDTO, ProfileVO
 from src.domain.user.model.reservation_model import (
-    ReservationQueryDTO, 
-    UpdateReservationDTO, 
+    ReservationQueryDTO,
+    UpdateReservationDTO,
     ReservationDTO,
 )
+from src.domain.user.model.user_model import ProfileDTO
 from src.infra.client.async_service_api_adapter import AsyncServiceApiAdapter
 from src.infra.template.cache import ICache
 

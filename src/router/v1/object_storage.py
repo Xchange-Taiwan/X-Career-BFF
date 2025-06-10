@@ -3,9 +3,9 @@ from fastapi import File, UploadFile, APIRouter
 from fastapi.encoders import jsonable_encoder
 from fastapi.params import Depends
 
+from src.app._di.injection import _file_service
 from src.config.exception import ForbiddenException
 from src.domain.file.model.file_info_model import FileInfoListVO
-from src.app._di.injection import _file_service
 from src.infra.storage.global_object_storage import GlobalObjectStorage
 from src.router.res.response import idempotent_response, res_success
 

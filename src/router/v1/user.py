@@ -1,27 +1,21 @@
-import os
-import time
-import json
-from typing import List, Dict, Any
+import logging as log
+
 from fastapi import (
     APIRouter,
-    Request, Depends,
-    Header, Path, Query, Body, Form
+    Path, Query, Body
 )
 from fastapi.encoders import jsonable_encoder
 
+from ..res.response import *
+from ...app._di.injection import _user_service
+from ...config.constant import *
+from ...config.exception import *
 from ...domain.user.model import (
     common_model as common,
     user_model as user,
     reservation_model as reservation,
 )
-from ..res.response import *
-from ...config.constant import *
-from ...config.exception import *
 from ...infra.util.util import get_localized_territories_alpha_3
-import logging as log
-
-from ...domain.user.model.common_model import InterestListVO
-from ...app._di.injection import _user_service
 
 log.basicConfig(filemode='w', level=log.INFO)
 

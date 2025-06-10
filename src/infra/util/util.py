@@ -1,23 +1,17 @@
-import functools
 import time
-import httpx
+import logging as log
+import time
 from typing import Dict, List
 
+import httpx
 import pycountry
 from babel import Locale
-from starlette import status
 
 from ..template.cache import ICache
 from ...config.constant import SERIAL_KEY, Language
 from ...config.exception import (
     ServerException,
-    ClientException,
-    UnauthorizedException,
-    ForbiddenException,
-    NotFoundException,
-    NotAcceptableException,
 )
-import logging as log
 
 log.basicConfig(filemode="w", level=log.INFO)
 

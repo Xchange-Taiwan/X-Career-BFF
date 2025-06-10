@@ -1,20 +1,13 @@
-from fastapi.responses import JSONResponse
+import logging as log
+from typing import Dict
 
-from src.config.constant import USER_SERVICE_PREFIX, USERS
 from src.config.conf import *
 from src.config.exception import *
-from src.router.req.authorization import (
-    gen_token,
-    gen_refresh_token,
-    valid_refresh_token,
-)
-from src.domain.auth.service.auth_service import AuthService
 from src.domain.auth.model.auth_model import *
-from src.infra.util.time_util import current_seconds
+from src.domain.auth.service.auth_service import AuthService
 from src.infra.template.cache import ICache
 from src.infra.template.service_api import IServiceApi
 from src.infra.template.service_response import ServiceApiResponse
-import logging as log
 
 log.basicConfig(filemode="w", level=log.INFO)
 
