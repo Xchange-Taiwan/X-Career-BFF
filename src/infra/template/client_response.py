@@ -1,7 +1,9 @@
+from typing import Dict, Any
+
+import httpx
 from fastapi import status
 from pydantic import BaseModel
-from typing import Dict, Any
-import httpx
+
 
 class ClientResponse(BaseModel):
 

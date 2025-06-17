@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Set, Optional
+from typing import Any, List, Set, Optional
 
 
 class ICache(ABC):

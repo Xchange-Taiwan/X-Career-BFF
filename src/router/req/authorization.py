@@ -1,16 +1,17 @@
-import os
-import time
 import uuid
-from datetime import datetime
-from typing import Callable, List, Union
+from typing import Callable, List
+import logging as log
+import uuid
+from typing import Callable, List
+
 import jwt as jwt_util
-from fastapi import APIRouter, FastAPI, Header, Path, Query, Body, Request, Response, Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import Path, Response, Depends
 from fastapi.routing import APIRoute
-from ...config.conf import JWT_SECRET, JWT_ALGORITHM, ACCESS_TOKEN_TTL, SHORT_TERM_TTL
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+
+from ...config.conf import JWT_ALGORITHM, ACCESS_TOKEN_TTL, SHORT_TERM_TTL
 from ...config.exception import *
 from ...infra.util.time_util import *
-import logging as log
 
 log.basicConfig(level=log.INFO)
 

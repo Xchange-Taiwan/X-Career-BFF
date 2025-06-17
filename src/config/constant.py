@@ -1,6 +1,4 @@
-import string
 from enum import Enum
-import os
 
 
 class Language(Enum):
@@ -23,6 +21,7 @@ class ExperienceCategory(Enum):
     WORK = 'WORK'
     EDUCATION = 'EDUCATION'
     LINK = 'LINK'
+    WHAT_I_OFFER = 'WHAT_I_OFFER'
 
 
 class ScheduleType(Enum):

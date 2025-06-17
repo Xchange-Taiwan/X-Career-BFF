@@ -9,11 +9,11 @@ from botocore.exceptions import NoCredentialsError, PartialCredentialsError, Cli
 from fastapi import UploadFile, File, HTTPException
 
 from src.domain.file.model.file_info_model import FileInfoDTO, FileInfoListVO
+from ...app._di.injection import _user_service
 from ...config.conf import XC_BUCKET, S3_REGION, MAX_STORAGE_SIZE, MAX_WIDTH, MAX_HEIGHT, XC_USER_BUCKET
 from ...config.exception import ServerException, NotFoundException
 from ...domain.file.service.file_service import FileService
-from ...domain.user.model.user_model import ProfileVO, ProfileDTO
-from ...app._di.injection import _user_service
+from ...domain.user.model.user_model import ProfileDTO
 
 log.basicConfig(filemode='w', level=log.INFO)
 
