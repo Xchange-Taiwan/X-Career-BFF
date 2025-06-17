@@ -1,8 +1,10 @@
+import logging as log
+from typing import Any
+
 from fastapi import FastAPI, Request, HTTPException, status
 from fastapi.responses import JSONResponse
-from typing import Any
+
 from ..router.res.response import res_err_format
-import logging as log
 
 log.basicConfig(filemode='w', level=log.INFO)
 

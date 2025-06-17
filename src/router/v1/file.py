@@ -4,9 +4,9 @@ from fastapi import APIRouter, Path
 from fastapi.encoders import jsonable_encoder
 from fastapi.params import Body
 
+from src.app._di.injection import _file_service
 from src.domain.file.model.file_info_model import FileInfoVO, FileInfoListVO, FileInfoDTO
 from src.router.res.response import idempotent_response, res_success
-from src.app._di.injection import _file_service
 
 log.basicConfig(filemode='w', level=log.INFO)
 

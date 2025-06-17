@@ -1,12 +1,8 @@
-import logging as log
+from typing import Any
 
-from fastapi.encoders import jsonable_encoder
-from pydantic import BaseModel, Field
-from typing import List, Optional, Dict, Any, Tuple
 from .user_model import *
-from ....config.constant import *
 from ....config.conf import BATCH
-
+from ....config.constant import *
 
 log.basicConfig(filemode='w', level=log.INFO)
 

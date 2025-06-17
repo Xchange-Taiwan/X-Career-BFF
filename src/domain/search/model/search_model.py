@@ -1,11 +1,10 @@
-import json
-from typing import Any, Dict, List, Optional, Union
-from pydantic import BaseModel
-from datetime import datetime
-from ...mentor.model.mentor_model import MentorProfileVO
-from ....config.conf import *
-from ....config.constant import *
 import logging as log
+from datetime import datetime
+from typing import List, Optional
+
+from pydantic import BaseModel
+
+from ...mentor.model.mentor_model import MentorProfileVO
 
 log.basicConfig(filemode='w', level=log.INFO)
 

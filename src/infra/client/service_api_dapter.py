@@ -1,12 +1,14 @@
+import logging as log
+from typing import Dict, Optional
+
 import requests as RequestsHTTPLibrary
 from fastapi import status
 from requests.models import Response
-from typing import Dict, Union, Any, Optional
-from ...infra.template.service_api import IServiceApi
+
 from ...config.exception import \
-    ClientException, UnauthorizedException, ForbiddenException, NotFoundException, NotAcceptableException,\
+    ClientException, UnauthorizedException, ForbiddenException, NotFoundException, NotAcceptableException, \
     ServerException
-import logging as log
+from ...infra.template.service_api import IServiceApi
 
 log.basicConfig(filemode='w', level=log.INFO)
 

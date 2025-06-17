@@ -1,13 +1,12 @@
-from pydantic import BaseModel, Field
+from .experience_model import ExperienceVO
 from ...user.model.common_model import (
-    ProfessionDTO,
+    ProfessionListVO,
+)
+from ...user.model.common_model import (
     ProfessionListVO,
 )
 from ...user.model.user_model import *
-from .experience_model import ExperienceVO
-from ....config.conf import *
 from ....config.constant import *
-
 
 log.basicConfig(filemode="w", level=log.INFO)
 
