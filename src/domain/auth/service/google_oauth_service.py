@@ -28,8 +28,7 @@ class GoogleOAuthService(AuthService):
         self.google_client_id = GOOGLE_CLIENT_ID
         self.google_client_secret = GOOGLE_CLIENT_SECRET
 
-        state = f'/{STAGE}' if STAGE != 'local' else ''
-        self.google_redirect_uri = f'{API_BASE_URL}{state}{REDICRECT_URI}'
+        self.google_redirect_uri = f'{FRONTEND_REDIRECT_URL}'
         self.google_auth_url = 'https://accounts.google.com/o/oauth2/v2/auth'
         self.google_token_url = 'https://oauth2.googleapis.com/token'
 
@@ -173,6 +172,8 @@ class GoogleOAuthService(AuthService):
         data = self.ttl_secs.copy()
         if STAGE == TESTING:
             data.update({"token": token})
+
+        data.update({"auth_type": AuthorizeType.SIGNUP.value})
         return data
 
 
@@ -196,6 +197,7 @@ class GoogleOAuthService(AuthService):
         user_res = await self.get_user_profile(user_id, language)
         auth_res = self.filter_auth_res(auth_res)
         return {
+            "auth_type": AuthorizeType.LOGIN.value,
             "auth": auth_res,
             "user": user_res,
         }

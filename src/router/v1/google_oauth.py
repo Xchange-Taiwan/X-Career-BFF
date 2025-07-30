@@ -1,6 +1,7 @@
 import logging as log
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Body, Response
+from fastapi.responses import RedirectResponse
 
 from ..req.authorization import *
 from ..res.response import *
@@ -26,10 +27,10 @@ async def oauth_authorize_login():
     return post_success(data=data, msg='Authorization URL generated successfully!')
 
 
-@router.get('/callback', status_code=200)
+@router.post('/callback', status_code=201)
 async def oauth_callback(
-    code: str = Query(...),
-    state: str = Query(...),
+    code: str = Body(..., embed=True),
+    state: str = Body(..., embed=True),
 ):
     data = await _google_oauth_service.handle_callback(code, state)
-    return res_success(data=data, msg='Authorization successful!')
+    return post_success(data=data, msg='Authorization successful!')
