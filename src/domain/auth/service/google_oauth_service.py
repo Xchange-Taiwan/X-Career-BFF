@@ -169,11 +169,21 @@ class GoogleOAuthService(AuthService):
 
         token = auth_res["token"]
         await self.__cache_oauth_id(email, body.oauth_id, token)
-        data = self.ttl_secs.copy()
         if STAGE == TESTING:
-            data.update({"token": token})
-
-        data.update({"auth_type": AuthorizeType.SIGNUP.value})
+            auth_res.update({
+                "token": token,
+                "email": email,
+            })
+        else:
+            auth_res.update({
+                "email": email,
+            })
+        
+        data = self.ttl_secs.copy()
+        data.update({
+            "auth_type": AuthorizeType.SIGNUP.value,
+            "auth": auth_res,
+        })
         return data
 
 
