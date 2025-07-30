@@ -29,7 +29,7 @@ ACCESS_TOKEN_TTL = int(os.getenv('ACCESS_TOKEN_TTL', 1800))
 REFRESH_TOKEN_TTL = int(os.getenv('REFRESH_TOKEN_TTL', 2592000))
 
 # filter auth response fields
-AUTH_RESPONSE_FIELDS = os.getenv('AUTH_RESPONSE_FIELDS', 'oauth_id;email;account_type;region;online')
+AUTH_RESPONSE_FIELDS = os.getenv('AUTH_RESPONSE_FIELDS', 'oauth_id;account_type;region;online')
 AUTH_RESPONSE_FIELDS = AUTH_RESPONSE_FIELDS.strip().split(';')
 
 # cache
@@ -48,6 +48,9 @@ REDIS_PASS = os.getenv('REDIS_PASSWORD', None)
 AUTH_SERVICE_URL = os.getenv('AUTH_SERVICE_URL', 'http://127.0.0.1:8008/auth-service/api')
 USER_SERVICE_URL = os.getenv('USER_SERVICE_URL', 'http://127.0.0.1:8010/user-service/api')
 SEARCH_SERVICE_URL = os.getenv('SEARCH_SERVICE_URL', 'http://127.0.0.1:8012/search-service/api')
+
+# frontend
+FRONTEND_REDIRECT_URL = os.getenv('FRONTEND_REDIRECT_URL', 'http://localhost:3000')
 
 # storage
 MAX_WIDTH = int(os.getenv('MAX_WIDTH', 300))
