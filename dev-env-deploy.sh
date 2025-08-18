@@ -38,6 +38,4 @@ FRONTEND_REDIRECT_URL=https://xtalent.vercel.app/auth/google/callback/redirect,
 MAX_WIDTH=300,
 MAX_HEIGHT=300,
 MAX_STORAGE_SIZE=15728640,
-GOOGLE_CLIENT_ID=xxxx,
-GOOGLE_CLIENT_SECRET=xxxx,
 }"
