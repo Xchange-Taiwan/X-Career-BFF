@@ -7,7 +7,7 @@ from src.app._di.injection import _file_service
 from src.config.exception import ForbiddenException
 from src.domain.file.model.file_info_model import FileInfoListVO
 from src.infra.storage.global_object_storage import GlobalObjectStorage
-from src.router.res.response import idempotent_response, res_success
+from src.router.res.response import idempotent_response, res_success, post_success
 
 _s3 = boto3.resource('s3')
 _obj_store = GlobalObjectStorage(_s3, _file_service)
@@ -26,10 +26,10 @@ def validate_image(file: UploadFile = File(...)):
     return file
 
 
-@router.post('/', responses=idempotent_response('upload_avatar', FileInfoListVO))
+@router.post('/', responses=idempotent_response('upload_avatar', FileInfoListVO), status_code=201)
 async def upload_avatar(file: UploadFile = Depends(validate_image), user_id: int = -1):
     res: FileInfoListVO = await _obj_store.upload_avatar(file, user_id)
-    return res_success(data=jsonable_encoder(res))
+    return post_success(data=jsonable_encoder(res))
 
 
 @router.delete('/avatar', responses=idempotent_response('delete_avatar', bool))

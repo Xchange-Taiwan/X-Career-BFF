@@ -10,9 +10,8 @@ log.basicConfig(filemode='w', level=log.INFO)
 class ReservationQueryDTO(BaseModel):
     state: str = Field(
         None,
-        example=ReservationListState.UPCOMING.value,
-        pattern=f'^({ReservationListState.UPCOMING.value}|{ReservationListState.PENDING.value}|{ReservationListState.HISTORY.value})$',
-    )
+        example=ReservationListState.MENTOR_UPCOMING.value,
+        pattern=f'^({ReservationListState.MENTOR_UPCOMING.value}|{ReservationListState.MENTEE_UPCOMING.value}|{ReservationListState.MENTOR_PENDING.value}|{ReservationListState.MENTEE_PENDING.value}|{ReservationListState.HISTORY.value})$')
     batch: int = Field(..., example=BATCH, ge=1)
     next_dtend: Optional[int] = Field(None, example=1735398000)
 
