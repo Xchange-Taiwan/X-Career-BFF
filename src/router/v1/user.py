@@ -96,7 +96,8 @@ async def reservation_list(
 # 如果 "previous_reserve" 不為空，則表示這是一次變更預約的操作 => 新增後，將舊的預約設為 cancel。
 ############################################################################################
 @router.post('/{user_id}/reservations',
-             responses=post_response('new_booking', reservation.ReservationVO))
+             responses=post_response('new_booking', reservation.ReservationVO),
+             status_code=201)
 async def new_booking(
         user_id: int = Path(...),
         body: reservation.ReservationDTO = Body(...),
@@ -104,7 +105,7 @@ async def new_booking(
     body.my_user_id = user_id
     body.my_status = BookingStatus.ACCEPT
     res: Dict = await _user_service.new_booking(body)
-    return res_success(data=res)
+    return post_success(data=res)
 
 
 @router.put('/{user_id}/reservations/{reservation_id}',

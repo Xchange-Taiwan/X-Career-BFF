@@ -39,9 +39,9 @@ class TimeSlotDTO(BaseModel):
     dt_month: Optional[int] = Field(default=None, example=6)
     dtstart: int = Field(..., example=1717203600)
     dtend: int = Field(..., example=1717207200)
-    timezone: str = Field(default="UTC", example="UTC")
     rrule: Optional[str] = Field(default=None, example="FREQ=WEEKLY;COUNT=4")
-    exdate: List[Optional[int]] = Field(default=[], example=[1718413200, 1719622800])
+    # timezone: str = Field(default="UTC", example="UTC")
+    # exdate: List[Optional[int]] = Field(default=[], example=[1718413200, 1719622800])
 
 
 class MentorScheduleDTO(BaseModel):
