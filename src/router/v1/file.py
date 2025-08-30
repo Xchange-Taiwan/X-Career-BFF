@@ -6,7 +6,7 @@ from fastapi.params import Body
 
 from src.app._di.injection import _file_service
 from src.domain.file.model.file_info_model import FileInfoVO, FileInfoListVO, FileInfoDTO
-from src.router.res.response import idempotent_response, res_success
+from src.router.res.response import idempotent_response, res_success, post_success
 
 log.basicConfig(filemode='w', level=log.INFO)
 
@@ -37,11 +37,11 @@ async def get_file_info_by_user_id(
 
 
 @router.post('/',
-             responses=idempotent_response('create_file_info', FileInfoVO))
+             responses=idempotent_response('create_file_info', FileInfoVO), status_code=201)
 async def create_file_info(
         body: FileInfoDTO = Body(...)):
     res: FileInfoVO = await _file_service.create_file_info(body)
-    return res_success(data=jsonable_encoder(res))
+    return post_success(data=jsonable_encoder(res))
 
 
 @router.put('/{user_id}',
