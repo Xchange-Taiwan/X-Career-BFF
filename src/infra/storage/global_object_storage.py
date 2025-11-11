@@ -132,14 +132,24 @@ class GlobalObjectStorage:
             # Read file contents
             avatar = await file.read()
             content_type = file.content_type
-            file_type = file.content_type[6:]
+            # 解析檔案類型
+            file_type = content_type.split('/')[-1].lower()
+            
+            # 標準化檔案類型
+            if file_type in ['jpg', 'jpeg']:
+                file_type = 'jpeg'
+            elif file_type not in ['png', 'gif', 'webp', 'bmp']:
+                log.warning(f'Unsupported image format: {file_type}, defaulting to jpeg')
+                file_type = 'jpeg'
+                
             avatar_name = f'avatar.{file_type}'
             avatar_key = self.__get_obj_key(avatar_name, user_id)
-            minor_avatar = self.__get_resized_obj(avatar, file_type)
-            minor_avatar_name = f'minor_avatar.{file_type}'
-            minor_avatar_key = self.__get_obj_key(minor_avatar_name, user_id)
+            # minor_avatar = self.__get_resized_obj(avatar, file_type)
+            # minor_avatar_name = f'minor_avatar.{file_type}'
+            # minor_avatar_key = self.__get_obj_key(minor_avatar_name, user_id)
 
-            if self.get_user_storage_size(user_id) + len(avatar)+len(minor_avatar) > MAX_STORAGE_SIZE:
+            # if self.get_user_storage_size(user_id) + len(avatar)+len(minor_avatar) > MAX_STORAGE_SIZE:
+            if self.get_user_storage_size(user_id) > MAX_STORAGE_SIZE:
                 log.error(f'upload_avatar {avatar_name} [file size too large] ')
                 raise HTTPException(status_code=400, detail="File size too large")
             is_delete_avatar_success: bool = await self.delete_avatar(user_id)
@@ -151,16 +161,17 @@ class GlobalObjectStorage:
                                                     avatar_name,
                                                     content_type,
                                                     user_id)
-            minor_avatar_dto = \
-                await self.__upload_avatar_and_info(minor_avatar,
-                                                    minor_avatar_key,
-                                                    minor_avatar_name,
-                                                    content_type,
-                                                    user_id)
+            # minor_avatar_dto = \
+            #     await self.__upload_avatar_and_info(minor_avatar,
+            #                                         minor_avatar_key,
+            #                                         minor_avatar_name,
+            #                                         content_type,
+            #                                         user_id)
 
-            res = [avatar_dto, minor_avatar_dto]
+            # res = [avatar_dto, minor_avatar_dto]
             # Return file info
-            res.sort(key=lambda x: x.file_size)
+            # res.sort(key=lambda x: x.file_size)
+            res = [avatar_dto]
             return FileInfoListVO(file_info_vo_list=res)
 
         except (NoCredentialsError, PartialCredentialsError) as e:
@@ -236,27 +247,81 @@ class GlobalObjectStorage:
 
     def __get_resized_obj(self, content: bytes, content_type: str = 'jpeg') -> bytes:
         try:
-            image = Image.open(io.BytesIO(content))
+            # 驗證輸入
+            if not content or len(content) == 0:
+                raise ValueError("Empty image content")
+            
+            # 創建 BytesIO 對象
+            img_buffer = io.BytesIO(content)
+            img_buffer.seek(0)
+            
+            # 嘗試打開圖片
+            try:
+                image = Image.open(img_buffer)
+                # 確保圖片已完全載入
+                image.load()
+            except Exception as img_error:
+                log.error(f'PIL cannot open image: {img_error}, content_length: {len(content)}')
+                raise ValueError(f"Cannot identify image format: {img_error}")
+
+            # 轉換為 RGB 模式（Lambda 環境下更穩定）
+            if image.mode in ('RGBA', 'LA', 'P'):
+                # 創建白色背景
+                background = Image.new('RGB', image.size, (255, 255, 255))
+                if image.mode == 'P':
+                    image = image.convert('RGBA')
+                if image.mode in ('RGBA', 'LA'):
+                    background.paste(image, mask=image.split()[-1])
+                    image = background
+                else:
+                    image = image.convert('RGB')
 
             # Resize the image to the specified dimensions
             width, height = image.size
+            log.info(f'Original image size: {width}x{height}')
+            
             if width > MAX_WIDTH or height > MAX_HEIGHT:
                 new_width, new_height = MAX_WIDTH, MAX_HEIGHT
                 if width > height:
                     new_height = int(height * MAX_WIDTH / width)
                 else:
                     new_width = int(width * MAX_HEIGHT / height)
-                image = image.resize((new_width, new_height))
+                
+                # 使用 LANCZOS 重採樣（如果可用）
+                try:
+                    resample = Image.Resampling.LANCZOS
+                except AttributeError:
+                    resample = Image.LANCZOS  # 舊版本 Pillow 兼容性
+                
+                image = image.resize((new_width, new_height), resample)
+                log.info(f'Resized image to: {new_width}x{new_height}')
 
             # Save the resized image to a BytesIO buffer
             buffer = io.BytesIO()
-            image.save(buffer, format=content_type)
+            
+            # 標準化格式名稱
+            save_format = content_type.upper()
+            if save_format in ['JPG', 'JPEG']:
+                save_format = 'JPEG'
+                # JPEG 品質設置
+                image.save(buffer, format=save_format, quality=85, optimize=True)
+            elif save_format == 'PNG':
+                image.save(buffer, format=save_format, optimize=True)
+            else:
+                # 預設使用 JPEG
+                image.save(buffer, format='JPEG', quality=85, optimize=True)
+            
             buffer.seek(0)
-
-            return buffer.getvalue()
+            result = buffer.getvalue()
+            log.info(f'Processed image: original={len(content)} bytes, processed={len(result)} bytes')
+            return result
+            
+        except ValueError:
+            # 重新拋出 ValueError
+            raise
         except Exception as e:
-            log.error(f'__get_resized_obj [resize image error] {e.__str__()}')
-            raise ValueError(f"Invalid image content: {e}")
+            log.error(f'__get_resized_obj [unexpected error] {e.__str__()}')
+            raise ValueError(f"Image processing failed: {e}")
 
     def __get_total_file_size(self, bucket_name, prefix):
         try:

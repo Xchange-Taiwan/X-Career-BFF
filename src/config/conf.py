@@ -10,7 +10,7 @@ STAGE = os.getenv('STAGE', 'local')
 TESTING = os.getenv('TESTING', 'local')
 
 XC_BUCKET = os.getenv('XC_BUCKET', 'x-career-user-dev-serverlessdeploymentbucket-bmz2uc2exezm')
-XC_USER_BUCKET = os.getenv('XC_USER_BUCK', 'x-career-multimedia')
+XC_USER_BUCKET = os.getenv('XC_USER_BUCKET', 'x-career-multimedia')
 
 BATCH = int(os.getenv('BATCH', '10'))
 

@@ -43,6 +43,21 @@ provider:
     Resource:
     - arn:aws:dynamodb:${env:THE_REGION}:${env:ACCOUNT_ID}:table/${env:TABLE_CACHE}
 
+  # S3 權限 - 用於檔案上傳和管理
+  - Effect: Allow
+    Action:
+    - s3:ListBucket
+    Resource:
+    - arn:aws:s3:::${env:XC_USER_BUCKET}
+
+  - Effect: Allow
+    Action:
+    - s3:GetObject
+    - s3:PutObject
+    - s3:DeleteObject
+    Resource:
+    - arn:aws:s3:::${env:XC_USER_BUCKET}/*
+
 # you can add statements to the Lambda function's IAM Role here
 #  iam:
 #    role:
@@ -102,14 +117,23 @@ functions:
       - "!**/__pycache__/**"
 
     handler: main.handler
+    timeout: 30
+    memorySize: 256
     environment:
       STAGE: ${self:provider.stage}
+      # S3 相關環境變數
+      XC_USER_BUCKET: ${env:XC_USER_BUCKET}
+      S3_REGION: ${self:provider.region}
     layers:
     - {Ref: PythonRequirementsLambdaLayer}
     events:
     - http:
         method: any
         path: /{proxy+}
+        cors:
+          origin: '*'
+          headers: '*'
+          allowCredentials: false
 
 plugins:
 - serverless-python-requirements
