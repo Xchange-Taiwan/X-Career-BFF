@@ -39,6 +39,7 @@ class ProfileDTO(BaseModel):
     topics: Optional[List[str]] = Field(default_factory=list)
     industry: Optional[str] = ''
     language: Optional[str] = DEFAULT_LANGUAGE
+    is_mentor: Optional[bool] = False
 
     @staticmethod
     def from_vo(vo: Dict) -> "ProfileDTO":
@@ -79,4 +80,5 @@ class ProfileDTO(BaseModel):
             topics=topic_subject_groups,
             industry=vo.get('industry', ''),
             language=vo.get('language', DEFAULT_LANGUAGE),
+            is_mentor=vo.get('is_mentor', False),
         )
