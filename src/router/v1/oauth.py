@@ -1,4 +1,4 @@
-import logging as log
+import logging
 
 from fastapi import APIRouter, Query
 
@@ -10,7 +10,7 @@ from ...config.conf import DEFAULT_LANGUAGE_ENUM
 from ...config.constant import Language, OAuthType
 from ...domain.auth.service.auth_service import AuthService
 
-log.basicConfig(filemode='w', level=log.INFO)
+log = logging.getLogger(__name__)
 
 
 router = APIRouter(
@@ -31,7 +31,7 @@ async def signup_oauth(
     return post_success(data=data, msg='Account signup successfully!')
 
 
-@router.post('/login/{auth_type}', 
+@router.post('/login/{auth_type}',
              responses=post_response('login_oauth', LoginResponseVO),
              status_code=201)
 async def login_oauth(

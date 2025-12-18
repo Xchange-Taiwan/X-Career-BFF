@@ -1,5 +1,5 @@
 import time
-import logging as log
+import logging
 import time
 from typing import Dict, List
 
@@ -13,7 +13,7 @@ from ...config.exception import (
     ServerException,
 )
 
-log.basicConfig(filemode="w", level=log.INFO)
+log = logging.getLogger(__name__)
 
 
 def gen_confirm_code():
@@ -64,10 +64,10 @@ def parse_country_name(country_name: str) -> str:
     country_name = country_name.lower()
     if country_name.startswith('taiwan'):
         country_name = 'taiwan, province of china'
-        
+
     elif country_name.startswith('korea'):
         country_name = 'korea, republic of'
-        
+
     return country_name
 
 """
@@ -78,7 +78,7 @@ def get_universities_by_country(country_name: str) -> List[str]:
     country_name = parse_country_name(country_name)
     if country_name in country_to_universities:
         return country_to_universities[country_name]
-    
+
     url = f"http://universities.hipolabs.com/search?country={country_name}"
     try:
         with httpx.Client() as client:

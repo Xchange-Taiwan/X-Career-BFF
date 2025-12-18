@@ -1,4 +1,4 @@
-import logging as log
+import logging
 from typing import Optional
 
 from src.config.conf import USER_SERVICE_URL
@@ -8,7 +8,7 @@ from src.infra.client.async_service_api_adapter import AsyncServiceApiAdapter
 from src.infra.template.cache import ICache
 from src.infra.template.service_response import ServiceApiResponse
 
-log.basicConfig(filemode='w', level=log.INFO)
+log = logging.getLogger(__name__)
 
 
 class FileService:

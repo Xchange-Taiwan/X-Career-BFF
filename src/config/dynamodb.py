@@ -2,7 +2,6 @@ import logging
 
 import boto3
 
-logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 

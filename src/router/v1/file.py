@@ -1,4 +1,4 @@
-import logging as log
+import logging
 
 from fastapi import APIRouter, Path
 from fastapi.encoders import jsonable_encoder
@@ -8,7 +8,7 @@ from src.app._di.injection import _file_service
 from src.domain.file.model.file_info_model import FileInfoVO, FileInfoListVO, FileInfoDTO
 from src.router.res.response import idempotent_response, res_success, post_success
 
-log.basicConfig(filemode='w', level=log.INFO)
+log = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix='/file',

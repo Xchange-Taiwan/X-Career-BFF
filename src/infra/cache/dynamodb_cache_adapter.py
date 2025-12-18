@@ -1,5 +1,5 @@
 import json
-import logging as log
+import logging
 from typing import Any, List, Set, Optional
 
 from ..template.cache import ICache
@@ -8,7 +8,7 @@ from ...config.dynamodb import dynamodb
 from ...config.exception import ServerException
 from ...infra.util.time_util import gen_ttl_secs
 
-log.basicConfig(filemode='w', level=log.INFO)
+log = logging.getLogger(__name__)
 
 
 class DynamoDbCacheAdapter(ICache):

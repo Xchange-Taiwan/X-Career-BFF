@@ -1,4 +1,4 @@
-import logging as log
+import logging
 from typing import Dict, List, Optional
 
 from pydantic import BaseModel, Field
@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 from .common_model import ProfessionVO, InterestListVO
 from ....config.conf import DEFAULT_LANGUAGE
 
-log.basicConfig(filemode="w", level=log.INFO)
+log = logging.getLogger(__name__) 
 
 
 class ProfileVO(BaseModel):
