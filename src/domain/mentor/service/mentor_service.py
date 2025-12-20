@@ -1,4 +1,4 @@
-import logging as log
+import logging
 from typing import Optional, Dict, Any
 
 from ..model.experience_model import ExperienceVO, ExperienceDTO
@@ -16,7 +16,7 @@ from ....infra.client.async_service_api_adapter import AsyncServiceApiAdapter
 from ....infra.template.cache import ICache
 from ....infra.template.service_response import ServiceApiResponse
 
-log.basicConfig(filemode='w', level=log.INFO)
+log = logging.getLogger(__name__)
 
 
 class MentorService:

@@ -1,4 +1,4 @@
-import logging as log
+import logging
 import secrets
 import string
 from typing import Dict
@@ -14,7 +14,7 @@ from src.infra.template.service_api import IServiceApi
 from src.infra.template.service_response import ServiceApiResponse
 from src.infra.util.time_util import current_seconds
 
-log.basicConfig(filemode='w', level=log.INFO)
+log = logging.getLogger(__name__)
 
 
 class GoogleOAuthService(AuthService):
@@ -23,7 +23,7 @@ class GoogleOAuthService(AuthService):
         self.req = req
         self.cache = cache
         self.ttl_secs = {'ttl_secs': REQUEST_INTERVAL_TTL}
-        
+
         # Google OAuth2 配置
         self.google_client_id = GOOGLE_CLIENT_ID
         self.google_client_secret = GOOGLE_CLIENT_SECRET
@@ -60,7 +60,7 @@ class GoogleOAuthService(AuthService):
 
         # 生成授權 URL
         auth_url = f'{self.google_auth_url}?{urlencode(params)}'
-        
+
         return {
             'authorization_url': auth_url,
             'state': state
@@ -76,10 +76,10 @@ class GoogleOAuthService(AuthService):
 
         # 交換授權碼獲取 token
         token_data = await self.__exchange_code_for_token(code)
-        
+
         # 獲取用戶信息
         user_info = await self.__get_user_info(token_data['access_token'])
-        
+
         google_oauth_data = {
             'oauth_id': user_info['sub'],
             'email': user_info['email'],
@@ -91,11 +91,11 @@ class GoogleOAuthService(AuthService):
         if state_data.get('auth_type') == AuthorizeType.SIGNUP.value:
             signup_body = SignupOauthDTO.model_validate(google_oauth_data)
             return await self.signup_oauth_and_send_email(signup_body)
-        
+
         if state_data.get('auth_type') == AuthorizeType.LOGIN.value:
             signin_body = LoginOauthDTO.model_validate(google_oauth_data)
             return await self.login_oauth(signin_body, language=DEFAULT_LANGUAGE)
-        
+
         raise ServerException(msg='Invalid authorization type provided')
 
 
@@ -111,7 +111,7 @@ class GoogleOAuthService(AuthService):
         alphabet = string.ascii_letters + string.digits + '-_'
         # 生成 32 個字符的隨機字符串
         state = ''.join(secrets.choice(alphabet) for _ in range(32))
-        
+
         # 存儲 state 到緩存
         await self.cache.set(
             f'google_oauth_state:{state}',
@@ -178,7 +178,7 @@ class GoogleOAuthService(AuthService):
             auth_res.update({
                 "email": email,
             })
-        
+
         data = self.ttl_secs.copy()
         data.update({
             "auth_type": AuthorizeType.SIGNUP.value,

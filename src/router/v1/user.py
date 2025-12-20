@@ -1,4 +1,4 @@
-import logging as log
+import logging
 
 from fastapi import (
     APIRouter,
@@ -17,7 +17,7 @@ from ...domain.user.model import (
 )
 from ...infra.util.util import get_localized_territories_alpha_3
 
-log.basicConfig(filemode='w', level=log.INFO)
+log = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix='/users',

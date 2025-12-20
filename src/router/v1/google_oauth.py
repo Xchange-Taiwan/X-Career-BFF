@@ -1,4 +1,4 @@
-import logging as log
+import logging
 
 from fastapi import APIRouter, Query, Body, Response
 from fastapi.responses import RedirectResponse
@@ -7,7 +7,7 @@ from ..req.authorization import *
 from ..res.response import *
 from ...app._di.injection import _google_oauth_service
 
-log.basicConfig(filemode='w', level=log.INFO)
+log = logging.getLogger(__name__)
 
 
 router = APIRouter(

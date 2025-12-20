@@ -10,7 +10,6 @@ from ...config.exception import *
 from ...infra.template.service_api import IServiceApi
 from ...infra.template.service_response import ServiceApiResponse
 
-logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 

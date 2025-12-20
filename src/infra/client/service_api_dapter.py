@@ -1,4 +1,4 @@
-import logging as log
+import logging
 from typing import Dict, Optional
 
 import requests as RequestsHTTPLibrary
@@ -10,7 +10,7 @@ from ...config.exception import \
     ServerException
 from ...infra.template.service_api import IServiceApi
 
-log.basicConfig(filemode='w', level=log.INFO)
+log = logging.getLogger(__name__)
 
 
 SUCCESS_CODE = '0'
@@ -32,7 +32,7 @@ class ServiceApiAdapter(IServiceApi):
             log.error(f'simple_get request error, url:%s, params:%s, headers:%s, resp:%s, err:%s',
                     url, params, headers, response, e.__str__())
             raise ServerException(msg='get_connection_error')
-            
+
         self.__status_code_validation(
             response=response,
             method='GET',
@@ -108,7 +108,7 @@ class ServiceApiAdapter(IServiceApi):
             log.error(f'simple_post request error, url:%s, json:%s, headers:%s, resp:%s, err:%s',
                     url, json, headers, response, e.__str__())
             raise ServerException(msg='post_connection_error')
-            
+
         self.__status_code_validation(
             response=response,
             method='POST',
@@ -132,7 +132,7 @@ class ServiceApiAdapter(IServiceApi):
             log.error(f'simple_post request error, url:%s, data:%s, headers:%s, resp:%s, err:%s',
                     url, byte_data.decode(), headers, response, e.__str__())
             raise ServerException(msg='post_connection_error')
-            
+
         self.__status_code_validation(
             response=response,
             method='POST',
@@ -146,7 +146,7 @@ class ServiceApiAdapter(IServiceApi):
         result = result['data']
 
         return result
-    
+
     '''
     return result, msg, err
     '''
@@ -208,7 +208,7 @@ class ServiceApiAdapter(IServiceApi):
             log.error(f'simple_put request error, url:%s, json:%s, headers:%s, resp:%s, err:%s',
                     url, json, headers, response, e.__str__())
             raise ServerException(msg='put_connection_error')
-            
+
         self.__status_code_validation(
             response=response,
             method='PUT',
@@ -284,7 +284,7 @@ class ServiceApiAdapter(IServiceApi):
             log.error(f'simple_delete request error, url:%s, params:%s, headers:%s, resp:%s, err:%s',
                     url, params, headers, response, e.__str__())
             raise ServerException(msg='delete_connection_error')
-            
+
         self.__status_code_validation(
             response=response,
             method='DEL',
@@ -349,35 +349,35 @@ class ServiceApiAdapter(IServiceApi):
                 f'delete_with_statuscode request error, url:{url}, headers:{headers}, resp:{response}, err:{err}')
 
         return result, msg, status_code, err
-    
+
     def __status_code_validation(self, response: Response, method: str, url: str, body: Dict = None, params: Dict = None, headers: Dict = None):
         status_code = response.status_code
         if status_code < 400:
             return
-        
+
         response_json = response.json()
         msg = response_json['msg'] if 'msg' in response_json else response.reason
         data = response_json['data'] if 'data' in response_json else None
-        log.error(f'service request fail, [%s]: %s, body:%s, params:%s, headers:%s, status_code:%s, msg:%s, \n response:%s', 
+        log.error(f'service request fail, [%s]: %s, body:%s, params:%s, headers:%s, status_code:%s, msg:%s, \n response:%s',
                   method, url, body, params, headers, status_code, msg, response)
-        
+
         if status_code == status.HTTP_400_BAD_REQUEST:
             raise ClientException(msg=msg, data=data)
-        
+
         if status_code == status.HTTP_401_UNAUTHORIZED:
             raise UnauthorizedException(msg=msg, data=data)
-        
+
         if status_code == status.HTTP_403_FORBIDDEN:
             raise ForbiddenException(msg=msg, data=data)
-        
+
         if status_code == status.HTTP_404_NOT_FOUND:
             raise NotFoundException(msg=msg, data=data)
-        
+
         if status_code == status.HTTP_406_NOT_ACCEPTABLE:
             raise NotAcceptableException(msg=msg, data=data)
-        
+
         raise ServerException(msg=msg, data=data)
-            
+
 
     def __err(self, resp_json):
         return not 'code' in resp_json or resp_json['code'] != SUCCESS_CODE

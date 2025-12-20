@@ -1,7 +1,7 @@
 import asyncio
 import io
 import json
-import logging as log
+import logging
 from typing import Optional, Dict, Any
 
 from PIL import Image
@@ -15,7 +15,7 @@ from ...config.exception import ServerException, NotFoundException
 from ...domain.file.service.file_service import FileService
 from ...domain.user.model.user_model import ProfileDTO
 
-log.basicConfig(filemode='w', level=log.INFO)
+log = logging.getLogger(__name__)
 
 
 class GlobalObjectStorage:
@@ -134,14 +134,14 @@ class GlobalObjectStorage:
             content_type = file.content_type
             # 解析檔案類型
             file_type = content_type.split('/')[-1].lower()
-            
+
             # 標準化檔案類型
             if file_type in ['jpg', 'jpeg']:
                 file_type = 'jpeg'
             elif file_type not in ['png', 'gif', 'webp', 'bmp']:
                 log.warning(f'Unsupported image format: {file_type}, defaulting to jpeg')
                 file_type = 'jpeg'
-                
+
             avatar_name = f'avatar.{file_type}'
             avatar_key = self.__get_obj_key(avatar_name, user_id)
             # minor_avatar = self.__get_resized_obj(avatar, file_type)
@@ -250,11 +250,11 @@ class GlobalObjectStorage:
             # 驗證輸入
             if not content or len(content) == 0:
                 raise ValueError("Empty image content")
-            
+
             # 創建 BytesIO 對象
             img_buffer = io.BytesIO(content)
             img_buffer.seek(0)
-            
+
             # 嘗試打開圖片
             try:
                 image = Image.open(img_buffer)
@@ -279,26 +279,26 @@ class GlobalObjectStorage:
             # Resize the image to the specified dimensions
             width, height = image.size
             log.info(f'Original image size: {width}x{height}')
-            
+
             if width > MAX_WIDTH or height > MAX_HEIGHT:
                 new_width, new_height = MAX_WIDTH, MAX_HEIGHT
                 if width > height:
                     new_height = int(height * MAX_WIDTH / width)
                 else:
                     new_width = int(width * MAX_HEIGHT / height)
-                
+
                 # 使用 LANCZOS 重採樣（如果可用）
                 try:
                     resample = Image.Resampling.LANCZOS
                 except AttributeError:
                     resample = Image.LANCZOS  # 舊版本 Pillow 兼容性
-                
+
                 image = image.resize((new_width, new_height), resample)
                 log.info(f'Resized image to: {new_width}x{new_height}')
 
             # Save the resized image to a BytesIO buffer
             buffer = io.BytesIO()
-            
+
             # 標準化格式名稱
             save_format = content_type.upper()
             if save_format in ['JPG', 'JPEG']:
@@ -310,12 +310,12 @@ class GlobalObjectStorage:
             else:
                 # 預設使用 JPEG
                 image.save(buffer, format='JPEG', quality=85, optimize=True)
-            
+
             buffer.seek(0)
             result = buffer.getvalue()
             log.info(f'Processed image: original={len(content)} bytes, processed={len(result)} bytes')
             return result
-            
+
         except ValueError:
             # 重新拋出 ValueError
             raise

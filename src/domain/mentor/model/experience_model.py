@@ -1,11 +1,11 @@
-import logging as log
+import logging
 from typing import Dict, List, Optional
 
 from pydantic import BaseModel
 
 from ....config.constant import *
 
-log.basicConfig(filemode="w", level=log.INFO)
+log = logging.getLogger(__name__) 
 
 
 class ExperienceDTO(BaseModel):
