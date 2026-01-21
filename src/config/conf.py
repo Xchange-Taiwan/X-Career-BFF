@@ -56,6 +56,8 @@ FRONTEND_REDIRECT_URL = os.getenv('FRONTEND_REDIRECT_URL', 'http://localhost:300
 MAX_WIDTH = int(os.getenv('MAX_WIDTH', 300))
 MAX_HEIGHT = int(os.getenv('MAX_HEIGHT', 300))
 MAX_STORAGE_SIZE = int(os.getenv('MAX_STORAGE_SIZE', 15 * 1024 * 1024))  # give 15 MB to users
+MAX_FILE_SIZE = int(os.getenv('MAX_FILE_SIZE', 15 * 1024 * 1024))
+PRESIGNED_URL_EXPIRES = int(os.getenv('PRESIGNED_URL_EXPIRES', 600))
 
 # Google OAuth2 setup
 GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID', 'google-client-id')

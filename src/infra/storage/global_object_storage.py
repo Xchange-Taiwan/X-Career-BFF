@@ -10,7 +10,7 @@ from fastapi import UploadFile, File, HTTPException
 
 from src.domain.file.model.file_info_model import FileInfoDTO, FileInfoListVO
 from ...app._di.injection import _user_service
-from ...config.conf import XC_BUCKET, S3_REGION, MAX_STORAGE_SIZE, MAX_WIDTH, MAX_HEIGHT, XC_USER_BUCKET
+from ...config.conf import XC_BUCKET, S3_REGION, MAX_STORAGE_SIZE, MAX_WIDTH, MAX_HEIGHT, XC_USER_BUCKET, PRESIGNED_URL_EXPIRES, MAX_FILE_SIZE
 from ...config.exception import ServerException, NotFoundException
 from ...domain.file.service.file_service import FileService
 from ...domain.user.model.user_model import ProfileDTO
@@ -19,8 +19,9 @@ log = logging.getLogger(__name__)
 
 
 class GlobalObjectStorage:
-    def __init__(self, s3, file_service: FileService):
+    def __init__(self, s3, s3_client, file_service: FileService):
         self.s3 = s3
+        self.s3_client = s3_client
         self.file_service = file_service
         self.__cls_name = self.__class__.__name__
 
@@ -339,3 +340,25 @@ class GlobalObjectStorage:
 
     def get_user_storage_size(self, user_id: int):
         return self.__get_total_file_size(XC_USER_BUCKET, f'files/{user_id}/')
+
+    def get_presigned_url_for_avatar(self, user_id: int) -> dict:
+        key = f'files/{user_id}/avatar'
+        post_data = self.__get_presigned_post(key)
+        return post_data
+
+    def __get_presigned_post(self, key: str) -> dict:
+        try:
+            conditions = [
+                ["content-length-range", 1, MAX_FILE_SIZE],
+                ['starts-with', '$Content-Type', 'image/']
+            ]
+            
+            return self.s3_client.generate_presigned_post(
+                Bucket=XC_USER_BUCKET,
+                Key=key,
+                Conditions=conditions,
+                ExpiresIn=PRESIGNED_URL_EXPIRES
+            )
+        except Exception as e:
+            log.error(f'{self.__cls_name}.__get_presigned_post [error] err:%s', e.__str__())
+            raise HTTPException(status_code=500, detail="Failed to generate presigned URL")
