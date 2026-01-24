@@ -4,13 +4,15 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.params import Depends
 
 from src.app._di.injection import _file_service
+from src.config.conf import S3_REGION
 from src.config.exception import ForbiddenException
 from src.domain.file.model.file_info_model import FileInfoListVO
 from src.infra.storage.global_object_storage import GlobalObjectStorage
 from src.router.res.response import idempotent_response, res_success, post_success
 
 _s3 = boto3.resource('s3')
-_obj_store = GlobalObjectStorage(_s3, _file_service)
+_s3_client = boto3.client('s3', region_name=S3_REGION)
+_obj_store = GlobalObjectStorage(_s3, _s3_client, _file_service)
 
 router = APIRouter(
     prefix='/storage',
@@ -64,3 +66,11 @@ async def get_bucket_size(user_id: int):
     
     res: int = _obj_store.get_user_storage_size(user_id)
     return res_success(data=jsonable_encoder(res))
+
+@router.get('/presigned-url/{user_id}', responses=idempotent_response('get_presigned_url_for_avatar', dict))
+async def get_presigned_url_for_avatar(user_id: int):
+    if user_id <= 0:
+        raise HTTPException(status_code=400, detail="Invalid user_id. Must be a positive integer.")
+    
+    res = _obj_store.get_presigned_url_for_avatar(user_id)
+    return res_success(data=res)
