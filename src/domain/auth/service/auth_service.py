@@ -1,4 +1,4 @@
-import logging as log
+import logging
 from typing import Dict, Set
 
 from ..model.auth_model import *
@@ -14,7 +14,7 @@ from ....router.req.authorization import (
     valid_refresh_token,
 )
 
-log.basicConfig(filemode='w', level=log.INFO)
+log = logging.getLogger(__name__)
 
 
 class AuthService:

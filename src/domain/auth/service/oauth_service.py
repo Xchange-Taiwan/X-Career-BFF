@@ -1,4 +1,4 @@
-import logging as log
+import logging
 from typing import Dict
 
 from src.config.conf import *
@@ -9,7 +9,7 @@ from src.infra.template.cache import ICache
 from src.infra.template.service_api import IServiceApi
 from src.infra.template.service_response import ServiceApiResponse
 
-log.basicConfig(filemode="w", level=log.INFO)
+log = logging.getLogger(__name__) 
 
 
 class OAuthService(AuthService):

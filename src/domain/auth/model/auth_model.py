@@ -1,4 +1,4 @@
-import logging as log
+import logging
 from typing import Optional
 
 from pydantic import BaseModel, EmailStr, field_validator, ValidationInfo
@@ -6,7 +6,7 @@ from pydantic import BaseModel, EmailStr, field_validator, ValidationInfo
 from ...user.model.user_model import ProfileVO
 from ....config.exception import ClientException
 
-log.basicConfig(filemode='w', level=log.INFO)
+log = logging.getLogger(__name__)
 
 
 class SignupDTO(BaseModel):

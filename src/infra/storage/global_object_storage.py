@@ -1,7 +1,7 @@
 import asyncio
 import io
 import json
-import logging as log
+import logging
 from typing import Optional, Dict, Any
 
 from PIL import Image
@@ -10,17 +10,18 @@ from fastapi import UploadFile, File, HTTPException
 
 from src.domain.file.model.file_info_model import FileInfoDTO, FileInfoListVO
 from ...app._di.injection import _user_service
-from ...config.conf import XC_BUCKET, S3_REGION, MAX_STORAGE_SIZE, MAX_WIDTH, MAX_HEIGHT, XC_USER_BUCKET
+from ...config.conf import XC_BUCKET, S3_REGION, MAX_STORAGE_SIZE, MAX_WIDTH, MAX_HEIGHT, XC_USER_BUCKET, PRESIGNED_URL_EXPIRES, MAX_FILE_SIZE
 from ...config.exception import ServerException, NotFoundException
 from ...domain.file.service.file_service import FileService
 from ...domain.user.model.user_model import ProfileDTO
 
-log.basicConfig(filemode='w', level=log.INFO)
+log = logging.getLogger(__name__)
 
 
 class GlobalObjectStorage:
-    def __init__(self, s3, file_service: FileService):
+    def __init__(self, s3, s3_client, file_service: FileService):
         self.s3 = s3
+        self.s3_client = s3_client
         self.file_service = file_service
         self.__cls_name = self.__class__.__name__
 
@@ -132,14 +133,24 @@ class GlobalObjectStorage:
             # Read file contents
             avatar = await file.read()
             content_type = file.content_type
-            file_type = file.content_type[6:]
+            # 解析檔案類型
+            file_type = content_type.split('/')[-1].lower()
+
+            # 標準化檔案類型
+            if file_type in ['jpg', 'jpeg']:
+                file_type = 'jpeg'
+            elif file_type not in ['png', 'gif', 'webp', 'bmp']:
+                log.warning(f'Unsupported image format: {file_type}, defaulting to jpeg')
+                file_type = 'jpeg'
+
             avatar_name = f'avatar.{file_type}'
             avatar_key = self.__get_obj_key(avatar_name, user_id)
-            minor_avatar = self.__get_resized_obj(avatar, file_type)
-            minor_avatar_name = f'minor_avatar.{file_type}'
-            minor_avatar_key = self.__get_obj_key(minor_avatar_name, user_id)
+            # minor_avatar = self.__get_resized_obj(avatar, file_type)
+            # minor_avatar_name = f'minor_avatar.{file_type}'
+            # minor_avatar_key = self.__get_obj_key(minor_avatar_name, user_id)
 
-            if self.get_user_storage_size(user_id) + len(avatar)+len(minor_avatar) > MAX_STORAGE_SIZE:
+            # if self.get_user_storage_size(user_id) + len(avatar)+len(minor_avatar) > MAX_STORAGE_SIZE:
+            if self.get_user_storage_size(user_id) > MAX_STORAGE_SIZE:
                 log.error(f'upload_avatar {avatar_name} [file size too large] ')
                 raise HTTPException(status_code=400, detail="File size too large")
             is_delete_avatar_success: bool = await self.delete_avatar(user_id)
@@ -151,16 +162,17 @@ class GlobalObjectStorage:
                                                     avatar_name,
                                                     content_type,
                                                     user_id)
-            minor_avatar_dto = \
-                await self.__upload_avatar_and_info(minor_avatar,
-                                                    minor_avatar_key,
-                                                    minor_avatar_name,
-                                                    content_type,
-                                                    user_id)
+            # minor_avatar_dto = \
+            #     await self.__upload_avatar_and_info(minor_avatar,
+            #                                         minor_avatar_key,
+            #                                         minor_avatar_name,
+            #                                         content_type,
+            #                                         user_id)
 
-            res = [avatar_dto, minor_avatar_dto]
+            # res = [avatar_dto, minor_avatar_dto]
             # Return file info
-            res.sort(key=lambda x: x.file_size)
+            # res.sort(key=lambda x: x.file_size)
+            res = [avatar_dto]
             return FileInfoListVO(file_info_vo_list=res)
 
         except (NoCredentialsError, PartialCredentialsError) as e:
@@ -236,27 +248,81 @@ class GlobalObjectStorage:
 
     def __get_resized_obj(self, content: bytes, content_type: str = 'jpeg') -> bytes:
         try:
-            image = Image.open(io.BytesIO(content))
+            # 驗證輸入
+            if not content or len(content) == 0:
+                raise ValueError("Empty image content")
+
+            # 創建 BytesIO 對象
+            img_buffer = io.BytesIO(content)
+            img_buffer.seek(0)
+
+            # 嘗試打開圖片
+            try:
+                image = Image.open(img_buffer)
+                # 確保圖片已完全載入
+                image.load()
+            except Exception as img_error:
+                log.error(f'PIL cannot open image: {img_error}, content_length: {len(content)}')
+                raise ValueError(f"Cannot identify image format: {img_error}")
+
+            # 轉換為 RGB 模式（Lambda 環境下更穩定）
+            if image.mode in ('RGBA', 'LA', 'P'):
+                # 創建白色背景
+                background = Image.new('RGB', image.size, (255, 255, 255))
+                if image.mode == 'P':
+                    image = image.convert('RGBA')
+                if image.mode in ('RGBA', 'LA'):
+                    background.paste(image, mask=image.split()[-1])
+                    image = background
+                else:
+                    image = image.convert('RGB')
 
             # Resize the image to the specified dimensions
             width, height = image.size
+            log.info(f'Original image size: {width}x{height}')
+
             if width > MAX_WIDTH or height > MAX_HEIGHT:
                 new_width, new_height = MAX_WIDTH, MAX_HEIGHT
                 if width > height:
                     new_height = int(height * MAX_WIDTH / width)
                 else:
                     new_width = int(width * MAX_HEIGHT / height)
-                image = image.resize((new_width, new_height))
+
+                # 使用 LANCZOS 重採樣（如果可用）
+                try:
+                    resample = Image.Resampling.LANCZOS
+                except AttributeError:
+                    resample = Image.LANCZOS  # 舊版本 Pillow 兼容性
+
+                image = image.resize((new_width, new_height), resample)
+                log.info(f'Resized image to: {new_width}x{new_height}')
 
             # Save the resized image to a BytesIO buffer
             buffer = io.BytesIO()
-            image.save(buffer, format=content_type)
-            buffer.seek(0)
 
-            return buffer.getvalue()
+            # 標準化格式名稱
+            save_format = content_type.upper()
+            if save_format in ['JPG', 'JPEG']:
+                save_format = 'JPEG'
+                # JPEG 品質設置
+                image.save(buffer, format=save_format, quality=85, optimize=True)
+            elif save_format == 'PNG':
+                image.save(buffer, format=save_format, optimize=True)
+            else:
+                # 預設使用 JPEG
+                image.save(buffer, format='JPEG', quality=85, optimize=True)
+
+            buffer.seek(0)
+            result = buffer.getvalue()
+            log.info(f'Processed image: original={len(content)} bytes, processed={len(result)} bytes')
+            return result
+
+        except ValueError:
+            # 重新拋出 ValueError
+            raise
         except Exception as e:
-            log.error(f'__get_resized_obj [resize image error] {e.__str__()}')
-            raise ValueError(f"Invalid image content: {e}")
+            log.error(f'__get_resized_obj [unexpected error] {e.__str__()}')
+            raise ValueError(f"Image processing failed: {e}")
 
     def __get_total_file_size(self, bucket_name, prefix):
         try:
@@ -274,3 +340,25 @@ class GlobalObjectStorage:
 
     def get_user_storage_size(self, user_id: int):
         return self.__get_total_file_size(XC_USER_BUCKET, f'files/{user_id}/')
+
+    def get_presigned_url_for_avatar(self, user_id: int) -> dict:
+        key = f'files/{user_id}/avatar'
+        post_data = self.__get_presigned_post(key)
+        return post_data
+
+    def __get_presigned_post(self, key: str) -> dict:
+        try:
+            conditions = [
+                ["content-length-range", 1, MAX_FILE_SIZE],
+                ['starts-with', '$Content-Type', 'image/']
+            ]
+            
+            return self.s3_client.generate_presigned_post(
+                Bucket=XC_USER_BUCKET,
+                Key=key,
+                Conditions=conditions,
+                ExpiresIn=PRESIGNED_URL_EXPIRES
+            )
+        except Exception as e:
+            log.error(f'{self.__cls_name}.__get_presigned_post [error] err:%s', e.__str__())
+            raise HTTPException(status_code=500, detail="Failed to generate presigned URL")

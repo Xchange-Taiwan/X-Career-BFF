@@ -1,4 +1,4 @@
-import logging as log
+import logging
 from typing import Dict, List, Optional
 
 from pydantic import BaseModel, Field
@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 from .common_model import ProfessionVO, InterestListVO
 from ....config.conf import DEFAULT_LANGUAGE
 
-log.basicConfig(filemode="w", level=log.INFO)
+log = logging.getLogger(__name__) 
 
 
 class ProfileVO(BaseModel):
@@ -39,6 +39,7 @@ class ProfileDTO(BaseModel):
     topics: Optional[List[str]] = Field(default_factory=list)
     industry: Optional[str] = ''
     language: Optional[str] = DEFAULT_LANGUAGE
+    is_mentor: Optional[bool] = False
 
     @staticmethod
     def from_vo(vo: Dict) -> "ProfileDTO":
@@ -79,4 +80,5 @@ class ProfileDTO(BaseModel):
             topics=topic_subject_groups,
             industry=vo.get('industry', ''),
             language=vo.get('language', DEFAULT_LANGUAGE),
+            is_mentor=vo.get('is_mentor', False),
         )
