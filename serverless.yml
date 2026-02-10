@@ -34,10 +34,15 @@ provider:
   - Effect: Allow
     Action:
       - logs:CreateLogGroup
+      - logs:TagResource
+    Resource:
+      - arn:aws:logs:${env:THE_REGION}:${env:ACCOUNT_ID}:log-group:/aws/lambda/x-career-bff-dev-app
+  - Effect: Allow
+    Action:
       - logs:CreateLogStream
       - logs:PutLogEvents
     Resource:
-      - arn:aws:logs:${env:THE_REGION}:${env:ACCOUNT_ID}:log-group:/aws/lambda/*:*
+      - arn:aws:logs:${env:THE_REGION}:${env:ACCOUNT_ID}:log-group:/aws/lambda/x-career-bff-dev-app:*
 
   - Effect: Allow
     Action:
