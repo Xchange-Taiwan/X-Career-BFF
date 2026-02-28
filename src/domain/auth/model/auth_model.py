@@ -103,6 +103,7 @@ class NewTokenDTO(BaseModel):
 
 
 class ResetPasswordDTO(BaseModel):
+    """Used internally when calling Auth Service (includes register_email from cache)."""
     register_email: EmailStr
     password: str
     confirm_password: str
@@ -117,6 +118,26 @@ class ResetPasswordDTO(BaseModel):
         json_schema_extra = {
             'example': {
                 'register_email': 'user@example.com',
+                'password': 'secret',
+                'confirm_password': 'secret',
+            },
+        }
+
+
+class ResetPasswordBodyDTO(BaseModel):
+    """Request body for PUT /auth/password/reset. Email 由 verify_token 從 cache 取得，不經由 client 傳送。"""
+    password: str
+    confirm_password: str
+
+    @field_validator('confirm_password')
+    def passwords_match(cls, v, values: ValidationInfo):
+        if 'password' in values.data and v != values.data['password']:
+            raise ClientException(msg='passwords do not match')
+        return v
+
+    class Config:
+        json_schema_extra = {
+            'example': {
                 'password': 'secret',
                 'confirm_password': 'secret',
             },
