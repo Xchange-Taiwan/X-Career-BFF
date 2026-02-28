@@ -470,13 +470,17 @@ class AuthService:
             data.update({'token': token})
         return data
 
-    async def reset_passwrod(self, verify_token: str, body: ResetPasswordDTO):
+    async def reset_passwrod(self, verify_token: str, body: ResetPasswordBodyDTO):
+        """Email 僅由 cache (verify_token -> email) 取得，不依賴 client 傳入，降低資安風險。"""
         checked_email = await self.cache.get(verify_token)
         if not checked_email:
             raise UnauthorizedException(msg='invalid token')
-        if checked_email != body.register_email:
-            raise UnauthorizedException(msg='invalid user')
-        await self.__req_reset_password(body)
+        payload = ResetPasswordDTO(
+            register_email=checked_email,
+            password=body.password,
+            confirm_password=body.confirm_password,
+        )
+        await self.__req_reset_password(payload)
         await self.__cache_remove_by_reset_password(verify_token, checked_email)
 
     async def __cache_check_for_reset_password(self, email: EmailStr):
