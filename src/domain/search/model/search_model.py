@@ -1,4 +1,4 @@
-import logging as log
+import logging
 from datetime import datetime
 from typing import List, Optional
 
@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 from ...mentor.model.mentor_model import MentorProfileVO
 
-log.basicConfig(filemode='w', level=log.INFO)
+log = logging.getLogger(__name__)
 
 
 class SearchMentorProfileDTO(BaseModel):

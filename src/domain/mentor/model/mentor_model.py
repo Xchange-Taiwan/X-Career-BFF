@@ -8,7 +8,7 @@ from ...user.model.common_model import (
 from ...user.model.user_model import *
 from ....config.constant import *
 
-log.basicConfig(filemode="w", level=log.INFO)
+log = logging.getLogger(__name__)
 
 
 class MentorProfileDTO(ProfileDTO):

@@ -1,4 +1,4 @@
-import logging as log
+import logging
 from datetime import datetime
 from typing import List
 
@@ -19,7 +19,7 @@ from ...domain.search.model import (
     search_model as search,
 )
 
-log.basicConfig(filemode='w', level=log.INFO)
+log = logging.getLogger(__name__)
 
 
 router = APIRouter(

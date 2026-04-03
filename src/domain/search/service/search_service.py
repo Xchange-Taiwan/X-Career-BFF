@@ -1,4 +1,4 @@
-import logging as log
+import logging
 from typing import Optional, Dict, Any
 
 from src.config.conf import SEARCH_SERVICE_URL
@@ -8,7 +8,7 @@ from ....domain.search.model import (
     search_model as search,
 )
 
-log.basicConfig(filemode='w', level=log.INFO)
+log = logging.getLogger(__name__)
 
 
 class SearchService:

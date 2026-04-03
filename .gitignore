@@ -19,3 +19,8 @@ test2/
 
 *.py~
 src/router/.DS_Store
+
+# Snyk Security Extension - AI Rules (auto-generated)
+.cursor/rules/snyk_rules.mdc
+
+.github/

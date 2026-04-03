@@ -1,4 +1,4 @@
-import logging as log
+import logging
 from typing import List
 
 from fastapi import (
@@ -21,7 +21,7 @@ from src.infra.template.service_response import ServiceApiResponse
 from src.router.res.response import *
 from ...infra.util.util import get_universities_by_country
 
-log.basicConfig(filemode='w', level=log.INFO)
+log = logging.getLogger(__name__)
 
 
 router = APIRouter(

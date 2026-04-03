@@ -1,4 +1,4 @@
-import logging as log
+import logging
 from typing import Optional, Dict, Any
 
 from fastapi.encoders import jsonable_encoder
@@ -15,7 +15,7 @@ from src.domain.user.model.user_model import ProfileDTO
 from src.infra.client.async_service_api_adapter import AsyncServiceApiAdapter
 from src.infra.template.cache import ICache
 
-log.basicConfig(filemode='w', level=log.INFO)
+log = logging.getLogger(__name__)
 
 
 class UserService:
@@ -60,7 +60,7 @@ class UserService:
             cache_val = await self.local_cache.get(cache_key)
             if cache_val:
                 return cache_val
-            
+
             req_url = f"{USER_SERVICE_URL}/v1/{USERS}/{language.value}/industries"
             res: Dict = await self.service_api.simple_get(url=req_url)
             # set cache

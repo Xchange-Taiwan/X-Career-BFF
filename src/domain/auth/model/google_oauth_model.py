@@ -1,8 +1,8 @@
-import logging as log
+import logging
 
 from pydantic import BaseModel, EmailStr
 
-log.basicConfig(filemode='w', level=log.INFO)
+log = logging.getLogger(__name__)
 
 class GoogleAuthorizeDTO(BaseModel):
     email: EmailStr

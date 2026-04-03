@@ -4,7 +4,7 @@ from .user_model import *
 from ....config.conf import BATCH
 from ....config.constant import *
 
-log.basicConfig(filemode='w', level=log.INFO)
+log = logging.getLogger(__name__)
 
 
 class ReservationQueryDTO(BaseModel):

@@ -1,6 +1,6 @@
 import uuid
 from typing import Callable, List
-import logging as log
+import logging
 import uuid
 from typing import Callable, List
 
@@ -13,7 +13,7 @@ from ...config.conf import JWT_ALGORITHM, ACCESS_TOKEN_TTL, SHORT_TERM_TTL
 from ...config.exception import *
 from ...infra.util.time_util import *
 
-log.basicConfig(level=log.INFO)
+log = logging.getLogger(__name__)
 
 auth_scheme = HTTPBearer()
 
@@ -26,14 +26,14 @@ def parse_token(credentials: HTTPAuthorizationCredentials):
     if not token:
         log.error(f'parse_token fail: [\'token\' is required in credentials], credentials:{credentials}')
         raise UnauthorizedException(msg='Authorization failed')
-    
+
     return token
 
 async def parse_token_from_request(request: Request):
     credentials: HTTPAuthorizationCredentials = await auth_scheme.__call__(request)
     if not credentials:
         raise UnauthorizedException(msg='Authorization header missing')
-    
+
     return parse_token(credentials)
 
 
@@ -45,7 +45,7 @@ def gen_token(data: dict, fields: List = []):
     if not 'user_id' in data:
         log.error(f'gen_token fail: [\'user_id\' is required in data], data:{data}, fields:{fields}')
         raise ServerException(msg='user_id not found in data')
-    
+
     secret = __get_secret(data['user_id'])
     for field in fields:
         val = str(data[field])
@@ -108,7 +108,7 @@ def __valid_user_id(data: dict, user_id):
 def __outdated_token(data: dict) -> (bool):
     if not 'exp' in data:
         return True
-    
+
     future_time_in_secs = int(data['exp'])
     current_time_in_secs = current_seconds()
     log.info('\n\n\noutdated?? future_time_in_secs: %d, current_time_in_secs: %d', future_time_in_secs, current_time_in_secs)
@@ -127,7 +127,7 @@ def __verify_token_in_auth(user_id: int, credentials: HTTPAuthorizationCredentia
 async def verify_token(request: Request):
     url_path = request.url.path
     user_id = get_user_id(url_path)
-    
+
     token = await parse_token_from_request(request)
     secret = __get_secret(user_id)
     data = __jwt_decode(jwt=token, key=secret, msg=f'invalid user')
@@ -147,9 +147,9 @@ class AuthRoute(APIRoute):
 
         async def custom_route_handler(request: Request) -> Response:
             before = time.time()
-            
+
             await verify_token(request)
-            
+
             response: Response = await original_route_handler(request)
             duration = time.time() - before
             response.headers['X-Response-Time'] = str(duration)

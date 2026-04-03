@@ -1,4 +1,4 @@
-import logging as log
+import logging
 
 from fastapi import APIRouter, Query
 
@@ -10,7 +10,7 @@ from ...config.conf import DEFAULT_LANGUAGE_ENUM
 from ...config.constant import Language
 from ...domain.auth.service.auth_service import AuthService
 
-log.basicConfig(filemode='w', level=log.INFO)
+log = logging.getLogger(__name__)
 
 
 router = APIRouter(
@@ -97,8 +97,9 @@ async def send_reset_password_comfirm_email(
 
 @router.put('/password/reset')
 async def reset_password(
-    reset_passwrod_dto: ResetPasswordDTO = Body(...),
+    body: ResetPasswordBodyDTO = Body(...),
     verify_token: str = Query(...),
 ):
-    await _auth_service.reset_passwrod(verify_token, reset_passwrod_dto)
+    """重設密碼：email 由信內連結的 verify_token 從 cache 取得，request body 不需傳入 email。"""
+    await _auth_service.reset_passwrod(verify_token, body)
     return res_success(msg='reset success')
