@@ -90,8 +90,11 @@ class GoogleOAuthService(AuthService):
         # 檢查用戶是否已存在
         if state_data.get('auth_type') == AuthorizeType.SIGNUP.value:
             signup_body = SignupOauthDTO.model_validate(google_oauth_data)
-            return await self.signup_oauth_and_send_email(signup_body)
-        
+            result = await self.signup_oauth_and_send_email(signup_body)
+            result['name'] = user_info.get('name')
+            result['avatar'] = user_info.get('picture')
+            return result
+
         if state_data.get('auth_type') == AuthorizeType.LOGIN.value:
             signin_body = LoginOauthDTO.model_validate(google_oauth_data)
             return await self.login_oauth(signin_body, language=DEFAULT_LANGUAGE)
