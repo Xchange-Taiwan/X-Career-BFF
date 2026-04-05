@@ -55,14 +55,13 @@ async def mentor_list(
     return res_success(data)
 
 
-# TODO: read from professional service
 @router.get('/{user_id}',
-            responses=idempotent_response('get_mentor', mentor.MentorProfileVO))
+            responses=idempotent_response('get_mentor', search.SearchMentorProfileVO))
 async def get_mentor(
     user_id: int = Path(...),
 ):
-    # TODO: implement
-    return res_success(data=None)
+    data = await _search_service.search_mentor_by_id(mentor_id=user_id)
+    return res_success(data)
 
 
 @router.get('/{user_id}/schedule/y/{dt_year}/m/{dt_month}',
