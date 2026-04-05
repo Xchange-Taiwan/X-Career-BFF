@@ -1,24 +1,84 @@
 name: X-Career-BFF Pipeline
 
-on: [push]
+on:
+  push:
+    branches:
+      - main
 
 jobs:
-  test:
+  deploy:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set up Python 3.9
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
-          python-version: 3.9
+          python-version: "3.9"
 
-      - name: Install dependencies
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+
+      - name: Install Node dependencies (Serverless)
+        run: npm install
+
+      - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run tests
-        run: pytest
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy to AWS Lambda
+        run: npx sls deploy --stage dev --region ${{ secrets.AWS_REGION }}
+        env:
+          STAGE: dev
+          THE_REGION: ${{ secrets.AWS_REGION }}
+          ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+          TABLE_CACHE: ${{ secrets.TABLE_CACHE }}
+          XC_USER_BUCKET: ${{ secrets.XC_USER_BUCKET }}
+
+      - name: Update Lambda environment variables
+        run: |
+          aws lambda update-function-configuration \
+            --function-name x-career-bff-dev-app \
+            --environment "Variables={
+          DEFAULT_LANGUAGE=zh_TW,
+          STAGE=dev,
+          TESTING=dev,
+          XC_BUCKET=x-career-bff-dev-serverlessdeploymentbucket-zndkgowobwsz,
+          XC_USER_BUCKET=x-career-multimedia,
+          REGION_HOST_AUTH=https://d11k5l9gl6.execute-api.ap-northeast-1.amazonaws.com/dev/auth-service/api,
+          REGION_HOST_USER=https://gvjbxpuqmh.execute-api.ap-northeast-1.amazonaws.com/dev/user-service/api,
+          REGION_HOST_SEARCH=https://qa9af3a6vf.execute-api.ap-northeast-1.amazonaws.com/dev/search-service/api,
+          BATCH=10,
+          REQUEST_INTERVAL_TTL=8,
+          SHORT_TERM_TTL=1800,
+          LONG_TERM_TTL=259200,
+          JWT_ALGORITHM=HS256,
+          ACCESS_TOKEN_TTL=1800,
+          REFRESH_TOKEN_TTL=2592000,
+          AUTH_RESPONSE_FIELDS=oauth_id;account_type;region;online,
+          CACHE_TTL=300,
+          TABLE_CACHE=dev_x_career_bff_cache,
+          AUTH_SERVICE_URL=https://d11k5l9gl6.execute-api.ap-northeast-1.amazonaws.com/dev/auth-service/api,
+          USER_SERVICE_URL=https://gvjbxpuqmh.execute-api.ap-northeast-1.amazonaws.com/dev/user-service/api,
+          SEARCH_SERVICE_URL=https://qa9af3a6vf.execute-api.ap-northeast-1.amazonaws.com/dev/search-service/api,
+          FRONTEND_REDIRECT_URL=https://xtalent.vercel.app/auth/google/callback/redirect,
+          MAX_WIDTH=300,
+          MAX_HEIGHT=300,
+          MAX_STORAGE_SIZE=15728640,
+          GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }},
+          GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+          }"
+
