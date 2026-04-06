@@ -41,6 +41,10 @@ class ProfileDTO(BaseModel):
     language: Optional[str] = DEFAULT_LANGUAGE
     is_mentor: Optional[bool] = False
 
+    model_config = {
+        "from_attributes": True,
+    }
+
     @staticmethod
     def from_vo(vo: Dict) -> "ProfileDTO":
         """
