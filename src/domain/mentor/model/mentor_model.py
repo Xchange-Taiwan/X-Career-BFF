@@ -15,6 +15,9 @@ class MentorProfileDTO(ProfileDTO):
     about: Optional[str] = None
     seniority_level: Optional[SeniorityLevel] = SeniorityLevel.NO_REVEAL
     expertises: Optional[List[str]] = None
+    personal_links: Optional[Dict] = None
+    education: Optional[Dict] = None
+    work_experience: Optional[Dict] = None
 
     class Config:
         from_attributes = True
@@ -25,6 +28,9 @@ class MentorProfileVO(ProfileVO):
     about: Optional[str] = ""
     seniority_level: Optional[SeniorityLevel] = SeniorityLevel.NO_REVEAL
     expertises: Optional[ProfessionListVO] = None
+    personal_links: Optional[Dict] = None
+    education: Optional[Dict] = None
+    work_experience: Optional[Dict] = None
     experiences: Optional[List[ExperienceVO]] = Field(default_factory=list)
 
 
