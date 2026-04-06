@@ -161,7 +161,12 @@ class AuthService:
 
     async def regenerate_signup_token(self, old_token: str, new_token: str):
         data = await self.cache.get(old_token)
-        if not data or not 'email' in data or not 'password' in data:
+        # 一般 email 註冊快取 password；Google OAuth 註冊快取 oauth_id（見 oauth_service / google_oauth_service）
+        if (
+            not data
+            or 'email' not in data
+            or ('password' not in data and 'oauth_id' not in data)
+        ):
             raise NotFoundException(msg='Email or password not found')
 
         await self.cache.set(new_token, data, ex=REQUEST_INTERVAL_TTL)
