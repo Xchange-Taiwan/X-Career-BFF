@@ -20,7 +20,9 @@ router = APIRouter(
 )
 
 
-@router.post('/signup', status_code=201)
+@router.post('/signup',
+             responses=post_response('signup', EmailSentVO),
+             status_code=201)
 async def signup(
     body: SignupDTO = Body(...),
 ):
@@ -28,7 +30,9 @@ async def signup(
     return post_success(data=data, msg='email_sent')
 
 
-@router.post('/email/resend', status_code=201)
+@router.post('/email/resend',
+             responses=post_response('signup_email_resend', EmailSentVO),
+             status_code=201)
 async def signup_email_resend(
     email: EmailStr = Body(..., embed=True),
 ):
@@ -61,6 +65,7 @@ async def login(
 
 
 @router.post('/token',
+             responses=post_response('refresh_token', TokenRefreshVO),
              status_code=201)
 async def refresh_token(
     payload: NewTokenDTO = Depends(refresh_token_check),
@@ -69,7 +74,9 @@ async def refresh_token(
     return AuthService.auth_response(data=data)
 
 
-@router.post('/logout', status_code=201)
+@router.post('/logout',
+             responses=post_response('logout', None),
+             status_code=201)
 async def logout(
     user_id: int = Body(..., embed=True),
 ):
@@ -77,7 +84,8 @@ async def logout(
     return post_success(data=data, msg=msg)
 
 
-@router.put('/password/{user_id}/update')
+@router.put('/password/{user_id}/update',
+            responses=idempotent_response('update_password', None))
 async def update_password(
     user_id: int = Path(...),
     update_password_dto: UpdatePasswordDTO = Body(...),
@@ -87,7 +95,8 @@ async def update_password(
     return res_success(msg='update success')
 
 
-@router.get('/password/reset/email')
+@router.get('/password/reset/email',
+            responses=idempotent_response('send_reset_password_email', EmailSentVO))
 async def send_reset_password_comfirm_email(
     email: EmailStr,
 ):
@@ -95,7 +104,8 @@ async def send_reset_password_comfirm_email(
     return res_success(data=data, msg='send_email_success')
 
 
-@router.put('/password/reset')
+@router.put('/password/reset',
+            responses=idempotent_response('reset_password', None))
 async def reset_password(
     body: ResetPasswordBodyDTO = Body(...),
     verify_token: str = Query(...),
