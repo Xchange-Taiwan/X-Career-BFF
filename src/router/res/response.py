@@ -1,27 +1,32 @@
-from typing import Optional, Any, Dict
+from typing import Optional, Any, Dict, Generic, TypeVar
 
 from fastapi import status
 from fastapi.responses import JSONResponse
-from pydantic import create_model, BaseModel
+from pydantic import BaseModel
+
+T = TypeVar('T')
 
 
-# ref: https://github.com/tiangolo/fastapi/issues/3737
-def idempotent_response(route: str, model: Any) -> (Dict):
-    responses: Dict = {
+class ApiResponse(BaseModel, Generic[T]):
+    code: str = '0'
+    msg: str = 'ok'
+    data: Optional[T] = None
+
+
+def idempotent_response(route: str, model: Any) -> Dict:
+    return {
         200: {
-            'model': create_model(route, code=(str, ...), msg=(str, ...), data=(model, ...))
+            'model': ApiResponse[model]
         }
     }
-    return responses
 
 
-def post_response(route: str, model: Any) -> (Dict):
-    responses: Dict = {
+def post_response(route: str, model: Any) -> Dict:
+    return {
         201: {
-            'model': create_model(route, code=(str, ...), msg=(str, ...), data=(model, ...))
+            'model': ApiResponse[model]
         }
     }
-    return responses
 
 
 def post_success(data=None, msg='ok', code='0'):
