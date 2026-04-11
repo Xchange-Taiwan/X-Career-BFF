@@ -178,3 +178,18 @@ class SignupResponseVO(BaseModel):
 class LoginResponseVO(SignupResponseVO):
     # TODO: define user VO
     user: ProfileVO
+
+
+class EmailSentVO(BaseModel):
+    """Returned by signup, email resend, and password reset email endpoints."""
+    ttl_secs: int
+
+
+class TokenRefreshAuthVO(BaseModel):
+    user_id: int
+    token: str
+
+
+class TokenRefreshVO(BaseModel):
+    """Returned by POST /token (refresh token pair)."""
+    auth: TokenRefreshAuthVO
