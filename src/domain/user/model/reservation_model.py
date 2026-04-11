@@ -70,8 +70,8 @@ class ReservationVO(ReservationDTO):
 
 class ReservationMessageVO(BaseModel):
     user_id: int = Field(None, example=0)
-    # role: Optional[str] = Field(..., example=RoleType.MENTEE.value,
-    #                      pattern=f'^({RoleType.MENTOR.value}|{RoleType.MENTEE.value})$')
+    role: Optional[str] = Field(None, example=RoleType.MENTEE.value,
+                         pattern=f'^({RoleType.MENTOR.value}|{RoleType.MENTEE.value})$')
     content: str = Field(None, example='')
 
 
