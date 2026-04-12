@@ -141,6 +141,28 @@ def verify_token_by_update_password(credentials: HTTPAuthorizationCredentials = 
     __verify_token_in_auth(user_id, credentials, 'access denied')
 
 
+def verify_token_for_delete_account(
+    credentials: HTTPAuthorizationCredentials = Depends(auth_scheme),
+) -> int:
+    token = parse_token(credentials)
+    try:
+        unverified = jwt_util.decode(
+            token,
+            options={"verify_signature": False},
+            algorithms=[JWT_ALGORITHM],
+        )
+    except Exception:
+        raise UnauthorizedException(msg='invalid token')
+
+    user_id = unverified.get('user_id')
+    if not user_id:
+        raise UnauthorizedException(msg='user_id not found in token')
+    user_id = int(user_id)
+
+    __verify_token_in_auth(user_id, credentials, 'access denied')
+    return user_id
+
+
 class AuthRoute(APIRoute):
     def get_route_handler(self) -> (Callable):
         original_route_handler = super().get_route_handler()

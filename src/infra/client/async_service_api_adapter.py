@@ -176,26 +176,26 @@ class AsyncServiceApiAdapter(IServiceApi):
     """
     return response body only
     """
-    async def simple_delete(self, url: str, params: Dict = None, headers: Dict = None) -> Optional[Dict[str, Any]]:
-        service_api_response = await self.delete(url, params, headers)
+    async def simple_delete(self, url: str, params: Dict = None, json: Dict = None, headers: Dict = None) -> Optional[Dict[str, Any]]:
+        service_api_response = await self.delete(url, params, json, headers)
         if service_api_response:
             return service_api_response.data
         return None
 
     @check_response_code('delete', 200)
-    async def delete(self, url: str, params: Dict = None, headers: Dict = None) -> Optional[ServiceApiResponse]:
+    async def delete(self, url: str, params: Dict = None, json: Dict = None, headers: Dict = None) -> Optional[ServiceApiResponse]:
         result = None
         response = None
         try:
             async with httpx.AsyncClient() as client:
-                response = await client.delete(url, params=params, headers=headers)
+                response = await client.delete(url, params=params, json=json, headers=headers)
                 result = ServiceApiResponse.parse(response)
 
         except Exception as e:
             err_msg = getattr(e, 'msg', str(e))
             err_data = getattr(e, 'data', None)
-            log.error(f"simple_delete request error, url:%s, params:%s, headers:%s, resp:%s, err:%s",
-                      url, params, headers, response, err_msg)
+            log.error(f"simple_delete request error, url:%s, params:%s, json:%s, headers:%s, resp:%s, err:%s",
+                      url, params, json, headers, response, err_msg)
             raise_http_exception(e=e, msg=err_msg, data=err_data)
 
         return result
