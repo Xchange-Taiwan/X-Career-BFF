@@ -193,3 +193,10 @@ class TokenRefreshAuthVO(BaseModel):
 class TokenRefreshVO(BaseModel):
     """Returned by POST /token (refresh token pair)."""
     auth: TokenRefreshAuthVO
+
+
+class DeleteAccountDTO(BaseModel):
+    user_id: Optional[int] = None
+    email: EmailStr
+    password: Optional[str] = None
+    id_token: Optional[str] = None
