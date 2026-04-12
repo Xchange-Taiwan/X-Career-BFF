@@ -536,3 +536,75 @@ class AuthService:
     async def __req_reset_password(self, body: ResetPasswordDTO):
         return await self.req.simple_put(
             f'{AUTH_SERVICE_URL}/v1/password/update', json=body.model_dump())
+
+    '''
+    delete account
+    '''
+
+    async def delete_account(self, body: DeleteAccountDTO):
+        user_id = body.user_id
+        email = body.email
+
+        # 1. Step-up: determine account_type and verify identity
+        account_type = None
+        cached_data = await self.cache.get(str(user_id))
+        if cached_data:
+            account_type = cached_data.get('account_type')
+
+        if account_type is None:
+            if body.password:
+                account_type = 'XC'
+            elif body.id_token:
+                account_type = 'GOOGLE'
+
+        if account_type == 'XC':
+            if not body.password:
+                raise UnauthorizedException(msg='Password is required for XC account')
+            login_body = LoginDTO(email=email, password=body.password)
+            await self.__req_login(login_body)
+        elif account_type == 'GOOGLE':
+            if not body.id_token:
+                raise UnauthorizedException(msg='id_token is required for Google account')
+            await self.__verify_google_id_token(body.id_token, email)
+        else:
+            raise UnauthorizedException(msg='Unable to determine account type')
+
+        # 2. Reservation blocking check
+        res = await self.req.simple_get(
+            f'{USER_SERVICE_URL}/v1/internal/users/{user_id}/has-active-reservations')
+        if res and res.get('has_active'):
+            raise ConflictException(
+                msg='尚有未結束或未來的預約，無法刪除帳號。請先取消或處理相關預約後再試。',
+                code='ACCOUNT_DELETE_BLOCKED_ACTIVE_RESERVATIONS',
+            )
+
+        # 3. Delete user data (Postgres + SQS if mentor)
+        await self.req.simple_delete(
+            url=f'{USER_SERVICE_URL}/v1/internal/users/{user_id}')
+
+        # 4. Delete auth account (DynamoDB)
+        try:
+            await self.req.simple_delete(
+                url=f'{AUTH_SERVICE_URL}/v1/accounts',
+                json={"email": email})
+        except Exception as e:
+            log.error(
+                f'{self.cls_name}.delete_account: Auth deletion failed after User deletion succeeded. '
+                f'user_id={user_id}, email={email}, error={e}. Manual compensation required.'
+            )
+            raise ServerException(msg='Account deletion partially failed. Please contact support.')
+
+        # 5. Clear BFF cache
+        await self.cache.delete(str(user_id))
+
+    async def __verify_google_id_token(self, id_token: str, email: str):
+        try:
+            auth_res = await self.req.simple_post(
+                f'{AUTH_SERVICE_URL}/v1/login',
+                json={'oauth_id': id_token, 'access_token': id_token})
+            if not auth_res or 'user_id' not in auth_res:
+                raise UnauthorizedException(msg='Google identity verification failed')
+        except Exception as e:
+            log.error(f'{self.cls_name}.__verify_google_id_token failed, email={email}, err={e}')
+            err_msg = getattr(e, 'msg', 'Google identity verification failed')
+            raise UnauthorizedException(msg=err_msg)

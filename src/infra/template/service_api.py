@@ -40,9 +40,9 @@ class IServiceApi(ABC):
         pass
 
     @abstractmethod
-    async def simple_delete(self, url: str, params: Dict = None, headers: Dict = None) -> Optional[Dict[str, Any]]:
+    async def simple_delete(self, url: str, params: Dict = None, json: Dict = None, headers: Dict = None) -> Optional[Dict[str, Any]]:
         pass
 
     @abstractmethod
-    async def delete(self, url: str, params: Dict = None, headers: Dict = None) -> Optional[ServiceApiResponse]:
+    async def delete(self, url: str, params: Dict = None, json: Dict = None, headers: Dict = None) -> Optional[ServiceApiResponse]:
         pass
