@@ -2,10 +2,11 @@ import logging
 
 from fastapi import (
     APIRouter,
-    Path, Query, Body
+    Path, Query, Body, Depends
 )
 from fastapi.encoders import jsonable_encoder
 
+from ..req.authorization import verify_jwt_access, verify_path_user_id
 from ..res.response import *
 from ...app._di.injection import _user_service
 from ...config.constant import *
@@ -23,10 +24,12 @@ router = APIRouter(
     prefix='/users',
     tags=['User'],
     responses={404: {'description': 'Not found'}},
+    dependencies=[Depends(verify_jwt_access)],
 )
 
 
 @router.put('/{user_id}/profile',
+            dependencies=[Depends(verify_path_user_id)],
             responses=idempotent_response('upsert_profile', user.ProfileVO))
 async def upsert_profile(
         user_id: int = Path(...),
@@ -40,6 +43,7 @@ async def upsert_profile(
 
 
 @router.get('/{user_id}/{language}/profile',
+            dependencies=[Depends(verify_path_user_id)],
             responses=idempotent_response('get_profile', user.ProfileVO))
 async def get_profile(
         user_id: int = Path(...),
@@ -78,6 +82,7 @@ async def get_countries(
 
 
 @router.get('/{user_id}/reservations',
+            dependencies=[Depends(verify_path_user_id)],
             responses=idempotent_response('reservation_list', reservation.ReservationInfoListVO))
 async def reservation_list(
         user_id: int = Path(...),
@@ -96,6 +101,7 @@ async def reservation_list(
 # 如果 "previous_reserve" 不為空，則表示這是一次變更預約的操作 => 新增後，將舊的預約設為 cancel。
 ############################################################################################
 @router.post('/{user_id}/reservations',
+             dependencies=[Depends(verify_path_user_id)],
              responses=post_response('new_booking', reservation.ReservationVO),
              status_code=201)
 async def new_booking(
@@ -109,6 +115,7 @@ async def new_booking(
 
 
 @router.put('/{user_id}/reservations/{reservation_id}',
+            dependencies=[Depends(verify_path_user_id)],
             responses=idempotent_response('update_reservation_status', reservation.ReservationVO))
 async def update_reservation_status(
         user_id: int = Path(...),
