@@ -35,4 +35,5 @@ class GoogleCallbackVO(BaseModel):
     auth: GoogleCallbackAuthVO
     user: Optional[ProfileVO] = None
     ttl_secs: Optional[int] = None
+    id_token: Optional[str] = None
 
