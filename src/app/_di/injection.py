@@ -1,4 +1,5 @@
 from src.config.dynamodb import dynamodb
+from src.config.conf import STAGE
 from src.domain.auth.service.auth_service import AuthService
 from src.domain.auth.service.google_oauth_service import GoogleOAuthService
 from src.domain.auth.service.oauth_service import OAuthService
@@ -11,8 +12,8 @@ from src.infra.cache.local_cache_adapter import LocalCacheAdapter
 from src.infra.client.async_service_api_adapter import AsyncServiceApiAdapter
 
 service_client = AsyncServiceApiAdapter()
-gw_cache = DynamoDbCacheAdapter(dynamodb)
 local_cache = LocalCacheAdapter()
+gw_cache = local_cache if STAGE == 'local' else DynamoDbCacheAdapter(dynamodb)
 
 _auth_service: AuthService = AuthService(service_client, gw_cache)
 _oauth_service: OAuthService = OAuthService(service_client, gw_cache)

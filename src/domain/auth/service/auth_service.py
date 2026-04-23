@@ -550,6 +550,11 @@ class AuthService:
         cached_data = await self.cache.get(str(user_id))
         if cached_data:
             account_type = cached_data.get('account_type')
+            cached_email = cached_data.get('email')
+            if not cached_email or cached_email != email:
+                raise UnauthorizedException(msg='Email does not match current session')
+        else:
+            raise UnauthorizedException(msg='Invalid session')
 
         if account_type is None:
             if body.password:
@@ -599,10 +604,32 @@ class AuthService:
 
     async def __verify_google_id_token(self, id_token: str, email: str):
         try:
-            auth_res = await self.req.simple_post(
-                f'{AUTH_SERVICE_URL}/v1/login',
-                json={'oauth_id': id_token, 'access_token': id_token})
-            if not auth_res or 'user_id' not in auth_res:
+            tokeninfo = await self.req.simple_get(
+                'https://oauth2.googleapis.com/tokeninfo',
+                params={'id_token': id_token},
+            )
+            if not tokeninfo:
+                raise UnauthorizedException(msg='Google identity verification failed')
+
+            token_email = tokeninfo.get('email')
+            if token_email != email:
+                raise UnauthorizedException(msg='Google identity verification failed')
+
+            # Google tokeninfo returns audience in `aud`.
+            aud = tokeninfo.get('aud')
+            if aud != GOOGLE_CLIENT_ID:
+                raise UnauthorizedException(msg='Google identity verification failed')
+
+            iss = tokeninfo.get('iss')
+            if iss not in {'accounts.google.com', 'https://accounts.google.com'}:
+                raise UnauthorizedException(msg='Google identity verification failed')
+
+            exp = tokeninfo.get('exp')
+            if not exp or int(exp) <= current_seconds():
+                raise UnauthorizedException(msg='Google identity verification failed')
+
+            # tokeninfo may return string values like "true"
+            if str(tokeninfo.get('email_verified', '')).lower() != 'true':
                 raise UnauthorizedException(msg='Google identity verification failed')
         except Exception as e:
             log.error(f'{self.cls_name}.__verify_google_id_token failed, email={email}, err={e}')
