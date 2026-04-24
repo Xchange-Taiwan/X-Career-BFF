@@ -188,7 +188,14 @@ class AsyncServiceApiAdapter(IServiceApi):
         response = None
         try:
             async with httpx.AsyncClient() as client:
-                response = await client.delete(url, params=params, json=json, headers=headers)
+                # httpx 0.27+：delete() 不支援 json=，需用 request("DELETE", ...)
+                response = await client.request(
+                    'DELETE',
+                    url,
+                    params=params,
+                    json=json,
+                    headers=headers,
+                )
                 result = ServiceApiResponse.parse(response)
 
         except Exception as e:
