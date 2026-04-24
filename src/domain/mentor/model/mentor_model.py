@@ -1,10 +1,7 @@
+from pydantic import Field
+
 from .experience_model import ExperienceVO
-from ...user.model.common_model import (
-    ProfessionListVO,
-)
-from ...user.model.common_model import (
-    ProfessionListVO,
-)
+from ...user.model.common_model import ProfessionListVO
 from ...user.model.user_model import *
 from ....config.constant import *
 
@@ -12,19 +9,23 @@ log = logging.getLogger(__name__)
 
 
 class MentorProfileDTO(ProfileDTO):
-    personal_statement: Optional[str] = ""
-    about: Optional[str] = ""
-    # TODO: enum
-    seniority_level: Optional[str] = "NO REVEAL"
-    expertises: Optional[List[str]] = []
+    """與 X-Career-User `MentorProfileDTO` 欄位一致。"""
+
+    personal_statement: Optional[str] = None
+    about: Optional[str] = None
+    seniority_level: Optional[SeniorityLevel] = SeniorityLevel.NO_REVEAL
+    expertises: Optional[List[str]] = None
+
+    class Config:
+        from_attributes = True
 
 
 class MentorProfileVO(ProfileVO):
     personal_statement: Optional[str] = ""
     about: Optional[str] = ""
-    seniority_level: Optional[str] = ""
+    seniority_level: Optional[SeniorityLevel] = SeniorityLevel.NO_REVEAL
     expertises: Optional[ProfessionListVO] = None
-    experiences: Optional[List[ExperienceVO]] = []
+    experiences: Optional[List[ExperienceVO]] = Field(default_factory=list)
 
 
 class TimeSlotDTO(BaseModel):

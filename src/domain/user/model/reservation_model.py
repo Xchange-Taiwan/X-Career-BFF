@@ -50,8 +50,8 @@ class ReservationDTO(UpdateReservationDTO):
 
 class RUserInfoVO(BaseModel):
     user_id: Optional[int] = Field(None, example=0)
-    # role: Optional[str] = Field(None, example=RoleType.MENTEE.value,
-    #                      pattern=f'^({RoleType.MENTOR.value}|{RoleType.MENTEE.value})$')
+    role: Optional[str] = Field(None, example=RoleType.MENTEE.value,
+                         pattern=f'^({RoleType.MENTOR.value}|{RoleType.MENTEE.value})$')
     status: Optional[str] = Field(
         None,
         example=BookingStatus.PENDING.value,
@@ -60,7 +60,7 @@ class RUserInfoVO(BaseModel):
     name: Optional[str] = ''
     avatar: Optional[str] = ''
     job_title: Optional[str] = ''
-    years_of_experience: Optional[int] = 0
+    years_of_experience: Optional[str] = '0'
 
 
 class ReservationVO(ReservationDTO):
@@ -70,8 +70,8 @@ class ReservationVO(ReservationDTO):
 
 class ReservationMessageVO(BaseModel):
     user_id: int = Field(None, example=0)
-    # role: Optional[str] = Field(..., example=RoleType.MENTEE.value,
-    #                      pattern=f'^({RoleType.MENTOR.value}|{RoleType.MENTEE.value})$')
+    role: Optional[str] = Field(None, example=RoleType.MENTEE.value,
+                         pattern=f'^({RoleType.MENTOR.value}|{RoleType.MENTEE.value})$')
     content: str = Field(None, example='')
 
 
@@ -87,5 +87,5 @@ class ReservationInfoVO(BaseModel):
 
 
 class ReservationInfoListVO(BaseModel):
-    reservations: Optional[List[ReservationInfoVO]] = []
+    reservations: List[ReservationInfoVO] = []
     next_dtend: Optional[int] = 0

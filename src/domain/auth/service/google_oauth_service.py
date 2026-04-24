@@ -52,7 +52,8 @@ class GoogleOAuthService(AuthService):
             'client_id': self.google_client_id,
             'redirect_uri': self.google_redirect_uri,
             'response_type': 'code',
-            'scope': 'email profile',
+            # Include openid so Google token endpoint returns OIDC id_token.
+            'scope': 'openid email profile',
             'state': state,
             'access_type': 'offline',
             'prompt': 'consent',
@@ -80,6 +81,7 @@ class GoogleOAuthService(AuthService):
         # 獲取用戶信息
         user_info = await self.__get_user_info(token_data['access_token'])
 
+        id_token = token_data.get('id_token')
         google_oauth_data = {
             'oauth_id': user_info['sub'],
             'email': user_info['email'],
@@ -90,14 +92,20 @@ class GoogleOAuthService(AuthService):
         # 檢查用戶是否已存在
         if state_data.get('auth_type') == AuthorizeType.SIGNUP.value:
             signup_body = SignupOauthDTO.model_validate(google_oauth_data)
-            result = await self.signup_oauth_and_send_email(signup_body)
-            result['name'] = user_info.get('name')
-            result['avatar'] = user_info.get('picture')
-            return result
+            signup_res = await self.signup_oauth_and_send_email(signup_body)
+            signup_res['name'] = user_info.get('name')
+            signup_res['avatar'] = user_info.get('picture')
+            if id_token:
+                signup_res['id_token'] = id_token
+            return signup_res
 
         if state_data.get('auth_type') == AuthorizeType.LOGIN.value:
             signin_body = LoginOauthDTO.model_validate(google_oauth_data)
-            return await self.login_oauth(signin_body, language=DEFAULT_LANGUAGE)
+            return await self.login_oauth(
+                signin_body,
+                language=DEFAULT_LANGUAGE,
+                id_token=id_token,
+            )
 
         raise ServerException(msg='Invalid authorization type provided')
 
@@ -190,7 +198,12 @@ class GoogleOAuthService(AuthService):
         return data
 
 
-    async def login_oauth(self, body: LoginOauthDTO, language: str = DEFAULT_LANGUAGE):
+    async def login_oauth(
+        self,
+        body: LoginOauthDTO,
+        language: str = DEFAULT_LANGUAGE,
+        id_token: Optional[str] = None,
+    ):
         tokeninfo = await self.__get_tokeninfo(body.access_token)
         oauth_id = str(tokeninfo.get("sub", None))
         if oauth_id != body.oauth_id:
@@ -209,11 +222,14 @@ class GoogleOAuthService(AuthService):
         auth_res = self.apply_token(auth_res)
         user_res = await self.get_user_profile(user_id, language)
         auth_res = self.filter_auth_res(auth_res)
-        return {
+        res = {
             "auth_type": AuthorizeType.LOGIN.value,
             "auth": auth_res,
             "user": user_res,
         }
+        if id_token:
+            res["id_token"] = id_token
+        return res
 
 
     async def __req_login(self, body: LoginOauthDTO, email: EmailStr, language: str):

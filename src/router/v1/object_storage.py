@@ -3,6 +3,7 @@ from fastapi import File, UploadFile, APIRouter, HTTPException
 from fastapi.encoders import jsonable_encoder
 from fastapi.params import Depends
 
+from ..req.authorization import verify_jwt_access, verify_path_user_id, verify_query_user_id
 from src.app._di.injection import _file_service
 from src.config.conf import S3_REGION
 from src.config.exception import ForbiddenException
@@ -18,6 +19,7 @@ router = APIRouter(
     prefix='/storage',
     tags=['storage'],
     responses={404: {'description': 'Not found'}},
+    dependencies=[Depends(verify_jwt_access)],
 )
 
 
@@ -28,7 +30,10 @@ def validate_image(file: UploadFile = File(...)):
     return file
 
 
-@router.post('/', responses=idempotent_response('upload_avatar', FileInfoListVO), status_code=201)
+@router.post('/',
+             dependencies=[Depends(verify_query_user_id)],
+             responses=idempotent_response('upload_avatar', FileInfoListVO),
+             status_code=201)
 async def upload_avatar(user_id: int, file: UploadFile = Depends(validate_image)):
     # 驗證 user_id 是否有效
     if user_id <= 0:
@@ -38,7 +43,9 @@ async def upload_avatar(user_id: int, file: UploadFile = Depends(validate_image)
     return post_success(data=jsonable_encoder(res))
 
 
-@router.delete('/avatar', responses=idempotent_response('delete_avatar', bool))
+@router.delete('/avatar',
+               dependencies=[Depends(verify_query_user_id)],
+               responses=idempotent_response('delete_avatar', bool))
 async def delete_avatar(user_id: int):
     if user_id <= 0:
         raise HTTPException(status_code=400, detail="Invalid user_id. Must be a positive integer.")
@@ -48,7 +55,9 @@ async def delete_avatar(user_id: int):
 
 
 # this endpoint is available for deleting any file
-@router.delete('/', responses=idempotent_response('delete_file', bool))
+@router.delete('/',
+               dependencies=[Depends(verify_query_user_id)],
+               responses=idempotent_response('delete_file', bool))
 async def delete_file(user_id: int, file_name: str):
     if user_id <= 0:
         raise HTTPException(status_code=400, detail="Invalid user_id. Must be a positive integer.")
@@ -59,7 +68,9 @@ async def delete_file(user_id: int, file_name: str):
     return res_success(data=jsonable_encoder(res))
 
 
-@router.get('/size', responses=idempotent_response('get_bucket_size', FileInfoListVO))
+@router.get('/size',
+            dependencies=[Depends(verify_query_user_id)],
+            responses=idempotent_response('get_bucket_size', FileInfoListVO))
 async def get_bucket_size(user_id: int):
     if user_id <= 0:
         raise HTTPException(status_code=400, detail="Invalid user_id. Must be a positive integer.")
@@ -67,7 +78,9 @@ async def get_bucket_size(user_id: int):
     res: int = _obj_store.get_user_storage_size(user_id)
     return res_success(data=jsonable_encoder(res))
 
-@router.get('/presigned-url/{user_id}', responses=idempotent_response('get_presigned_url_for_avatar', dict))
+@router.get('/presigned-url/{user_id}',
+            dependencies=[Depends(verify_path_user_id)],
+            responses=idempotent_response('get_presigned_url_for_avatar', dict))
 async def get_presigned_url_for_avatar(user_id: int):
     if user_id <= 0:
         raise HTTPException(status_code=400, detail="Invalid user_id. Must be a positive integer.")

@@ -1,12 +1,9 @@
-import uuid
-from typing import Callable, List
 import logging
 import uuid
-from typing import Callable, List
+from typing import Any, List
 
 import jwt as jwt_util
-from fastapi import Path, Response, Depends
-from fastapi.routing import APIRoute
+from fastapi import Depends, Path, Query, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from ...config.conf import JWT_ALGORITHM, ACCESS_TOKEN_TTL, SHORT_TERM_TTL
@@ -17,10 +14,6 @@ log = logging.getLogger(__name__)
 
 auth_scheme = HTTPBearer()
 
-# token required in Header
-def token_required(credentials: HTTPAuthorizationCredentials = Depends(auth_scheme)):
-    pass
-
 def parse_token(credentials: HTTPAuthorizationCredentials):
     token = credentials.credentials
     if not token:
@@ -28,14 +21,6 @@ def parse_token(credentials: HTTPAuthorizationCredentials):
         raise UnauthorizedException(msg='Authorization failed')
 
     return token
-
-async def parse_token_from_request(request: Request):
-    credentials: HTTPAuthorizationCredentials = await auth_scheme.__call__(request)
-    if not credentials:
-        raise UnauthorizedException(msg='Authorization header missing')
-
-    return parse_token(credentials)
-
 
 def __get_secret(pattern: Any):
     return f'secret{str(pattern)[::-1]}' # if user_id != None else JWT_SECRET
@@ -80,15 +65,6 @@ def valid_refresh_token(refresh_token: str) -> (bool):
     return passed
 
 
-def get_user_id(url_path: str) -> (int):
-    try:
-        # TODO: define how to parse user_id from url_path
-        return int(url_path.split('/')[6])
-    except Exception as e:
-        log.error(f'cannot get user_id from url path, url_path:{url_path}, err:{e}')
-        raise NotFoundException(msg='\'user_id\' is not found in url path')
-
-
 def __jwt_decode(jwt, key, msg):
     try:
         algorithms = [JWT_ALGORITHM]
@@ -123,16 +99,48 @@ def __verify_token_in_auth(user_id: int, credentials: HTTPAuthorizationCredentia
     if not __valid_user_id(data, user_id) or __outdated_token(data):
         raise UnauthorizedException(msg=err_msg)
 
+def __extract_user_id_from_token(token: str) -> int:
+    try:
+        unverified = jwt_util.decode(
+            token,
+            options={"verify_signature": False},
+            algorithms=[JWT_ALGORITHM],
+        )
+    except Exception:
+        raise UnauthorizedException(msg='invalid token')
 
-async def verify_token(request: Request):
-    url_path = request.url.path
-    user_id = get_user_id(url_path)
+    user_id = unverified.get('user_id')
+    if not user_id:
+        raise UnauthorizedException(msg='user_id not found in token')
+    return int(user_id)
 
-    token = await parse_token_from_request(request)
-    secret = __get_secret(user_id)
-    data = __jwt_decode(jwt=token, key=secret, msg=f'invalid user')
-    if not __valid_user_id(data, user_id):
-        raise UnauthorizedException(msg=f'invalid user')
+
+def verify_jwt_access(
+    credentials: HTTPAuthorizationCredentials = Depends(auth_scheme),
+) -> int:
+    token = parse_token(credentials)
+    user_id = __extract_user_id_from_token(token)
+    __verify_token_in_auth(user_id, credentials, 'access denied')
+    return user_id
+
+
+async def verify_path_user_id(
+    request: Request,
+    token_user_id: int = Depends(verify_jwt_access),
+):
+    path_user_id = request.path_params.get('user_id')
+    if path_user_id is None:
+        return
+    if int(path_user_id) != int(token_user_id):
+        raise ForbiddenException(msg='user_id not match')
+
+
+def verify_query_user_id(
+    user_id: int = Query(...),
+    token_user_id: int = Depends(verify_jwt_access),
+):
+    if int(user_id) != int(token_user_id):
+        raise ForbiddenException(msg='user_id not match')
 
 
 def verify_token_by_update_password(credentials: HTTPAuthorizationCredentials = Depends(auth_scheme),
@@ -141,21 +149,10 @@ def verify_token_by_update_password(credentials: HTTPAuthorizationCredentials = 
     __verify_token_in_auth(user_id, credentials, 'access denied')
 
 
-class AuthRoute(APIRoute):
-    def get_route_handler(self) -> (Callable):
-        original_route_handler = super().get_route_handler()
-
-        async def custom_route_handler(request: Request) -> Response:
-            before = time.time()
-
-            await verify_token(request)
-
-            response: Response = await original_route_handler(request)
-            duration = time.time() - before
-            response.headers['X-Response-Time'] = str(duration)
-            # log.info(f'route duration: {duration}')
-            # log.info(f'route response headers: {response.headers}')
-            # log.info(f'route response: {response}')
-            return response
-
-        return custom_route_handler
+def verify_token_for_delete_account(
+    credentials: HTTPAuthorizationCredentials = Depends(auth_scheme),
+) -> int:
+    token = parse_token(credentials)
+    user_id = __extract_user_id_from_token(token)
+    __verify_token_in_auth(user_id, credentials, 'access denied')
+    return user_id

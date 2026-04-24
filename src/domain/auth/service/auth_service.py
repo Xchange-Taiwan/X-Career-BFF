@@ -161,7 +161,12 @@ class AuthService:
 
     async def regenerate_signup_token(self, old_token: str, new_token: str):
         data = await self.cache.get(old_token)
-        if not data or not 'email' in data or not 'password' in data:
+        # 一般 email 註冊快取 password；Google OAuth 註冊快取 oauth_id（見 oauth_service / google_oauth_service）
+        if (
+            not data
+            or 'email' not in data
+            or ('password' not in data and 'oauth_id' not in data)
+        ):
             raise NotFoundException(msg='Email or password not found')
 
         await self.cache.set(new_token, data, ex=REQUEST_INTERVAL_TTL)
@@ -531,3 +536,102 @@ class AuthService:
     async def __req_reset_password(self, body: ResetPasswordDTO):
         return await self.req.simple_put(
             f'{AUTH_SERVICE_URL}/v1/password/update', json=body.model_dump())
+
+    '''
+    delete account
+    '''
+
+    async def delete_account(self, body: DeleteAccountDTO):
+        user_id = body.user_id
+        email = body.email
+
+        # 1. Step-up: determine account_type and verify identity
+        account_type = None
+        cached_data = await self.cache.get(str(user_id))
+        if cached_data:
+            account_type = cached_data.get('account_type')
+            cached_email = cached_data.get('email')
+            if not cached_email or cached_email != email:
+                raise UnauthorizedException(msg='Email does not match current session')
+        else:
+            raise UnauthorizedException(msg='Invalid session')
+
+        if account_type is None:
+            if body.password:
+                account_type = 'XC'
+            elif body.id_token:
+                account_type = 'GOOGLE'
+
+        if account_type == 'XC':
+            if not body.password:
+                raise UnauthorizedException(msg='Password is required for XC account')
+            login_body = LoginDTO(email=email, password=body.password)
+            await self.__req_login(login_body)
+        elif account_type == 'GOOGLE':
+            if not body.id_token:
+                raise UnauthorizedException(msg='id_token is required for Google account')
+            await self.__verify_google_id_token(body.id_token, email)
+        else:
+            raise UnauthorizedException(msg='Unable to determine account type')
+
+        # 2. Reservation blocking check
+        res = await self.req.simple_get(
+            f'{USER_SERVICE_URL}/v1/internal/users/{user_id}/has-active-reservations')
+        if res and res.get('has_active'):
+            raise ConflictException(
+                msg='尚有未結束或未來的預約，無法刪除帳號。請先取消或處理相關預約後再試。',
+                code='ACCOUNT_DELETE_BLOCKED_ACTIVE_RESERVATIONS',
+            )
+
+        # 3. Delete user data (Postgres + SQS if mentor)
+        await self.req.simple_delete(
+            url=f'{USER_SERVICE_URL}/v1/internal/users/{user_id}')
+
+        # 4. Delete auth account (DynamoDB)
+        try:
+            await self.req.simple_delete(
+                url=f'{AUTH_SERVICE_URL}/v1/accounts',
+                json={"email": email})
+        except Exception as e:
+            log.error(
+                f'{self.cls_name}.delete_account: Auth deletion failed after User deletion succeeded. '
+                f'user_id={user_id}, email={email}, error={e}. Manual compensation required.'
+            )
+            raise ServerException(msg='Account deletion partially failed. Please contact support.')
+
+        # 5. Clear BFF cache
+        await self.cache.delete(str(user_id))
+
+    async def __verify_google_id_token(self, id_token: str, email: str):
+        try:
+            tokeninfo = await self.req.simple_get(
+                'https://oauth2.googleapis.com/tokeninfo',
+                params={'id_token': id_token},
+            )
+            if not tokeninfo:
+                raise UnauthorizedException(msg='Google identity verification failed')
+
+            token_email = tokeninfo.get('email')
+            if token_email != email:
+                raise UnauthorizedException(msg='Google identity verification failed')
+
+            # Google tokeninfo returns audience in `aud`.
+            aud = tokeninfo.get('aud')
+            if aud != GOOGLE_CLIENT_ID:
+                raise UnauthorizedException(msg='Google identity verification failed')
+
+            iss = tokeninfo.get('iss')
+            if iss not in {'accounts.google.com', 'https://accounts.google.com'}:
+                raise UnauthorizedException(msg='Google identity verification failed')
+
+            exp = tokeninfo.get('exp')
+            if not exp or int(exp) <= current_seconds():
+                raise UnauthorizedException(msg='Google identity verification failed')
+
+            # tokeninfo may return string values like "true"
+            if str(tokeninfo.get('email_verified', '')).lower() != 'true':
+                raise UnauthorizedException(msg='Google identity verification failed')
+        except Exception as e:
+            log.error(f'{self.cls_name}.__verify_google_id_token failed, email={email}, err={e}')
+            err_msg = getattr(e, 'msg', 'Google identity verification failed')
+            raise UnauthorizedException(msg=err_msg)

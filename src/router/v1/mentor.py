@@ -3,10 +3,11 @@ from typing import List
 
 from fastapi import (
     APIRouter,
-    Header, Path, Query, Body,
+    Header, Path, Query, Body, Depends,
 )
 from fastapi.encoders import jsonable_encoder
 
+from ..req.authorization import verify_jwt_access, verify_path_user_id
 from src.app._di.injection import _mentor_service
 from src.config.constant import ExperienceCategory, Language
 from src.config.exception import *
@@ -33,6 +34,7 @@ router = APIRouter(
 
 # Resquest obj is used to access router path
 @router.put('/{user_id}/profile',
+            dependencies=[Depends(verify_path_user_id)],
             responses=idempotent_response('upsert_mentor_profile', mentor.MentorProfileVO))
 async def upsert_mentor_profile(
         user_id: int = Path(...),
@@ -70,6 +72,7 @@ async def get_universities(
 
 
 @router.put('/{user_id}/experiences/{experience_type}',
+            dependencies=[Depends(verify_path_user_id)],
             responses=idempotent_response('upsert_experience', experience.ExperienceVO))
 async def upsert_experience(
         is_mentor: bool = Header(False),
@@ -84,6 +87,7 @@ async def upsert_experience(
 
 
 @router.delete('/{user_id}/experiences/{experience_type}/{experience_id}',
+               dependencies=[Depends(verify_path_user_id)],
                responses=idempotent_response('delete_experience', experience.ExperienceVO))
 async def delete_experience(
         is_mentor: bool = Header(False),
@@ -109,6 +113,7 @@ async def get_expertises(
 
 
 @router.put('/{user_id}/schedule',
+            dependencies=[Depends(verify_path_user_id)],
             responses=idempotent_response('upsert_mentor_schedule', mentor.MentorScheduleVO))
 async def upsert_mentor_schedule(
         user_id: int = Path(...),
@@ -119,6 +124,7 @@ async def upsert_mentor_schedule(
 
 
 @router.delete('/{user_id}/schedule/{schedule_id}',
+               dependencies=[Depends(verify_path_user_id)],
                responses=idempotent_response('delete_mentor_schedule', int))
 async def delete_mentor_schedule(
         user_id: int = Path(...),

@@ -19,7 +19,9 @@ router = APIRouter(
     responses={404: {'description': 'Not found'}},
 )
 
-@router.post('/signup/{auth_type}', status_code=201)
+@router.post('/signup/{auth_type}',
+             responses=post_response('signup_oauth', EmailSentVO),
+             status_code=201)
 async def signup_oauth(
     auth_type: OAuthType = Path(...),
     body: SignupOauthDTO = Body(...),

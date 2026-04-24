@@ -102,6 +102,17 @@ class TooManyRequestsException(HTTPException, ErrorLogger):
         return self.msg
 
 
+class ConflictException(HTTPException, ErrorLogger):
+    def __init__(self, msg: str, code: str = '40900', data: Any = None):
+        self.msg = msg
+        self.code = code
+        self.data = data
+        self.status_code = status.HTTP_409_CONFLICT
+
+    def __str__(self) -> str:
+        return self.msg
+
+
 class ServerException(HTTPException, ErrorLogger):
     def __init__(self, msg: str, code: str = '50000', data: Any = None):
         self.msg = msg  # 將改為 lang 語系
@@ -145,6 +156,10 @@ def __too_many_requests_exception_handler(request: Request, exc: TooManyRequests
     return JSONResponse(status_code=exc.status_code, content=res_err_format(msg=exc.msg, code=exc.code, data=exc.data))
 
 
+def __conflict_exception_handler(request: Request, exc: ConflictException):
+    return JSONResponse(status_code=exc.status_code, content=res_err_format(msg=exc.msg, code=exc.code, data=exc.data))
+
+
 def __server_exception_handler(request: Request, exc: ServerException):
     return JSONResponse(status_code=exc.status_code, content=res_err_format(msg=exc.msg, code=exc.code, data=exc.data))
 
@@ -158,6 +173,7 @@ def include_app(app: FastAPI):
     app.add_exception_handler(DuplicateUserException, __duplicate_user_exception_handler)
     app.add_exception_handler(UnprocessableClientException, __unprocessable_client_exception_handler)
     app.add_exception_handler(TooManyRequestsException, __too_many_requests_exception_handler)
+    app.add_exception_handler(ConflictException, __conflict_exception_handler)
     app.add_exception_handler(ServerException, __server_exception_handler)
 
 
@@ -186,6 +202,9 @@ def raise_http_exception(e: Exception, msg: str = None, data: Any = None):
     if isinstance(e, TooManyRequestsException):
         raise TooManyRequestsException(msg=msg or e.msg, data=data or e.data)
 
+    if isinstance(e, ConflictException):
+        raise ConflictException(msg=msg or e.msg, data=data or e.data)
+
     if isinstance(e, ServerException):
         raise ServerException(msg=msg or e.msg, data=data or e.data)
 
@@ -198,6 +217,7 @@ status_code_mapping = {
     403: ForbiddenException,
     404: NotFoundException,
     406: NotAcceptableException,  # No DuplicateUserException
+    409: ConflictException,
     422: UnprocessableClientException,
     429: TooManyRequestsException,
     500: ServerException,

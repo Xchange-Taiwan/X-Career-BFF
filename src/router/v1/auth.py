@@ -1,6 +1,6 @@
 import logging
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Response
 
 from ..req.auth_validation import *
 from ..req.authorization import *
@@ -8,6 +8,7 @@ from ..res.response import *
 from ...app._di.injection import _auth_service
 from ...config.conf import DEFAULT_LANGUAGE_ENUM
 from ...config.constant import Language
+from ...domain.auth.model.auth_model import DeleteAccountDTO
 from ...domain.auth.service.auth_service import AuthService
 
 log = logging.getLogger(__name__)
@@ -20,7 +21,9 @@ router = APIRouter(
 )
 
 
-@router.post('/signup', status_code=201)
+@router.post('/signup',
+             responses=post_response('signup', EmailSentVO),
+             status_code=201)
 async def signup(
     body: SignupDTO = Body(...),
 ):
@@ -28,7 +31,9 @@ async def signup(
     return post_success(data=data, msg='email_sent')
 
 
-@router.post('/email/resend', status_code=201)
+@router.post('/email/resend',
+             responses=post_response('signup_email_resend', EmailSentVO),
+             status_code=201)
 async def signup_email_resend(
     email: EmailStr = Body(..., embed=True),
 ):
@@ -61,6 +66,7 @@ async def login(
 
 
 @router.post('/token',
+             responses=post_response('refresh_token', TokenRefreshVO),
              status_code=201)
 async def refresh_token(
     payload: NewTokenDTO = Depends(refresh_token_check),
@@ -69,7 +75,9 @@ async def refresh_token(
     return AuthService.auth_response(data=data)
 
 
-@router.post('/logout', status_code=201)
+@router.post('/logout',
+             responses=post_response('logout', None),
+             status_code=201)
 async def logout(
     user_id: int = Body(..., embed=True),
 ):
@@ -77,7 +85,8 @@ async def logout(
     return post_success(data=data, msg=msg)
 
 
-@router.put('/password/{user_id}/update')
+@router.put('/password/{user_id}/update',
+            responses=idempotent_response('update_password', None))
 async def update_password(
     user_id: int = Path(...),
     update_password_dto: UpdatePasswordDTO = Body(...),
@@ -87,7 +96,8 @@ async def update_password(
     return res_success(msg='update success')
 
 
-@router.get('/password/reset/email')
+@router.get('/password/reset/email',
+            responses=idempotent_response('send_reset_password_email', EmailSentVO))
 async def send_reset_password_comfirm_email(
     email: EmailStr,
 ):
@@ -95,7 +105,8 @@ async def send_reset_password_comfirm_email(
     return res_success(data=data, msg='send_email_success')
 
 
-@router.put('/password/reset')
+@router.put('/password/reset',
+            responses=idempotent_response('reset_password', None))
 async def reset_password(
     body: ResetPasswordBodyDTO = Body(...),
     verify_token: str = Query(...),
@@ -103,3 +114,14 @@ async def reset_password(
     """重設密碼：email 由信內連結的 verify_token 從 cache 取得，request body 不需傳入 email。"""
     await _auth_service.reset_passwrod(verify_token, body)
     return res_success(msg='reset success')
+
+
+@router.delete('/account', status_code=204)
+async def delete_account(
+    body: DeleteAccountDTO = Body(...),
+    user_id: int = Depends(verify_token_for_delete_account),
+):
+    body.user_id = user_id
+    # TODO: 需要異步刪除 S3 的 profile picture / media file
+    await _auth_service.delete_account(body)
+    return Response(status_code=204)

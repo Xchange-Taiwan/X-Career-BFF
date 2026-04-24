@@ -14,9 +14,23 @@ class ServiceApiResponse(ClientResponse):
     @staticmethod
     def parse(response: httpx.Response = None) -> 'ServiceApiResponse':
         if response:
+            # 204 No Content / empty body: httpx raises JSONDecodeError on .json()
+            if not response.content:
+                return ServiceApiResponse(
+                    status_code=response.status_code,
+                    headers=response.headers,
+                    res_json={},
+                    res_content=response.content,
+                    res_text=response.text or '',
+                    code='20400',
+                    msg='ok',
+                    data=None,
+                )
             parsed_data = response.json()
             code = parsed_data.get('code', '20000')
             msg = parsed_data.get('msg', 'ok')
+            if not isinstance(msg, str):
+                msg = json.dumps(msg, ensure_ascii=False) if msg is not None else 'ok'
             raw_data = parsed_data.get('data', {})
             # Ensure `data` is parsed properly
             if isinstance(raw_data, str):
