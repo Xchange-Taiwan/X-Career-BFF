@@ -122,5 +122,6 @@ async def delete_account(
     user_id: int = Depends(verify_token_for_delete_account),
 ):
     body.user_id = user_id
+    # TODO: 需要異步刪除 S3 的 profile picture / media file
     await _auth_service.delete_account(body)
     return Response(status_code=204)

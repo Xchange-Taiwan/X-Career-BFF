@@ -93,6 +93,8 @@ class GoogleOAuthService(AuthService):
         if state_data.get('auth_type') == AuthorizeType.SIGNUP.value:
             signup_body = SignupOauthDTO.model_validate(google_oauth_data)
             signup_res = await self.signup_oauth_and_send_email(signup_body)
+            signup_res['name'] = user_info.get('name')
+            signup_res['avatar'] = user_info.get('picture')
             if id_token:
                 signup_res['id_token'] = id_token
             return signup_res
