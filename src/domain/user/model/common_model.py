@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 from pydantic import BaseModel
 
@@ -8,13 +8,18 @@ from ....config.constant import *
 log = logging.getLogger(__name__)
 
 
+class MetadataVO(BaseModel):
+    desc: Optional[str] = None
+    icon: Optional[str] = None
+
+
 class InterestVO(BaseModel):
     id: int
     category: InterestCategory = None
     language: Optional[str] = None
     subject_group: str = 'unknown'
     subject: Optional[str] = ''
-    desc: Optional[Dict] = {}
+    desc: Optional[MetadataVO] = None
 
 
 class InterestListVO(BaseModel):
@@ -31,7 +36,7 @@ class ProfessionDTO(BaseModel):
 class ProfessionVO(ProfessionDTO):
     subject_group: str = 'unknown'
     subject: str = ''
-    profession_metadata: Dict = {}
+    profession_metadata: MetadataVO = MetadataVO()
     language: Optional[str] = ''
 
 
