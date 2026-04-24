@@ -29,7 +29,6 @@ router = APIRouter(
     prefix='/mentors',
     tags=['Mentor'],
     responses={404: {'description': 'Not found'}},
-    dependencies=[Depends(verify_jwt_access)],
 )
 
 
@@ -49,7 +48,6 @@ async def upsert_mentor_profile(
 
 
 @router.get('/{user_id}/{language}/profile',
-            dependencies=[Depends(verify_path_user_id)],
             responses=idempotent_response('get_mentor_profile', mentor.MentorProfileVO))
 async def get_mentor_profile(
         # request: Request,
