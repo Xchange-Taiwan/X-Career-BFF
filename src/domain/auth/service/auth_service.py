@@ -3,7 +3,7 @@ from typing import Dict, Optional, Set
 
 from ..model.auth_model import *
 from ....config.conf import *
-from ....config.constant import USERS
+from ....config.constant import REFRESH_TOKEN_KEY, USERS
 from ....config.exception import *
 from ....infra.template.cache import ICache
 from ....infra.template.service_api import IServiceApi
@@ -37,11 +37,11 @@ class AuthService:
         if not auth:
             raise ServerException(msg='Invalid user')
 
-        refresh_token = auth.pop('refresh_token', None)
+        refresh_token = auth.pop(REFRESH_TOKEN_KEY, None)
 
         user = data.get('user')
         if isinstance(user, dict):
-            user.pop('refresh_token', None)
+            user.pop(REFRESH_TOKEN_KEY, None)
 
         response = JSONResponse(
             status_code=status.HTTP_201_CREATED,
@@ -54,10 +54,10 @@ class AuthService:
         if not refresh_token:
             return response
 
-        # 設定 Set-Cookie Header: refresh_token
+        # 設定 Set-Cookie Header（名稱與 REFRESH_TOKEN_KEY 一致）
         response.set_cookie(
-            key='refresh_token',        # Cookie 名稱: refresh_token
-            value=refresh_token,        # Cookie 值: refresh_token
+            key=REFRESH_TOKEN_KEY,
+            value=refresh_token,
             httponly=True,              # 防止 JavaScript 訪問，防範 XSS 攻擊
             secure=True,                # 僅限 HTTPS 傳輸
             samesite='Strict',          # 防範 CSRF 攻擊
@@ -236,17 +236,17 @@ class AuthService:
         await self.init_user_profile(user_id)
         # cache auth data（新帳號無舊 refresh 需撤銷；refresh 僅經 Set-Cookie，不進 JSON）
         prev = await self.cache.get(str(user_id))
-        prev_rt = prev.get('refresh_token') if prev else None
+        prev_rt = prev.get(REFRESH_TOKEN_KEY) if prev else None
         cookie_refresh = await self.cache_auth_res(
             str(user_id),
             auth_res,
-            removed_fields={'refresh_token'},
+            removed_fields={REFRESH_TOKEN_KEY},
             revoke_previous_refresh=prev_rt,
         )
         auth_res = self.apply_token(auth_res)
         auth_res = self.filter_auth_res(auth_res)
         if cookie_refresh:
-            auth_res['refresh_token'] = cookie_refresh
+            auth_res[REFRESH_TOKEN_KEY] = cookie_refresh
         return {
             'auth': auth_res,
         }
@@ -297,7 +297,7 @@ class AuthService:
         return {
             k: res[k]
             for k in res
-            if k not in AUTH_RESPONSE_FIELDS and k != 'refresh_token'
+            if k not in AUTH_RESPONSE_FIELDS and k != REFRESH_TOKEN_KEY
         }
 
     '''
@@ -357,20 +357,20 @@ class AuthService:
         user_id = auth_res.get('user_id')
         user_id_key = str(user_id)
         prev = await self.cache.get(user_id_key)
-        prev_rt = prev.get('refresh_token') if prev else None
+        prev_rt = prev.get(REFRESH_TOKEN_KEY) if prev else None
 
-        # cache auth data（refresh_token 僅經 Set-Cookie 下發，不進 JSON）
+        # cache auth data（refresh 僅經 Set-Cookie 下發，不進 JSON）
         cookie_refresh = await self.cache_auth_res(
             user_id_key,
             auth_res,
-            removed_fields={'refresh_token'},
+            removed_fields={REFRESH_TOKEN_KEY},
             revoke_previous_refresh=prev_rt,
         )
         auth_res = self.apply_token(auth_res)
         user_res = await self.get_user_profile(user_id, language)
         auth_res = self.filter_auth_res(auth_res)
         if cookie_refresh:
-            auth_res['refresh_token'] = cookie_refresh
+            auth_res[REFRESH_TOKEN_KEY] = cookie_refresh
         return {
             'auth': auth_res,
             'user': user_res,
@@ -412,9 +412,9 @@ class AuthService:
 
         auth_res.update({
             'online': True,
-            'refresh_token': gen_refresh_token(),
+            REFRESH_TOKEN_KEY: gen_refresh_token(),
         })
-        new_refresh = auth_res.get('refresh_token')
+        new_refresh = auth_res.get(REFRESH_TOKEN_KEY)
         updated = await self.cache.set(
             user_id_key, auth_res, ex=LONG_TERM_TTL)
         if not updated:
@@ -433,8 +433,8 @@ class AuthService:
         to_remove = set(removed_fields)
         to_remove.add('aid')
         cookie_refresh: Optional[str] = None
-        if 'refresh_token' in to_remove:
-            cookie_refresh = auth_res.get('refresh_token')
+        if REFRESH_TOKEN_KEY in to_remove:
+            cookie_refresh = auth_res.get(REFRESH_TOKEN_KEY)
         for field in to_remove:
             auth_res.pop(field, None)
         return cookie_refresh
@@ -454,7 +454,7 @@ class AuthService:
             await self.cache.delete(_refresh_token_index_key(refresh_token))
             raise UnauthorizedException(msg='invalid_grant')
 
-        cached_refresh_token = user.get('refresh_token', None)
+        cached_refresh_token = user.get(REFRESH_TOKEN_KEY, None)
         if cached_refresh_token != refresh_token or not valid_refresh_token(cached_refresh_token):
             raise UnauthorizedException(msg='invalid_grant')
 
@@ -464,10 +464,10 @@ class AuthService:
             revoke_previous_refresh=refresh_token,
         )
         res = self.apply_token(user)
-        new_rt = user.get('refresh_token')
+        new_rt = user.get(REFRESH_TOKEN_KEY)
         auth_res = {k: res[k] for k in ['user_id', 'token'] if k in res}
         if new_rt:
-            auth_res['refresh_token'] = new_rt
+            auth_res[REFRESH_TOKEN_KEY] = new_rt
         return {
             'auth': auth_res,
         }
@@ -479,7 +479,7 @@ class AuthService:
     async def logout(self, user_id: int):
         user_id_key = str(user_id)
         user = await self.__cache_check_for_auth(user_id_key)
-        prev_rt = user.get('refresh_token')
+        prev_rt = user.get(REFRESH_TOKEN_KEY)
         if prev_rt:
             await self.cache.delete(_refresh_token_index_key(prev_rt))
         user_logout_status = self.__logout_status(user)
@@ -669,7 +669,7 @@ class AuthService:
             raise ServerException(msg='Account deletion partially failed. Please contact support.')
 
         # 5. Clear BFF cache
-        rt = cached_data.get('refresh_token') if cached_data else None
+        rt = cached_data.get(REFRESH_TOKEN_KEY) if cached_data else None
         if rt:
             await self.cache.delete(_refresh_token_index_key(rt))
         await self.cache.delete(str(user_id))
