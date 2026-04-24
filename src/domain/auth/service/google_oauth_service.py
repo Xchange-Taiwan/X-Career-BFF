@@ -214,14 +214,22 @@ class GoogleOAuthService(AuthService):
             raise ServerException(msg="Invalid Google email")
         auth_res = await self.__req_login(body, email, language)
         user_id = auth_res.get("user_id")
+        user_id_key = str(user_id)
+        prev = await self.cache.get(user_id_key)
+        prev_rt = prev.get("refresh_token") if prev else None
 
-        # cache auth data
-        await self.cache_auth_res(
-            str(user_id), auth_res, removed_fields={"refresh_token"}
+        # cache auth data（refresh_token 僅經 Set-Cookie 下發，不進 JSON）
+        cookie_refresh = await self.cache_auth_res(
+            user_id_key,
+            auth_res,
+            removed_fields={"refresh_token"},
+            revoke_previous_refresh=prev_rt,
         )
         auth_res = self.apply_token(auth_res)
         user_res = await self.get_user_profile(user_id, language)
         auth_res = self.filter_auth_res(auth_res)
+        if cookie_refresh:
+            auth_res["refresh_token"] = cookie_refresh
         res = {
             "auth_type": AuthorizeType.LOGIN.value,
             "auth": auth_res,

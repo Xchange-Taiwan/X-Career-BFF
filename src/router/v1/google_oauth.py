@@ -7,6 +7,7 @@ from ..req.authorization import *
 from ..res.response import *
 from ...app._di.injection import _google_oauth_service
 from ...domain.auth.model.google_oauth_model import GoogleAuthorizeVO, GoogleCallbackVO
+from ...domain.auth.service.auth_service import AuthService
 
 log = logging.getLogger(__name__)
 
@@ -41,4 +42,4 @@ async def oauth_callback(
     state: str = Body(..., embed=True),
 ):
     data = await _google_oauth_service.handle_callback(code, state)
-    return post_success(data=data, msg='Authorization successful!')
+    return AuthService.auth_response(data=data, msg='Authorization successful!')

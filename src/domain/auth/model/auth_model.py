@@ -97,11 +97,6 @@ class SSOLoginDTO(BaseModel):
         return d
 
 
-class NewTokenDTO(BaseModel):
-    user_id: int
-    refresh_token: str
-
-
 class ResetPasswordDTO(BaseModel):
     """Used internally when calling Auth Service (includes register_email from cache)."""
     register_email: EmailStr

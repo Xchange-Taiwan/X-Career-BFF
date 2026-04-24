@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, Set
+from typing import Dict, Optional, Set
 
 from ..model.auth_model import *
 from ....config.conf import *
@@ -16,6 +16,13 @@ from ....router.req.authorization import (
 
 log = logging.getLogger(__name__)
 
+# refresh_token -> user_id（字串）對照，供 OAuth refresh grant 依 token 查 session，無需在 body 傳 user_id
+REFRESH_TOKEN_INDEX_PREFIX = 'rt:'
+
+
+def _refresh_token_index_key(refresh_token: str) -> str:
+    return f'{REFRESH_TOKEN_INDEX_PREFIX}{refresh_token}'
+
 
 class AuthService:
     def __init__(self, req: IServiceApi, cache: ICache):
@@ -31,6 +38,10 @@ class AuthService:
             raise ServerException(msg='Invalid user')
 
         refresh_token = auth.pop('refresh_token', None)
+
+        user = data.get('user')
+        if isinstance(user, dict):
+            user.pop('refresh_token', None)
 
         response = JSONResponse(
             status_code=status.HTTP_201_CREATED,
@@ -161,7 +172,7 @@ class AuthService:
 
     async def regenerate_signup_token(self, old_token: str, new_token: str):
         data = await self.cache.get(old_token)
-        # 一般 email 註冊快取 password；Google OAuth 註冊快取 oauth_id（見 oauth_service / google_oauth_service）
+        # 一般 email 註冊快取 password；Google OAuth 註冊快取 oauth_id（見 google_oauth_service）
         if (
             not data
             or 'email' not in data
@@ -223,10 +234,19 @@ class AuthService:
             raise ServerException(msg="signup fail", data=self.ttl_secs)
 
         await self.init_user_profile(user_id)
-        # cache auth data
-        await self.cache_auth_res(str(user_id), auth_res)
+        # cache auth data（新帳號無舊 refresh 需撤銷；refresh 僅經 Set-Cookie，不進 JSON）
+        prev = await self.cache.get(str(user_id))
+        prev_rt = prev.get('refresh_token') if prev else None
+        cookie_refresh = await self.cache_auth_res(
+            str(user_id),
+            auth_res,
+            removed_fields={'refresh_token'},
+            revoke_previous_refresh=prev_rt,
+        )
         auth_res = self.apply_token(auth_res)
         auth_res = self.filter_auth_res(auth_res)
+        if cookie_refresh:
+            auth_res['refresh_token'] = cookie_refresh
         return {
             'auth': auth_res,
         }
@@ -274,7 +294,11 @@ class AuthService:
         return res
 
     def filter_auth_res(self, res: Dict):
-        return {k: res[k] for k in res if not k in AUTH_RESPONSE_FIELDS}
+        return {
+            k: res[k]
+            for k in res
+            if k not in AUTH_RESPONSE_FIELDS and k != 'refresh_token'
+        }
 
     '''
     login preload process:
@@ -331,16 +355,22 @@ class AuthService:
     async def login(self, body: LoginDTO, language: str = DEFAULT_LANGUAGE):
         auth_res = await self.__req_login(body)
         user_id = auth_res.get('user_id')
+        user_id_key = str(user_id)
+        prev = await self.cache.get(user_id_key)
+        prev_rt = prev.get('refresh_token') if prev else None
 
-        # cache auth data
-        await self.cache_auth_res(
-            str(user_id),
+        # cache auth data（refresh_token 僅經 Set-Cookie 下發，不進 JSON）
+        cookie_refresh = await self.cache_auth_res(
+            user_id_key,
             auth_res,
-            removed_fields={'refresh_token'})
+            removed_fields={'refresh_token'},
+            revoke_previous_refresh=prev_rt,
+        )
         auth_res = self.apply_token(auth_res)
-        # 育志看一下這 API
         user_res = await self.get_user_profile(user_id, language)
         auth_res = self.filter_auth_res(auth_res)
+        if cookie_refresh:
+            auth_res['refresh_token'] = cookie_refresh
         return {
             'auth': auth_res,
             'user': user_res,
@@ -366,11 +396,25 @@ class AuthService:
             err_msg = getattr(e, 'msg', 'User not found.')
             raise_http_exception(e, err_msg)
 
-    async def cache_auth_res(self, user_id_key: str, auth_res: Dict, removed_fields: Set = set()):
+    async def cache_auth_res(
+        self,
+        user_id_key: str,
+        auth_res: Dict,
+        removed_fields: Set = set(),
+        revoke_previous_refresh: Optional[str] = None,
+    ) -> Optional[str]:
+        """寫入快取並從 auth_res 剔除敏感欄位。若 removed_fields 含 refresh_token，回傳該值供 auth_response 設 HttpOnly cookie。
+
+        並維護 Redis `rt:{refresh}` -> user_id_key，供 OAuth refresh grant 查詢；輪替或重登時傳 revoke_previous_refresh 撤銷舊索引。
+        """
+        if revoke_previous_refresh:
+            await self.cache.delete(_refresh_token_index_key(revoke_previous_refresh))
+
         auth_res.update({
             'online': True,
             'refresh_token': gen_refresh_token(),
         })
+        new_refresh = auth_res.get('refresh_token')
         updated = await self.cache.set(
             user_id_key, auth_res, ex=LONG_TERM_TTL)
         if not updated:
@@ -379,29 +423,51 @@ class AuthService:
                       user_id_key, auth_res, LONG_TERM_TTL, updated)
             raise ServerException(msg='server_error')
 
+        await self.cache.set(
+            _refresh_token_index_key(new_refresh),
+            user_id_key,
+            ex=LONG_TERM_TTL,
+        )
+
         # remove sensitive data: 'aid' & removed_fields
-        removed_fields.add('aid')
-        for field in removed_fields:
+        to_remove = set(removed_fields)
+        to_remove.add('aid')
+        cookie_refresh: Optional[str] = None
+        if 'refresh_token' in to_remove:
+            cookie_refresh = auth_res.get('refresh_token')
+        for field in to_remove:
             auth_res.pop(field, None)
+        return cookie_refresh
 
     '''
     gen new token and refresh_token
     '''
 
-    async def get_new_token_pair(self, payload: NewTokenDTO) -> (str):
-        user_id_key = str(payload.user_id)
+    async def get_new_token_pair(self, refresh_token: str) -> Dict:
+        """OAuth 2.0 refresh_token grant：僅依 refresh_token 查 session 並輪替 refresh（rotation）。"""
+        user_id_key = await self.cache.get(_refresh_token_index_key(refresh_token))
+        if not user_id_key:
+            raise UnauthorizedException(msg='invalid_grant')
+
         user = await self.cache.get(user_id_key)
         if not user:
-            raise UnauthorizedException(msg='Invalid user')
+            await self.cache.delete(_refresh_token_index_key(refresh_token))
+            raise UnauthorizedException(msg='invalid_grant')
 
         cached_refresh_token = user.get('refresh_token', None)
-        if cached_refresh_token != payload.refresh_token or \
-                not valid_refresh_token(cached_refresh_token):
-            raise UnauthorizedException(msg='Invalid User')
+        if cached_refresh_token != refresh_token or not valid_refresh_token(cached_refresh_token):
+            raise UnauthorizedException(msg='invalid_grant')
 
-        await self.cache_auth_res(user_id_key, user)
+        await self.cache_auth_res(
+            user_id_key,
+            user,
+            revoke_previous_refresh=refresh_token,
+        )
         res = self.apply_token(user)
+        new_rt = user.get('refresh_token')
         auth_res = {k: res[k] for k in ['user_id', 'token'] if k in res}
+        if new_rt:
+            auth_res['refresh_token'] = new_rt
         return {
             'auth': auth_res,
         }
@@ -413,6 +479,9 @@ class AuthService:
     async def logout(self, user_id: int):
         user_id_key = str(user_id)
         user = await self.__cache_check_for_auth(user_id_key)
+        prev_rt = user.get('refresh_token')
+        if prev_rt:
+            await self.cache.delete(_refresh_token_index_key(prev_rt))
         user_logout_status = self.__logout_status(user)
 
         # 'LONG_TERM_TTL' for redirct notification
@@ -600,6 +669,9 @@ class AuthService:
             raise ServerException(msg='Account deletion partially failed. Please contact support.')
 
         # 5. Clear BFF cache
+        rt = cached_data.get('refresh_token') if cached_data else None
+        if rt:
+            await self.cache.delete(_refresh_token_index_key(rt))
         await self.cache.delete(str(user_id))
 
     async def __verify_google_id_token(self, id_token: str, email: str):
