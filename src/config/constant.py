@@ -73,11 +73,6 @@ class AccountType(Enum):
     LINKEDIN = 'LINKEDIN'
 
 
-class OAuthType(Enum):
-    GOOGLE = 'GOOGLE'
-    # LINKEDIN = 'LINKEDIN'
-
-
 class AuthorizeType(Enum):
     SIGNUP = 'SIGNUP'
     LOGIN = 'LOGIN'

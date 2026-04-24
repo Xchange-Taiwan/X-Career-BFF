@@ -2,7 +2,6 @@ from src.config.dynamodb import dynamodb
 from src.config.conf import STAGE
 from src.domain.auth.service.auth_service import AuthService
 from src.domain.auth.service.google_oauth_service import GoogleOAuthService
-from src.domain.auth.service.oauth_service import OAuthService
 from src.domain.file.service.file_service import FileService
 from src.domain.mentor.service.mentor_service import MentorService
 from src.domain.search.service.search_service import SearchService
@@ -16,7 +15,6 @@ local_cache = LocalCacheAdapter()
 gw_cache = local_cache if STAGE == 'local' else DynamoDbCacheAdapter(dynamodb)
 
 _auth_service: AuthService = AuthService(service_client, gw_cache)
-_oauth_service: OAuthService = OAuthService(service_client, gw_cache)
 _google_oauth_service: GoogleOAuthService = GoogleOAuthService(service_client, gw_cache)
 _user_service: UserService = UserService(service_client, gw_cache, local_cache)
 _mentor_service: MentorService = MentorService(service_client, gw_cache, local_cache)
