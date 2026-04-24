@@ -5,7 +5,7 @@ from typing import Dict
 from urllib.parse import urlencode
 
 from src.config.conf import *
-from src.config.constant import AuthorizeType
+from src.config.constant import AuthorizeType, REFRESH_TOKEN_KEY
 from src.config.exception import *
 from src.domain.auth.model.auth_model import *
 from src.domain.auth.service.auth_service import AuthService
@@ -86,7 +86,7 @@ class GoogleOAuthService(AuthService):
             'oauth_id': user_info['sub'],
             'email': user_info['email'],
             'access_token': token_data['access_token'],
-            'refresh_token': token_data.get('refresh_token')
+            REFRESH_TOKEN_KEY: token_data.get(REFRESH_TOKEN_KEY)
         }
 
         # 檢查用戶是否已存在
@@ -214,14 +214,22 @@ class GoogleOAuthService(AuthService):
             raise ServerException(msg="Invalid Google email")
         auth_res = await self.__req_login(body, email, language)
         user_id = auth_res.get("user_id")
+        user_id_key = str(user_id)
+        prev = await self.cache.get(user_id_key)
+        prev_rt = prev.get(REFRESH_TOKEN_KEY) if prev else None
 
-        # cache auth data
-        await self.cache_auth_res(
-            str(user_id), auth_res, removed_fields={"refresh_token"}
+        # cache auth data（refresh 僅經 Set-Cookie 下發，不進 JSON）
+        cookie_refresh = await self.cache_auth_res(
+            user_id_key,
+            auth_res,
+            removed_fields={REFRESH_TOKEN_KEY},
+            revoke_previous_refresh=prev_rt,
         )
         auth_res = self.apply_token(auth_res)
         user_res = await self.get_user_profile(user_id, language)
         auth_res = self.filter_auth_res(auth_res)
+        if cookie_refresh:
+            auth_res[REFRESH_TOKEN_KEY] = cookie_refresh
         res = {
             "auth_type": AuthorizeType.LOGIN.value,
             "auth": auth_res,

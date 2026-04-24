@@ -73,14 +73,13 @@ class AccountType(Enum):
     LINKEDIN = 'LINKEDIN'
 
 
-class OAuthType(Enum):
-    GOOGLE = 'GOOGLE'
-    # LINKEDIN = 'LINKEDIN'
-
-
 class AuthorizeType(Enum):
     SIGNUP = 'SIGNUP'
     LOGIN = 'LOGIN'
+
+
+# Session/cache 欄位與 HttpOnly Cookie 名稱（與 OAuth 2.0 RFC 6749 參數名一致）
+REFRESH_TOKEN_KEY = 'refresh_token'
 
 
 # serial_key is a field of the collection in the user's cache

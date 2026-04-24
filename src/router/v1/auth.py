@@ -1,6 +1,6 @@
 import logging
 
-from fastapi import APIRouter, Query, Response
+from fastapi import APIRouter, Depends, Query, Response
 
 from ..req.auth_validation import *
 from ..req.authorization import *
@@ -69,9 +69,10 @@ async def login(
              responses=post_response('refresh_token', TokenRefreshVO),
              status_code=201)
 async def refresh_token(
-    payload: NewTokenDTO = Depends(refresh_token_check),
+    refresh_token: str = Depends(oauth_refresh_token_grant),
 ):
-    data = await _auth_service.get_new_token_pair(payload)
+    """OAuth 2.0 風格換發 access JWT：`grant_type=refresh_token` + `refresh_token`（form-urlencoded）。"""
+    data = await _auth_service.get_new_token_pair(refresh_token)
     return AuthService.auth_response(data=data)
 
 
