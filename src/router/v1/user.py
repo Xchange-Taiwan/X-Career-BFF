@@ -42,6 +42,7 @@ async def upsert_profile(
 
 
 @router.get('/{user_id}/{language}/profile',
+            dependencies=[Depends(verify_path_user_id)],
             responses=idempotent_response('get_profile', user.ProfileVO))
 async def get_profile(
         user_id: int = Path(...),
