@@ -101,10 +101,14 @@ class GoogleOAuthService(AuthService):
 
         if state_data.get('auth_type') == AuthorizeType.LOGIN.value:
             signin_body = LoginOauthDTO.model_validate(google_oauth_data)
+            # 帶上 Google 帳號的 name/picture，作為 onboarding 預設值的來源；
+            # login_oauth 只會在 DB profile 還沒填的欄位上回填，使用者已自訂的不會被覆蓋。
             return await self.login_oauth(
                 signin_body,
                 language=DEFAULT_LANGUAGE,
                 id_token=id_token,
+                default_name=user_info.get('name'),
+                default_avatar=user_info.get('picture'),
             )
 
         raise ServerException(msg='Invalid authorization type provided')
@@ -203,6 +207,8 @@ class GoogleOAuthService(AuthService):
         body: LoginOauthDTO,
         language: str = DEFAULT_LANGUAGE,
         id_token: Optional[str] = None,
+        default_name: Optional[str] = None,
+        default_avatar: Optional[str] = None,
     ):
         tokeninfo = await self.__get_tokeninfo(body.access_token)
         oauth_id = str(tokeninfo.get("sub", None))
@@ -227,6 +233,12 @@ class GoogleOAuthService(AuthService):
         )
         auth_res = self.apply_token(auth_res)
         user_res = await self.get_user_profile(user_id, language)
+        # 首次登入(尚未 onboarding)時，DB profile 的 name/avatar 會是空字串。
+        # 用 Google 帳號的 name/picture 作為 onboarding 預設值回填——
+        # 一旦使用者自訂過 profile，DB 即為唯一真實來源，這裡不會覆蓋。
+        user_res = self.__apply_google_profile_defaults(
+            user_res, default_name, default_avatar
+        )
         auth_res = self.filter_auth_res(auth_res)
         if cookie_refresh:
             auth_res[REFRESH_TOKEN_KEY] = cookie_refresh
@@ -238,6 +250,20 @@ class GoogleOAuthService(AuthService):
         if id_token:
             res["id_token"] = id_token
         return res
+
+    @staticmethod
+    def __apply_google_profile_defaults(
+        user_res: Any,
+        default_name: Optional[str],
+        default_avatar: Optional[str],
+    ):
+        if not isinstance(user_res, dict):
+            return user_res
+        if default_name and not user_res.get("name"):
+            user_res["name"] = default_name
+        if default_avatar and not user_res.get("avatar"):
+            user_res["avatar"] = default_avatar
+        return user_res
 
 
     async def __req_login(self, body: LoginOauthDTO, email: EmailStr, language: str):
