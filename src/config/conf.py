@@ -50,7 +50,7 @@ USER_SERVICE_URL = os.getenv('USER_SERVICE_URL', 'http://127.0.0.1:8010/user-ser
 SEARCH_SERVICE_URL = os.getenv('SEARCH_SERVICE_URL', 'http://127.0.0.1:8012/search-service/api')
 
 # frontend
-FRONTEND_REDIRECT_URL = os.getenv('FRONTEND_REDIRECT_URL', 'http://localhost:3000')
+FRONTEND_REDIRECT_URL = os.getenv('FRONTEND_REDIRECT_URL', 'http://localhost:8006/api/v2/oauth/google/callback-test')
 
 # storage
 MAX_WIDTH = int(os.getenv('MAX_WIDTH', 300))

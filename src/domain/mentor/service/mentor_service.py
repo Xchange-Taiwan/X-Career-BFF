@@ -6,6 +6,7 @@ from ..model.mentor_model import (
     MentorProfileDTO,
     MentorProfileVO,
     MentorScheduleVO,
+    MentorScheduleQueryVO,
     MentorScheduleDTO,
 )
 from ...user.model.common_model import ProfessionListVO
@@ -89,10 +90,10 @@ class MentorService:
         return f"{category}:{language}"
 
 
-    async def get_schedules(self, user_id: int, dt_year: int, dt_month: int, query: Optional[Dict] = None) -> MentorScheduleVO:
+    async def get_schedules(self, user_id: int, dt_year: int, dt_month: int, query: Optional[Dict] = None) -> MentorScheduleQueryVO:
         req_url = f'{USER_SERVICE_URL}/v1/{MENTORS}/{user_id}/schedule/y/{dt_year}/m/{dt_month}'
         res: Optional[ServiceApiResponse] = await self.service_api.get(url=req_url, params=query)
-        return MentorScheduleVO(**res.data)
+        return MentorScheduleQueryVO(**res.data)
 
 
     async def save_schedules(self, user_id: int, data: MentorScheduleDTO) -> MentorScheduleVO:

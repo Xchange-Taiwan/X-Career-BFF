@@ -676,7 +676,7 @@ class AuthService:
 
     async def __verify_google_id_token(self, id_token: str, email: str):
         try:
-            tokeninfo = await self.req.simple_get(
+            tokeninfo = await self.req.get_req(
                 'https://oauth2.googleapis.com/tokeninfo',
                 params={'id_token': id_token},
             )

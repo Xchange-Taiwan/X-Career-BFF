@@ -43,3 +43,15 @@ async def oauth_callback(
 ):
     data = await _google_oauth_service.handle_callback(code, state)
     return AuthService.auth_response(data=data, msg='Authorization successful!')
+
+
+@router.get('/callback-test',
+            responses=post_response('oauth_callback', GoogleCallbackVO),
+            status_code=201)
+async def oauth_callback_get(
+    code: str = Query(...),
+    state: str = Query(...),
+):
+    """Google 授權完成後以 GET 導回（query 帶 code、state）。與 POST /callback 行為相同，方便本機或未接前端的 redirect_uri 直接指到 BFF。"""
+    data = await _google_oauth_service.handle_callback(code, state)
+    return AuthService.auth_response(data=data, msg='Authorization successful!')

@@ -65,7 +65,7 @@ async def get_mentor(
 
 
 @router.get('/{user_id}/schedule/y/{dt_year}/m/{dt_month}',
-            responses=idempotent_response('get_mentor_schedule_list', mentor.MentorScheduleVO))
+            responses=idempotent_response('get_mentor_schedule_list', mentor.MentorScheduleQueryVO))
 async def get_schedules(
         user_id: int = Path(...),
         dt_year: int = Path(...),
@@ -73,11 +73,15 @@ async def get_schedules(
         limit: int = Query(None, ge=1),
         next_dtstart: int = Query(None),
 ):
-    query = None
-    if limit:
-        query = {'limit': limit, 'next_dtstart': next_dtstart or 0} # next_dtstart is optional
+    query = {}
+    if limit is not None:
+        query['limit'] = limit
+    if next_dtstart is not None:
+        query['next_dtstart'] = next_dtstart
+    if not query:
+        query = None
 
-    res: mentor.MentorScheduleVO = await _mentor_service.get_schedules(
+    res: mentor.MentorScheduleQueryVO = await _mentor_service.get_schedules(
         user_id=user_id,
         dt_year=dt_year,
         dt_month=dt_month,

@@ -41,8 +41,8 @@ class TimeSlotDTO(BaseModel):
     dtstart: int = Field(..., example=1717203600)
     dtend: int = Field(..., example=1717207200)
     rrule: Optional[str] = Field(default=None, example="FREQ=WEEKLY;COUNT=4")
-    # timezone: str = Field(default="UTC", example="UTC")
-    # exdate: List[Optional[int]] = Field(default=[], example=[1718413200, 1719622800])
+    timezone: str = Field(default="UTC", example="UTC")
+    exdate: List[Optional[int]] = Field(default=[], example=[1718413200, 1719622800])
 
 
 class MentorScheduleDTO(BaseModel):
@@ -56,4 +56,29 @@ class TimeSlotVO(TimeSlotDTO):
 
 class MentorScheduleVO(BaseModel):
     timeslots: Optional[List[TimeSlotVO]] = Field(default=[])
+    next_dtstart: Optional[int] = Field(default=None, example=0)
+
+
+class MentorScheduleSegmentVO(BaseModel):
+    id: Optional[int] = Field(default=None, example=0)
+    user_id: int = Field(..., example=1)
+    dt_type: str = Field(
+        ...,
+        example=ScheduleType.ALLOW.value,
+        pattern=(
+            f"^({ScheduleType.ALLOW.value}|{ScheduleType.FORBIDDEN.value}|"
+            f"{ScheduleType.BOOKED.value}|{ScheduleType.PENDING.value})$"
+        ),
+    )
+    dtstart: int = Field(..., example=1717203600)
+    dtend: int = Field(..., example=1717207200)
+    rrule: Optional[str] = Field(default=None, example="FREQ=WEEKLY;COUNT=4")
+    timezone: str = Field(default="UTC", example="UTC")
+    exdate: List[Optional[int]] = Field(default=[], example=[1718413200, 1719622800])
+    source: str = Field(..., example="schedule")
+    source_id: Optional[int] = Field(default=None, example=100)
+
+
+class MentorScheduleQueryVO(BaseModel):
+    segments: Optional[List[MentorScheduleSegmentVO]] = Field(default=[])
     next_dtstart: Optional[int] = Field(default=None, example=0)
