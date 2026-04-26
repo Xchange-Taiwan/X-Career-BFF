@@ -65,7 +65,10 @@ class MentorScheduleSegmentVO(BaseModel):
     dt_type: str = Field(
         ...,
         example=ScheduleType.ALLOW.value,
-        pattern=f"^({ScheduleType.ALLOW.value}|{ScheduleType.FORBIDDEN.value}|{ScheduleType.BOOKED.value})$",
+        pattern=(
+            f"^({ScheduleType.ALLOW.value}|{ScheduleType.FORBIDDEN.value}|"
+            f"{ScheduleType.BOOKED.value}|{ScheduleType.PENDING.value})$"
+        ),
     )
     dtstart: int = Field(..., example=1717203600)
     dtend: int = Field(..., example=1717207200)
