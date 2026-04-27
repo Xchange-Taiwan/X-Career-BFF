@@ -22,7 +22,11 @@ class ReservationMessageDTO(BaseModel):
 
 
 class PreviousReserveRef(BaseModel):
-    reserve_id: int = Field(..., example=0)
+    # Transitional: FE currently sends `{}` for new reservations (no
+    # reschedule UI yet). Keeping reserve_id optional accepts both `{}` and
+    # `{reserve_id: <id>}`. Tighten to required after FE stops sending `{}`
+    # (tracked in X-Talent-Tracker#161).
+    reserve_id: Optional[int] = Field(default=None, example=0)
 
 
 class UpdateReservationDTO(BaseModel):
