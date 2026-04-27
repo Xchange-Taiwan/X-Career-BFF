@@ -33,11 +33,16 @@ class SeniorityLevel(Enum):
     MANAGER = 'MANAGER'
 
 
-class ScheduleType(Enum):
+class ScheduleType(str, Enum):
     ALLOW = 'ALLOW'
     FORBIDDEN = 'FORBIDDEN'
     BOOKED = 'BOOKED'
     PENDING = 'PENDING'
+
+
+class TimeSlotType(str, Enum):
+    ALLOW = 'ALLOW'
+    FORBIDDEN = 'FORBIDDEN'
 
 
 class RoleType(Enum):
