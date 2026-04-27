@@ -1,31 +1,31 @@
 import logging
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel
 
 from ....config.constant import *
 
-log = logging.getLogger(__name__) 
+log = logging.getLogger(__name__)
 
 
 class ExperienceDTO(BaseModel):
     id: Optional[int] = None
     category: ExperienceCategory = None
-    mentor_experiences_metadata: Dict = {}
+    mentor_experiences_metadata: Dict[str, Any] = {}
     order: int = 0
 
 
 class ExperienceVO(BaseModel):
     id: int
     category: ExperienceCategory = None
-    mentor_experiences_metadata: Dict = {}
+    mentor_experiences_metadata: Dict[str, Any] = {}
     order: int = 0
 
     @staticmethod
     def of(
         exp_id: int,
         category: ExperienceCategory,
-        mentor_experiences_metadata: Dict,
+        mentor_experiences_metadata: Dict[str, Any],
         order: int,
     ) -> "ExperienceVO":
         return ExperienceVO(

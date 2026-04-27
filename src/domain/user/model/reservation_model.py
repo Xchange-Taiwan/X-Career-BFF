@@ -16,6 +16,17 @@ class ReservationQueryDTO(BaseModel):
     next_dtend: Optional[int] = Field(None, example=1735398000)
 
 
+class ReservationMessageDTO(BaseModel):
+    user_id: int = Field(..., example=0)
+    content: str = Field(..., example='')
+
+
+class PreviousReserveRef(BaseModel):
+    # FE sends `{}` for a brand-new reservation and `{reserve_id: <id>}` when
+    # rescheduling. reserve_id is optional to keep both shapes valid.
+    reserve_id: Optional[int] = Field(default=None, example=0)
+
+
 class UpdateReservationDTO(BaseModel):
     my_user_id: int = 0
     my_status: Optional[BookingStatus] = Field(None, example=BookingStatus.PENDING)
@@ -23,7 +34,10 @@ class UpdateReservationDTO(BaseModel):
     schedule_id: int = 0
     dtstart: int = 0  # timestamp
     dtend: int = 0  # timestamp
-    messages: Optional[List[Dict[str, Any]]] = []
+    messages: Optional[List[ReservationMessageDTO]] = []
+    # sender's previous reservation; only populated by POST (reschedule flow)
+    # but kept on the shared DTO so the OpenAPI spec matches what FE sends.
+    previous_reserve: Optional[PreviousReserveRef] = None
 
     def participant_query(self) -> Dict:
         return {
@@ -44,8 +58,7 @@ class UpdateReservationDTO(BaseModel):
 
 
 class ReservationDTO(UpdateReservationDTO):
-    # sender's previous reservation
-    previous_reserve: Optional[Dict[str, Any]] = None
+    pass
 
 
 class RUserInfoVO(BaseModel):
@@ -82,7 +95,7 @@ class ReservationInfoVO(BaseModel):
     schedule_id: int = 0
     dtstart: int = 0  # timestamp
     dtend: int = 0  # timestamp
-    previous_reserve: Optional[Dict[str, Any]] = None
+    previous_reserve: Optional[PreviousReserveRef] = None
     messages: Optional[List[ReservationMessageVO]] = []
 
 
