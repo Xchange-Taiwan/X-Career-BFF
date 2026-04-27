@@ -31,11 +31,7 @@ class MentorProfileVO(ProfileVO):
 class TimeSlotDTO(BaseModel):
     id: Optional[int] = Field(None, example=0)
     user_id: int = Field(..., example=1)
-    dt_type: str = Field(
-        ...,
-        example=ScheduleType.ALLOW.value,
-        pattern=f"^({ScheduleType.ALLOW.value}|{ScheduleType.FORBIDDEN.value})$",
-    )
+    dt_type: TimeSlotType = Field(..., example=TimeSlotType.ALLOW)
     dt_year: Optional[int] = Field(default=None, example=2024)
     dt_month: Optional[int] = Field(default=None, example=6)
     dtstart: int = Field(..., example=1717203600)
@@ -62,14 +58,7 @@ class MentorScheduleVO(BaseModel):
 class MentorScheduleSegmentVO(BaseModel):
     id: Optional[int] = Field(default=None, example=0)
     user_id: int = Field(..., example=1)
-    dt_type: str = Field(
-        ...,
-        example=ScheduleType.ALLOW.value,
-        pattern=(
-            f"^({ScheduleType.ALLOW.value}|{ScheduleType.FORBIDDEN.value}|"
-            f"{ScheduleType.BOOKED.value}|{ScheduleType.PENDING.value})$"
-        ),
-    )
+    dt_type: ScheduleType = Field(..., example=ScheduleType.ALLOW)
     dtstart: int = Field(..., example=1717203600)
     dtend: int = Field(..., example=1717207200)
     rrule: Optional[str] = Field(default=None, example="FREQ=WEEKLY;COUNT=4")

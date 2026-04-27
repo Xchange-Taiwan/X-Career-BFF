@@ -33,11 +33,16 @@ class SeniorityLevel(Enum):
     MANAGER = 'MANAGER'
 
 
-class ScheduleType(Enum):
+class ScheduleType(str, Enum):
     ALLOW = 'ALLOW'
     FORBIDDEN = 'FORBIDDEN'
     BOOKED = 'BOOKED'
     PENDING = 'PENDING'
+
+
+class TimeSlotType(str, Enum):
+    ALLOW = 'ALLOW'
+    FORBIDDEN = 'FORBIDDEN'
 
 
 class RoleType(Enum):
@@ -56,7 +61,8 @@ class ReservationListState(Enum):
     MENTEE_UPCOMING = 'MENTEE_UPCOMING'
     MENTOR_PENDING = 'MENTOR_PENDING'
     MENTEE_PENDING = 'MENTEE_PENDING'
-    HISTORY = 'HISTORY'
+    MENTOR_HISTORY = 'MENTOR_HISTORY'
+    MENTEE_HISTORY = 'MENTEE_HISTORY'
 
 
 class SortingBy(Enum):
