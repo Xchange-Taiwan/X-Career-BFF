@@ -22,9 +22,7 @@ class ReservationMessageDTO(BaseModel):
 
 
 class PreviousReserveRef(BaseModel):
-    # FE sends `{}` for a brand-new reservation and `{reserve_id: <id>}` when
-    # rescheduling. reserve_id is optional to keep both shapes valid.
-    reserve_id: Optional[int] = Field(default=None, example=0)
+    reserve_id: int = Field(..., example=0)
 
 
 class UpdateReservationDTO(BaseModel):
