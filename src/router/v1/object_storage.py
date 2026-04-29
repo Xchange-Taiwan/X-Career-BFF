@@ -4,10 +4,11 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.params import Depends
 
 from ..req.authorization import verify_jwt_access, verify_path_user_id, verify_query_user_id
-from src.app._di.injection import _file_service
+from src.app._di.injection import _file_service, _user_service
 from src.config.conf import S3_REGION
 from src.config.exception import ForbiddenException
 from src.domain.file.model.file_info_model import FileInfoListVO
+from src.domain.user.model.user_model import AvatarTouchVO
 from src.infra.storage.global_object_storage import GlobalObjectStorage
 from src.router.res.response import idempotent_response, res_success, post_success
 
@@ -84,6 +85,24 @@ async def get_bucket_size(user_id: int):
 async def get_presigned_url_for_avatar(user_id: int):
     if user_id <= 0:
         raise HTTPException(status_code=400, detail="Invalid user_id. Must be a positive integer.")
-    
+
     res = _obj_store.get_presigned_url_for_avatar(user_id)
+    return res_success(data=res)
+
+
+@router.post('/avatar/touch/{user_id}',
+             dependencies=[Depends(verify_path_user_id)],
+             responses=idempotent_response('touch_avatar', AvatarTouchVO))
+async def touch_avatar(user_id: int):
+    """Bump avatar_updated_at after a successful S3 upload.
+
+    The presigned-URL flow (and the server-side upload flow) re-uses a stable
+    per-user S3 key, so profile.avatar's URL doesn't change on re-upload. The
+    frontend calls this once the S3 PUT/POST completes so the User service
+    can refresh the cache buster the standard profile upsert can't detect.
+    """
+    if user_id <= 0:
+        raise HTTPException(status_code=400, detail="Invalid user_id. Must be a positive integer.")
+
+    res = await _user_service.touch_avatar(user_id)
     return res_success(data=res)

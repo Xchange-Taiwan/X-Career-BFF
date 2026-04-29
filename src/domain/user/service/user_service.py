@@ -37,6 +37,20 @@ class UserService:
         res: Optional[Dict[str, Any]] = await self.service_api.simple_put(url=req_url, json=data.model_dump())
         return res
 
+    async def touch_avatar(self, user_id: int) -> Optional[Dict[str, Any]]:
+        """Bump the user's ``avatar_updated_at`` after a successful upload.
+
+        Per-user S3 avatar keys are stable, so re-uploads don't change
+        ``profile.avatar`` and the standard upsert path can't tell the bytes
+        have changed. The storage router calls this from the upload-completion
+        flow to refresh the cache buster.
+        """
+        req_url = f"{USER_SERVICE_URL}/v1/{USERS}/{user_id}/avatar/touch"
+        res: Optional[Dict[str, Any]] = await self.service_api.simple_post(
+            url=req_url, json={}
+        )
+        return res
+
     async def get_interests(self, language: Language, interest: InterestCategory) -> Dict:
         try:
             cache_key = self.cache_key(f"interests:{interest.value}", language.value)
