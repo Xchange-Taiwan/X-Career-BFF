@@ -15,6 +15,11 @@ log = logging.getLogger(__name__)
 
 SUCCESS_CODE = "0"
 
+# Total response budget set well below the API Gateway 29s ceiling so a cold
+# downstream Lambda (Auth/User/Search) has time to finish its DB pool setup
+# instead of being cut off at httpx's 5s default and surfacing as a 500.
+_DEFAULT_TIMEOUT = httpx.Timeout(20.0, connect=5.0)
+
 
 def check_response_code(method: str, expected_code: int = 200):
     def decorator_check_response_code(func):
@@ -77,7 +82,7 @@ class AsyncServiceApiAdapter(IServiceApi):
         result = None
         response = None
         try:
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(timeout=_DEFAULT_TIMEOUT) as client:
                 response = await client.get(url, params=params, headers=headers)
                 result = ServiceApiResponse.parse(response)
 
@@ -93,7 +98,7 @@ class AsyncServiceApiAdapter(IServiceApi):
     # NOTE: retrun native response
     async def get_req(self, url: str, params: Dict = None, headers: Dict = None) -> Any:
         try:
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(timeout=_DEFAULT_TIMEOUT) as client:
                 response = await client.get(url, params=params, headers=headers)
                 response.raise_for_status()
                 return response.json()
@@ -118,7 +123,7 @@ class AsyncServiceApiAdapter(IServiceApi):
         result = None
         response = None
         try:
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(timeout=_DEFAULT_TIMEOUT) as client:
                 response = await client.post(url, json=json, headers=headers)
                 result = ServiceApiResponse.parse(response)
 
@@ -134,7 +139,7 @@ class AsyncServiceApiAdapter(IServiceApi):
     # NOTE: retrun native response
     async def post_req(self, url: str, json: Dict, headers: Dict = None) -> Any:
         try:
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(timeout=_DEFAULT_TIMEOUT) as client:
                 response = await client.post(url, json=json, headers=headers)
                 response.raise_for_status()
                 return response.json()
@@ -160,7 +165,7 @@ class AsyncServiceApiAdapter(IServiceApi):
         result = None
         response = None
         try:
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(timeout=_DEFAULT_TIMEOUT) as client:
                 response = await client.put(url, json=json, headers=headers)
                 result = ServiceApiResponse.parse(response)
 
@@ -187,7 +192,7 @@ class AsyncServiceApiAdapter(IServiceApi):
         result = None
         response = None
         try:
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(timeout=_DEFAULT_TIMEOUT) as client:
                 # httpx 0.27+：delete() 不支援 json=，需用 request("DELETE", ...)
                 response = await client.request(
                     'DELETE',

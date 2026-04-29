@@ -13,6 +13,9 @@ class ProfileVO(BaseModel):
     user_id: int
     name: Optional[str] = ''
     avatar: Optional[str] = ''
+    # Unix epoch seconds; bumped only when the avatar URL actually changes.
+    # Frontend uses this as a cache buster for the stable S3 avatar URL.
+    avatar_updated_at: Optional[int] = None
     job_title: Optional[str] = ''
     company: Optional[str] = ''
     years_of_experience: Optional[str] = '0'
@@ -30,6 +33,7 @@ class ProfileDTO(BaseModel):
     user_id: Optional[int]
     name: Optional[str] = ''
     avatar: Optional[str] = ''
+    avatar_updated_at: Optional[int] = None
     job_title: Optional[str] = ''
     company: Optional[str] = ''
     years_of_experience: Optional[str] = '0'
