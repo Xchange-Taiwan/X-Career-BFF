@@ -6,7 +6,7 @@ import jwt as jwt_util
 from fastapi import Depends, Path, Query, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
-from ...config.conf import JWT_ALGORITHM, ACCESS_TOKEN_TTL, SHORT_TERM_TTL
+from ...config.conf import JWT_ALGORITHM, ACCESS_TOKEN_TTL, REFRESH_TOKEN_TTL
 from ...config.exception import *
 from ...infra.util.time_util import *
 
@@ -52,16 +52,16 @@ def expiration_time():
 
 def gen_refresh_token():
     prefix = str(uuid.uuid4()).replace('-', '')
-    expiration = expiration_time()
+    # 編碼於 token 尾端的過期時間需對齊 cookie max_age (REFRESH_TOKEN_TTL)，
+    # 而非 access token 的有效期 (ACCESS_TOKEN_TTL)。
+    expiration = current_seconds() + REFRESH_TOKEN_TTL
     return f'{prefix[0:20]}{expiration}'
 
 def valid_refresh_token(refresh_token: str) -> (bool):
     future_time_in_secs = int(refresh_token[-10:])
     current_time_in_secs = current_seconds()
-    diff = abs(future_time_in_secs - current_time_in_secs)
-    # 兩者誤差在過期時間的一半內，視為有效
-    passed = diff < SHORT_TERM_TTL / 2
-    log.info('\n\n\nfuture_t: %s, current_t: %s, diff: %s, passed: %s', future_time_in_secs, current_time_in_secs, diff, passed)
+    passed = current_time_in_secs < future_time_in_secs
+    log.info('future_t: %s, current_t: %s, passed: %s', future_time_in_secs, current_time_in_secs, passed)
     return passed
 
 
