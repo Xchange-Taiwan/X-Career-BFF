@@ -12,11 +12,8 @@ class UserTagVO(BaseModel):
     subject_group: Optional[str] = None
     language: Optional[str] = None
     subject: Optional[str] = ''
-    # Free-form per-tag metadata (icon, display hints, etc.) — mirrors the
-    # User service Tag.desc JSONB column. Pass-through here.
     desc: Optional[Dict[str, Any]] = None
-    # Two-layer hierarchy (#226): NULL on top-level group / industry rows,
-    # non-NULL on leaf rows. Mirrors User-service Tag.parent_subject_group.
+    # NULL on top-level group rows, non-NULL on leaf rows.
     parent_subject_group: Optional[str] = None
 
 
@@ -25,14 +22,7 @@ class UserTagListVO(BaseModel):
 
 
 class UserTagBucketsVO(BaseModel):
-    """Pre-grouped view of a user's tags, mirroring User-service shape so the
-    BFF can pass the response through unchanged. Bucket → (kind, intent):
-      want_skills    → (skill,    WANT)   "想多了解、加強的技能"
-      offer_skills   → (skill,    OFFER)  "我能教的 expertise"
-      want_topics    → (topic,    WANT)   "想多了解的主題"
-      offer_topics   → (topic,    OFFER)  "我能聊的主題"
-      want_positions → (position, WANT)   "有興趣多了解的職位"
-    """
+    """Pre-grouped view of a user's tags, one bucket per (kind, intent)."""
     want_skills: List[UserTagVO] = []
     offer_skills: List[UserTagVO] = []
     want_topics: List[UserTagVO] = []
@@ -41,16 +31,10 @@ class UserTagBucketsVO(BaseModel):
 
 
 class UserTagBucketsInputDTO(BaseModel):
-    """Input mirror of User-service `UserTagBucketsInputDTO`. Used as a
-    nested field on PUT mentor_profile so caller can write multiple buckets
-    in one shot. None per bucket = leave alone, [] = clear, [...] = replace
-    with these LEAF subject_groups. BFF passes the dict through unchanged.
-
-    Language is intentionally not in this shape — User-service always uses
-    the user's profile language to avoid forking selections across languages
-    given the current single-table tag schema. See User-service
-    UserTagBucketsInputDTO docstring for the full reasoning.
-    """
+    """Per bucket: None = leave alone, [] = clear, [...] = replace with these
+    LEAF subject_groups. Language is intentionally omitted — User-service
+    always uses the user's profile language to avoid forked selections
+    across languages."""
     want_skills: Optional[List[str]] = None
     offer_skills: Optional[List[str]] = None
     want_topics: Optional[List[str]] = None
@@ -96,8 +80,5 @@ class TagCatalogVO(BaseModel):
 
 
 class TagCatalogsVO(BaseModel):
-    """Multi-kind catalog wrapper, mirror of User-service shape. Callers
-    always consume `data.catalogs[kind]` regardless of how many kinds the
-    request filtered for."""
     language: str
     catalogs: Dict[str, TagCatalogVO] = {}

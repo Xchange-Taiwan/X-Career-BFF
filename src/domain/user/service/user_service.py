@@ -96,10 +96,8 @@ class UserService:
     async def get_tag_catalog(
         self, language: str, kinds: Optional[List[str]] = None
     ) -> Dict:
-        # `kinds` None / [] = all kinds. Forwarded as repeated `?kind=skill&
-        # kind=topic` query params; User-service returns the unified
-        # TagCatalogsVO shape regardless.
         req_url = f"{USER_SERVICE_URL}/v1/{USERS}/{language}/tags/catalog"
+        # List value becomes repeated `?kind=skill&kind=topic` query params.
         params = {'kind': kinds} if kinds else None
         res: Dict = await self.service_api.simple_get(url=req_url, params=params)
         return res

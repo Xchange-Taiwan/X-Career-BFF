@@ -128,21 +128,13 @@ async def update_reservation_status(
     return res_success(data=res)
 
 
-############################################################################################
-# Tag catalog proxy (#226). The standalone GET/PUT /{user_id}/tags pair was
-# removed: callers now read user_tags from the hydrated `user_tags` field on
-# GET /mentor_profile (mentor) or GET /users/profile (mentee), and write via
-# the buckets payload on the corresponding PUT.
-############################################################################################
 @router.get('/{language}/tags/catalog',
             responses=idempotent_response('get_tag_catalog', tag.TagCatalogsVO))
 async def get_tag_catalog(
         language: str = Path(...),
         kind: Optional[List[TagKind]] = Query(default=None),
 ):
-    # Multi-kind: pass `?kind=skill&kind=topic`, or omit to fetch all
-    # supported kinds in one round-trip. Response is uniform
-    # TagCatalogsVO regardless of how many kinds were requested.
+    # Pass `?kind=skill&kind=topic`, or omit `kind` to fetch all kinds.
     kind_values = [k.value for k in kind] if kind else None
     data: Dict = await _user_service.get_tag_catalog(language, kind_values)
     return res_success(data=data)

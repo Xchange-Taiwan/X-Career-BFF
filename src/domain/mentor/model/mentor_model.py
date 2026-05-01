@@ -16,9 +16,6 @@ class MentorProfileDTO(ProfileDTO):
     about: Optional[str] = None
     seniority_level: Optional[SeniorityLevel] = SeniorityLevel.NO_REVEAL
     expertises: Optional[List[str]] = None
-    # #226 Option B: optional buckets-shaped input that User-service
-    # writes to user_tags atomically with the rest of the profile. BFF
-    # passes through unchanged.
     user_tags: Optional[UserTagBucketsInputDTO] = None
 
     class Config:
@@ -31,8 +28,6 @@ class MentorProfileVO(ProfileVO):
     seniority_level: Optional[SeniorityLevel] = SeniorityLevel.NO_REVEAL
     expertises: Optional[ProfessionListVO] = None
     experiences: Optional[List[ExperienceVO]] = Field(default_factory=list)
-    # #226 two-layer: pre-grouped per-(kind, intent) buckets, mirroring
-    # User-service MentorProfileVO so the BFF passes it through unchanged.
     user_tags: Optional[UserTagBucketsVO] = None
 
 
