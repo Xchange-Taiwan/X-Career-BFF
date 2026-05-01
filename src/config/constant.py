@@ -78,6 +78,19 @@ class Sorting(Enum):
 class AccountType(Enum):
     XC = 'XC'
     GOOGLE = 'GOOGLE'
+
+
+class TagKind(str, Enum):
+    EXPERTISE = 'expertise'
+    SKILL = 'skill'
+    POSITION = 'position'
+    TOPIC = 'topic'
+    WHAT_I_OFFER = 'what_i_offer'
+
+
+class TagIntent(str, Enum):
+    WANT = 'WANT'
+    OFFER = 'OFFER'
     LINKEDIN = 'LINKEDIN'
 
 
