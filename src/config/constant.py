@@ -82,9 +82,6 @@ class AccountType(Enum):
 
 
 class TagKind(str, Enum):
-    # `expertise` and `what_i_offer` were collapsed into `skill` / `topic`
-    # under the #226 two-layer redesign — intent flag (WANT vs OFFER)
-    # disambiguates mentee wants vs mentor offerings.
     SKILL = 'skill'
     POSITION = 'position'
     TOPIC = 'topic'
