@@ -4,6 +4,7 @@ from typing import Dict, List, Optional
 from pydantic import BaseModel, Field
 
 from .common_model import ProfessionVO, InterestListVO
+from .tag_model import UserTagBucketsInputDTO, UserTagBucketsVO
 from ....config.conf import DEFAULT_LANGUAGE
 
 log = logging.getLogger(__name__) 
@@ -24,6 +25,9 @@ class ProfileVO(BaseModel):
     onboarding: Optional[bool] = False
     is_mentor: Optional[bool] = False
     language: Optional[str] = DEFAULT_LANGUAGE
+    # #226: hydrated user-tags (mirror of User-service ProfileVO so BFF
+    # passes the buckets dict through unchanged).
+    user_tags: Optional[UserTagBucketsVO] = None
 
 
 class ProfileDTO(BaseModel):
@@ -40,6 +44,9 @@ class ProfileDTO(BaseModel):
     industry: Optional[str] = ''
     language: Optional[str] = DEFAULT_LANGUAGE
     is_mentor: Optional[bool] = False
+    # #226 Option B (mentee parity): optional buckets-shaped input that
+    # User-service writes atomically with the profile. BFF passes through.
+    user_tags: Optional[UserTagBucketsInputDTO] = None
 
     model_config = {
         "from_attributes": True,

@@ -93,29 +93,6 @@ class UserService:
         res: Dict = await self.service_api.simple_put(url=req_url, json=payload)
         return res
 
-    async def get_user_tags(
-        self,
-        user_id: int,
-        kind: Optional[str] = None,
-        intent: Optional[str] = None,
-    ) -> Dict:
-        req_url = f"{USER_SERVICE_URL}/v1/{USERS}/{user_id}/tags"
-        params: Dict[str, Any] = {}
-        if kind is not None:
-            params["kind"] = kind
-        if intent is not None:
-            params["intent"] = intent
-        res: Dict = await self.service_api.simple_get(
-            url=req_url, params=params or None
-        )
-        return res
-
-    async def replace_user_tags(self, user_id: int, body: UserTagsUpsertDTO) -> Dict:
-        req_url = f"{USER_SERVICE_URL}/v1/{USERS}/{user_id}/tags"
-        payload = jsonable_encoder(body)
-        res: Dict = await self.service_api.simple_put(url=req_url, json=payload)
-        return res
-
     async def get_tag_catalog(self, language: str, kind: str) -> Dict:
         req_url = f"{USER_SERVICE_URL}/v1/{USERS}/{language}/tags/catalog"
         res: Dict = await self.service_api.simple_get(
