@@ -24,6 +24,22 @@ class UserTagListVO(BaseModel):
     user_tags: List[UserTagVO] = []
 
 
+class UserTagBucketsVO(BaseModel):
+    """Pre-grouped view of a user's tags, mirroring User-service shape so the
+    BFF can pass the response through unchanged. Bucket → (kind, intent):
+      want_skills    → (skill,    WANT)   "想多了解、加強的技能"
+      offer_skills   → (skill,    OFFER)  "我能教的 expertise"
+      want_topics    → (topic,    WANT)   "想多了解的主題"
+      offer_topics   → (topic,    OFFER)  "我能聊的主題"
+      want_positions → (position, WANT)   "有興趣多了解的職位"
+    """
+    want_skills: List[UserTagVO] = []
+    offer_skills: List[UserTagVO] = []
+    want_topics: List[UserTagVO] = []
+    offer_topics: List[UserTagVO] = []
+    want_positions: List[UserTagVO] = []
+
+
 class UserTagsUpsertDTO(BaseModel):
     kind: TagKind
     intent: TagIntent
