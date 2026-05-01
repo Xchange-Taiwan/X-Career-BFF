@@ -40,6 +40,20 @@ class UserTagBucketsVO(BaseModel):
     want_positions: List[UserTagVO] = []
 
 
+class UserTagBucketsInputDTO(BaseModel):
+    """Input mirror of User-service `UserTagBucketsInputDTO`. Used as a
+    nested field on PUT mentor_profile so caller can write multiple buckets
+    in one shot. None per bucket = leave alone, [] = clear, [...] = replace
+    with these LEAF subject_groups. BFF passes the dict through unchanged.
+    """
+    want_skills: Optional[List[str]] = None
+    offer_skills: Optional[List[str]] = None
+    want_topics: Optional[List[str]] = None
+    offer_topics: Optional[List[str]] = None
+    want_positions: Optional[List[str]] = None
+    language: Optional[str] = None
+
+
 class UserTagsUpsertDTO(BaseModel):
     kind: TagKind
     intent: TagIntent
