@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 
 from fastapi import (
     APIRouter,
@@ -15,6 +16,7 @@ from ...domain.user.model import (
     common_model as common,
     user_model as user,
     reservation_model as reservation,
+    tag_model as tag,
 )
 from ...infra.util.util import get_localized_territories_alpha_3
 
@@ -124,3 +126,34 @@ async def update_reservation_status(
     body.my_user_id = user_id
     res: Dict = await _user_service.update_reservation_status(reservation_id, body)
     return res_success(data=res)
+
+
+############################################################################################
+# Unified user tag proxies (#226 / #229). Forwards to User service v2 tag endpoints.
+# Replaces per-kind interest/profession upsert paths once the frontend cuts over.
+############################################################################################
+@router.get('/{user_id}/tags',
+            dependencies=[Depends(verify_path_user_id)],
+            responses=idempotent_response('get_user_tags', tag.UserTagListVO))
+async def get_user_tags(
+        user_id: int = Path(...),
+        kind: Optional[TagKind] = Query(default=None),
+        intent: Optional[TagIntent] = Query(default=None),
+):
+    data: Dict = await _user_service.get_user_tags(
+        user_id,
+        kind=kind.value if kind else None,
+        intent=intent.value if intent else None,
+    )
+    return res_success(data=data)
+
+
+@router.put('/{user_id}/tags',
+            dependencies=[Depends(verify_path_user_id)],
+            responses=idempotent_response('replace_user_tags', tag.UserTagsUpsertVO))
+async def replace_user_tags(
+        user_id: int = Path(...),
+        body: tag.UserTagsUpsertDTO = Body(...),
+):
+    data: Dict = await _user_service.replace_user_tags(user_id, body)
+    return res_success(data=data)

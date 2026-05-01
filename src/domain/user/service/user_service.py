@@ -11,6 +11,7 @@ from src.domain.user.model.reservation_model import (
     UpdateReservationDTO,
     ReservationDTO,
 )
+from src.domain.user.model.tag_model import UserTagsUpsertDTO
 from src.domain.user.model.user_model import ProfileDTO
 from src.infra.client.async_service_api_adapter import AsyncServiceApiAdapter
 from src.infra.template.cache import ICache
@@ -88,6 +89,29 @@ class UserService:
 
     async def update_reservation_status(self, reservation_id: int, body: UpdateReservationDTO) -> Dict:
         req_url = f"{USER_SERVICE_URL}/v1/{USERS}/{body.my_user_id}/reservations/{reservation_id}"
+        payload = jsonable_encoder(body)
+        res: Dict = await self.service_api.simple_put(url=req_url, json=payload)
+        return res
+
+    async def get_user_tags(
+        self,
+        user_id: int,
+        kind: Optional[str] = None,
+        intent: Optional[str] = None,
+    ) -> Dict:
+        req_url = f"{USER_SERVICE_URL}/v1/{USERS}/{user_id}/tags"
+        params: Dict[str, Any] = {}
+        if kind is not None:
+            params["kind"] = kind
+        if intent is not None:
+            params["intent"] = intent
+        res: Dict = await self.service_api.simple_get(
+            url=req_url, params=params or None
+        )
+        return res
+
+    async def replace_user_tags(self, user_id: int, body: UserTagsUpsertDTO) -> Dict:
+        req_url = f"{USER_SERVICE_URL}/v1/{USERS}/{user_id}/tags"
         payload = jsonable_encoder(body)
         res: Dict = await self.service_api.simple_put(url=req_url, json=payload)
         return res
