@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel
 
@@ -12,6 +12,9 @@ class UserTagVO(BaseModel):
     subject_group: Optional[str] = None
     language: Optional[str] = None
     subject: Optional[str] = ''
+    # Free-form per-tag metadata (icon, display hints, etc.) — mirrors the
+    # User service Tag.desc JSONB column. Pass-through here.
+    desc: Optional[Dict[str, Any]] = None
 
 
 class UserTagListVO(BaseModel):
