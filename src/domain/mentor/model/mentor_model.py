@@ -2,6 +2,7 @@ from pydantic import Field
 
 from .experience_model import ExperienceVO
 from ...user.model.common_model import ProfessionListVO
+from ...user.model.tag_model import UserTagVO
 from ...user.model.user_model import *
 from ....config.constant import *
 
@@ -26,6 +27,10 @@ class MentorProfileVO(ProfileVO):
     seniority_level: Optional[SeniorityLevel] = SeniorityLevel.NO_REVEAL
     expertises: Optional[ProfessionListVO] = None
     experiences: Optional[List[ExperienceVO]] = Field(default_factory=list)
+    # #226 two-layer: hydrated unified user-tags array (with parent_subject_group).
+    # Mirrors the new field on User-service MentorProfileVO so the BFF passes
+    # it through unchanged.
+    user_tags: Optional[List[UserTagVO]] = None
 
 
 class TimeSlotDTO(BaseModel):
