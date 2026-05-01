@@ -93,3 +93,11 @@ class TagCatalogVO(BaseModel):
     kind: str
     language: str
     groups: List[TagCatalogGroupVO] = []
+
+
+class TagCatalogsVO(BaseModel):
+    """Multi-kind catalog wrapper, mirror of User-service shape. Callers
+    always consume `data.catalogs[kind]` regardless of how many kinds the
+    request filtered for."""
+    language: str
+    catalogs: Dict[str, TagCatalogVO] = {}

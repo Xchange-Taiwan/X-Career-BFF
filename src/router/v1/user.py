@@ -1,5 +1,5 @@
 import logging
-from typing import Optional
+from typing import List, Optional
 
 from fastapi import (
     APIRouter,
@@ -135,12 +135,14 @@ async def update_reservation_status(
 # the buckets payload on the corresponding PUT.
 ############################################################################################
 @router.get('/{language}/tags/catalog',
-            responses=idempotent_response('get_tag_catalog', tag.TagCatalogVO))
+            responses=idempotent_response('get_tag_catalog', tag.TagCatalogsVO))
 async def get_tag_catalog(
         language: str = Path(...),
-        kind: TagKind = Query(...),
+        kind: Optional[List[TagKind]] = Query(default=None),
 ):
-    # Two-layer catalog for the supplied kind in the requested language.
-    # Industry comes back flat (groups with empty leaves arrays).
-    data: Dict = await _user_service.get_tag_catalog(language, kind.value)
+    # Multi-kind: pass `?kind=skill&kind=topic`, or omit to fetch all
+    # supported kinds in one round-trip. Response is uniform
+    # TagCatalogsVO regardless of how many kinds were requested.
+    kind_values = [k.value for k in kind] if kind else None
+    data: Dict = await _user_service.get_tag_catalog(language, kind_values)
     return res_success(data=data)
