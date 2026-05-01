@@ -75,6 +75,7 @@ class RUserInfoVO(BaseModel):
     name: Optional[str] = ''
     avatar: Optional[str] = ''
     job_title: Optional[str] = ''
+    company: Optional[str] = ''
     years_of_experience: Optional[str] = '0'
 
 
