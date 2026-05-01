@@ -78,6 +78,7 @@ class Sorting(Enum):
 class AccountType(Enum):
     XC = 'XC'
     GOOGLE = 'GOOGLE'
+    LINKEDIN = 'LINKEDIN'
 
 
 class TagKind(str, Enum):
@@ -91,7 +92,6 @@ class TagKind(str, Enum):
 class TagIntent(str, Enum):
     WANT = 'WANT'
     OFFER = 'OFFER'
-    LINKEDIN = 'LINKEDIN'
 
 
 class AuthorizeType(Enum):
