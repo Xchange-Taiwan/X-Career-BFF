@@ -115,3 +115,10 @@ class UserService:
         payload = jsonable_encoder(body)
         res: Dict = await self.service_api.simple_put(url=req_url, json=payload)
         return res
+
+    async def get_tag_catalog(self, language: str, kind: str) -> Dict:
+        req_url = f"{USER_SERVICE_URL}/v1/{USERS}/{language}/tags/catalog"
+        res: Dict = await self.service_api.simple_get(
+            url=req_url, params={'kind': kind}
+        )
+        return res

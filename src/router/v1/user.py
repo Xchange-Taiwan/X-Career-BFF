@@ -157,3 +157,15 @@ async def replace_user_tags(
 ):
     data: Dict = await _user_service.replace_user_tags(user_id, body)
     return res_success(data=data)
+
+
+@router.get('/{language}/tags/catalog',
+            responses=idempotent_response('get_tag_catalog', tag.TagCatalogVO))
+async def get_tag_catalog(
+        language: str = Path(...),
+        kind: TagKind = Query(...),
+):
+    # Two-layer catalog for the supplied kind in the requested language.
+    # Industry comes back flat (groups with empty leaves arrays).
+    data: Dict = await _user_service.get_tag_catalog(language, kind.value)
+    return res_success(data=data)
