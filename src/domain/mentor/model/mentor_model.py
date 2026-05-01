@@ -2,7 +2,7 @@ from pydantic import Field
 
 from .experience_model import ExperienceVO
 from ...user.model.common_model import ProfessionListVO
-from ...user.model.tag_model import UserTagBucketsVO
+from ...user.model.tag_model import UserTagBucketsInputDTO, UserTagBucketsVO
 from ...user.model.user_model import *
 from ....config.constant import *
 
@@ -16,6 +16,10 @@ class MentorProfileDTO(ProfileDTO):
     about: Optional[str] = None
     seniority_level: Optional[SeniorityLevel] = SeniorityLevel.NO_REVEAL
     expertises: Optional[List[str]] = None
+    # #226 Option B: optional buckets-shaped input that User-service
+    # writes to user_tags atomically with the rest of the profile. BFF
+    # passes through unchanged.
+    user_tags: Optional[UserTagBucketsInputDTO] = None
 
     class Config:
         from_attributes = True
