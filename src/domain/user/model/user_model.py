@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 from .common_model import ProfessionVO, InterestListVO
 from ....config.conf import DEFAULT_LANGUAGE
 
-log = logging.getLogger(__name__)
+log = logging.getLogger(__name__) 
 
 
 class ProfileVO(BaseModel):
