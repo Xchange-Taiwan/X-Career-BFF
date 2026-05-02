@@ -87,11 +87,6 @@ class TagKind(str, Enum):
     TOPIC = 'topic'
 
 
-class TagIntent(str, Enum):
-    WANT = 'WANT'
-    HAVE = 'HAVE'
-
-
 class AuthorizeType(Enum):
     SIGNUP = 'SIGNUP'
     LOGIN = 'LOGIN'
