@@ -4,10 +4,9 @@ from typing import Dict, List, Optional
 from pydantic import BaseModel, Field
 
 from .common_model import ProfessionVO, InterestListVO
-from .tag_model import UserTagBucketsInputDTO, UserTagBucketsVO
 from ....config.conf import DEFAULT_LANGUAGE
 
-log = logging.getLogger(__name__) 
+log = logging.getLogger(__name__)
 
 
 class ProfileVO(BaseModel):
@@ -25,7 +24,6 @@ class ProfileVO(BaseModel):
     onboarding: Optional[bool] = False
     is_mentor: Optional[bool] = False
     language: Optional[str] = DEFAULT_LANGUAGE
-    user_tags: Optional[UserTagBucketsVO] = None
 
 
 class ProfileDTO(BaseModel):
@@ -42,7 +40,6 @@ class ProfileDTO(BaseModel):
     industry: Optional[str] = ''
     language: Optional[str] = DEFAULT_LANGUAGE
     is_mentor: Optional[bool] = False
-    user_tags: Optional[UserTagBucketsInputDTO] = None
 
     model_config = {
         "from_attributes": True,

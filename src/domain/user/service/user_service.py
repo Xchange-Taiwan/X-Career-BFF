@@ -11,7 +11,6 @@ from src.domain.user.model.reservation_model import (
     UpdateReservationDTO,
     ReservationDTO,
 )
-from src.domain.user.model.tag_model import UserTagsUpsertDTO
 from src.domain.user.model.user_model import ProfileDTO
 from src.infra.client.async_service_api_adapter import AsyncServiceApiAdapter
 from src.infra.template.cache import ICache

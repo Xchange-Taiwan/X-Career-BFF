@@ -89,7 +89,7 @@ class TagKind(str, Enum):
 
 class TagIntent(str, Enum):
     WANT = 'WANT'
-    OFFER = 'OFFER'
+    HAVE = 'HAVE'
 
 
 class AuthorizeType(Enum):
