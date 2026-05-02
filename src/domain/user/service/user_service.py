@@ -1,5 +1,5 @@
 import logging
-from typing import Optional, Dict, Any
+from typing import List, Optional, Dict, Any
 
 from fastapi.encoders import jsonable_encoder
 
@@ -90,4 +90,13 @@ class UserService:
         req_url = f"{USER_SERVICE_URL}/v1/{USERS}/{body.my_user_id}/reservations/{reservation_id}"
         payload = jsonable_encoder(body)
         res: Dict = await self.service_api.simple_put(url=req_url, json=payload)
+        return res
+
+    async def get_tag_catalog(
+        self, language: str, kinds: Optional[List[str]] = None
+    ) -> Dict:
+        req_url = f"{USER_SERVICE_URL}/v1/{USERS}/{language}/tags/catalog"
+        # List value becomes repeated `?kind=skill&kind=topic` query params.
+        params = {'kind': kinds} if kinds else None
+        res: Dict = await self.service_api.simple_get(url=req_url, params=params)
         return res
