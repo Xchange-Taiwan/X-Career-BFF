@@ -6,6 +6,8 @@ node_modules
 venv
 **/**__pycache__
 **.db
+.DS_Store
+**/.DS_Store
 
 test2/
 
