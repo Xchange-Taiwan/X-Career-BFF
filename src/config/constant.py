@@ -81,6 +81,12 @@ class AccountType(Enum):
     LINKEDIN = 'LINKEDIN'
 
 
+class TagKind(str, Enum):
+    SKILL = 'skill'
+    POSITION = 'position'
+    TOPIC = 'topic'
+
+
 class AuthorizeType(Enum):
     SIGNUP = 'SIGNUP'
     LOGIN = 'LOGIN'
