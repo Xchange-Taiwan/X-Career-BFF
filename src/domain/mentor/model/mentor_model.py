@@ -3,7 +3,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
-from .experience_model import ExperienceVO
+from .experience_model import ExperienceDTO, ExperienceVO
 from ...user.model.user_model import ProfileDTO, ProfileVO
 from ....config.constant import (
     ScheduleType,
@@ -20,6 +20,11 @@ class MentorProfileDTO(ProfileDTO):
     personal_statement: Optional[str] = None
     about: Optional[str] = None
     seniority_level: Optional[SeniorityLevel] = SeniorityLevel.NO_REVEAL
+
+    # Inline experiences batch — see X-Career-User MentorProfileDTO for
+    # replace semantics. Mirrored here so BFF doesn't strip the field
+    # when proxying via model_dump.
+    experiences: Optional[List[ExperienceDTO]] = None
 
     class Config:
         from_attributes = True
