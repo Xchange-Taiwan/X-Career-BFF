@@ -13,7 +13,6 @@ test2/
 **.env*
 
 !deploy.sh
-!dev-env-deploy.sh
 !.env.example
 
 
