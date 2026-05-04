@@ -6,14 +6,7 @@ class Language(Enum):
     ZH_TW = 'zh_TW'
 
 
-class InterestCategory(Enum):
-    INTERESTED_POSITION = 'INTERESTED_POSITION'
-    SKILL = 'SKILL'
-    TOPIC = 'TOPIC'
-
-
 class ProfessionCategory(Enum):
-    EXPERTISE = 'EXPERTISE'
     INDUSTRY = 'INDUSTRY'
 
 
@@ -21,7 +14,6 @@ class ExperienceCategory(Enum):
     WORK = 'WORK'
     EDUCATION = 'EDUCATION'
     LINK = 'LINK'
-    WHAT_I_OFFER = 'WHAT_I_OFFER'
 
 
 class SeniorityLevel(Enum):
@@ -79,12 +71,6 @@ class AccountType(Enum):
     XC = 'XC'
     GOOGLE = 'GOOGLE'
     LINKEDIN = 'LINKEDIN'
-
-
-class TagKind(str, Enum):
-    SKILL = 'skill'
-    POSITION = 'position'
-    TOPIC = 'topic'
 
 
 class AuthorizeType(Enum):

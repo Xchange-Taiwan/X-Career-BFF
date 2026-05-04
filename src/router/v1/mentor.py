@@ -101,17 +101,6 @@ async def delete_experience(
     return res_success(data=res)
 
 
-@router.get('/{language}/expertises',
-            responses=idempotent_response('get_expertises', common.ProfessionListVO))
-async def get_expertises(
-        language: Language = Path(...)
-        # can't use a certain enum as query, need to be a type
-         # category : ProfessionCategory.EXPERTISE = Query(...),
-):
-    res: Dict = await _mentor_service.get_expertises(language)
-    return res_success(data=jsonable_encoder(res))
-
-
 @router.put('/{user_id}/schedule',
             dependencies=[Depends(verify_path_user_id)],
             responses=idempotent_response('upsert_mentor_schedule', mentor.MentorScheduleVO))

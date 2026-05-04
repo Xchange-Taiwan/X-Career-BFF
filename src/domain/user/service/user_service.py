@@ -1,10 +1,10 @@
 import logging
-from typing import List, Optional, Dict, Any
+from typing import Optional, Dict, Any
 
 from fastapi.encoders import jsonable_encoder
 
 from src.config.conf import USER_SERVICE_URL, DEFAULT_LANGUAGE, CACHE_TTL
-from src.config.constant import Language, InterestCategory, USERS
+from src.config.constant import Language, USERS
 from src.config.exception import NotFoundException, raise_http_exception
 from src.domain.user.model.reservation_model import (
     ReservationQueryDTO,
@@ -36,23 +36,6 @@ class UserService:
         req_url = f"{USER_SERVICE_URL}/v1/{USERS}/profile"
         res: Optional[Dict[str, Any]] = await self.service_api.simple_put(url=req_url, json=data.model_dump())
         return res
-
-    async def get_interests(self, language: Language, interest: InterestCategory) -> Dict:
-        try:
-            cache_key = self.cache_key(f"interests:{interest.value}", language.value)
-            cache_val = await self.local_cache.get(cache_key)
-            if cache_val:
-                return cache_val
-
-            req_url = f"{USER_SERVICE_URL}/v1/{USERS}/{language.value}/interests"
-            res: Dict = await self.service_api.simple_get(url=req_url, params={'interest': interest.value})
-            # set cache
-            await self.local_cache.set(cache_key, res, CACHE_TTL)
-            return res
-
-        except Exception as e:
-            log.error(e)
-            raise_http_exception(e, 'Internal Server Error')
 
     async def get_industries(self, language: Language) -> Dict:
         try:
@@ -90,13 +73,4 @@ class UserService:
         req_url = f"{USER_SERVICE_URL}/v1/{USERS}/{body.my_user_id}/reservations/{reservation_id}"
         payload = jsonable_encoder(body)
         res: Dict = await self.service_api.simple_put(url=req_url, json=payload)
-        return res
-
-    async def get_tag_catalog(
-        self, language: str, kinds: Optional[List[str]] = None
-    ) -> Dict:
-        req_url = f"{USER_SERVICE_URL}/v1/{USERS}/{language}/tags/catalog"
-        # List value becomes repeated `?kind=skill&kind=topic` query params.
-        params = {'kind': kinds} if kinds else None
-        res: Dict = await self.service_api.simple_get(url=req_url, params=params)
         return res

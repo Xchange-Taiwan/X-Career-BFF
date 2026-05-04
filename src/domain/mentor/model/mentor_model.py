@@ -1,10 +1,15 @@
-from pydantic import Field
+import logging
+from typing import List, Optional
+
+from pydantic import BaseModel, Field
 
 from .experience_model import ExperienceVO
-from ...user.model.common_model import ProfessionListVO
-from ...user.model.tag_model import TagVO
-from ...user.model.user_model import *
-from ....config.constant import *
+from ...user.model.user_model import ProfileDTO, ProfileVO
+from ....config.constant import (
+    ScheduleType,
+    SeniorityLevel,
+    TimeSlotType,
+)
 
 log = logging.getLogger(__name__)
 
@@ -15,16 +20,6 @@ class MentorProfileDTO(ProfileDTO):
     personal_statement: Optional[str] = None
     about: Optional[str] = None
     seniority_level: Optional[SeniorityLevel] = SeniorityLevel.NO_REVEAL
-    expertises: Optional[List[str]] = None
-
-    # Per-bucket replace: None = leave alone, [] = clear, [...] = replace.
-    # Each entry is a leaf subject_group; User-service validates against the
-    # tags catalog and aggregates into want_tags / have_tags before storage.
-    want_position: Optional[List[str]] = None
-    want_skill: Optional[List[str]] = None
-    want_topic: Optional[List[str]] = None
-    have_skill: Optional[List[str]] = None
-    have_topic: Optional[List[str]] = None
 
     class Config:
         from_attributes = True
@@ -34,16 +29,7 @@ class MentorProfileVO(ProfileVO):
     personal_statement: Optional[str] = ""
     about: Optional[str] = ""
     seniority_level: Optional[SeniorityLevel] = SeniorityLevel.NO_REVEAL
-    expertises: Optional[ProfessionListVO] = None
     experiences: Optional[List[ExperienceVO]] = Field(default_factory=list)
-
-    # Hydrated by User-service: each TagVO carries subject + desc +
-    # parent_subject_group from the catalog.
-    want_position: Optional[List[TagVO]] = None
-    want_skill: Optional[List[TagVO]] = None
-    want_topic: Optional[List[TagVO]] = None
-    have_skill: Optional[List[TagVO]] = None
-    have_topic: Optional[List[TagVO]] = None
 
 
 class TimeSlotDTO(BaseModel):
