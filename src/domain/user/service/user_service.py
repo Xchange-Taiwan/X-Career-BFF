@@ -3,9 +3,9 @@ from typing import Optional, Dict, Any
 
 from fastapi.encoders import jsonable_encoder
 
-from src.config.conf import USER_SERVICE_URL, DEFAULT_LANGUAGE, CACHE_TTL
-from src.config.constant import Language, USERS
-from src.config.exception import NotFoundException, raise_http_exception
+from src.config.conf import USER_SERVICE_URL, DEFAULT_LANGUAGE
+from src.config.constant import USERS
+from src.config.exception import NotFoundException
 from src.domain.user.model.reservation_model import (
     ReservationQueryDTO,
     UpdateReservationDTO,
@@ -36,27 +36,6 @@ class UserService:
         req_url = f"{USER_SERVICE_URL}/v1/{USERS}/profile"
         res: Optional[Dict[str, Any]] = await self.service_api.simple_put(url=req_url, json=data.model_dump())
         return res
-
-    async def get_industries(self, language: Language) -> Dict:
-        try:
-            cache_key = self.cache_key(f"professions:INDUSTRY", language.value)
-            cache_val = await self.local_cache.get(cache_key)
-            if cache_val:
-                return cache_val
-
-            req_url = f"{USER_SERVICE_URL}/v1/{USERS}/{language.value}/industries"
-            res: Dict = await self.service_api.simple_get(url=req_url)
-            # set cache
-            await self.local_cache.set(cache_key, res, CACHE_TTL)
-            return res
-
-        except Exception as e:
-            log.error(e)
-            raise_http_exception(e, 'Internal Server Error')
-
-    def cache_key(self, category: str, language: str):
-        return f"{category}:{language}"
-
 
     async def get_reservation_list(self, user_id: int, query: ReservationQueryDTO) -> Dict:
         req_url = f"{USER_SERVICE_URL}/v1/{USERS}/{user_id}/reservations"

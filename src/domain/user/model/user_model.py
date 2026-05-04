@@ -1,9 +1,8 @@
 import logging
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
-from .common_model import ProfessionVO
 from ....config.conf import DEFAULT_LANGUAGE
 
 log = logging.getLogger(__name__)
@@ -17,7 +16,10 @@ class ProfileVO(BaseModel):
     company: Optional[str] = ''
     years_of_experience: Optional[str] = '0'
     location: Optional[str] = ''
-    industry: Optional[ProfessionVO] = None
+    # BFF is a proxy — industry is passed through unmodified from the
+    # User service (TagVO shape, kind='industry'). Not modeled here on
+    # purpose: that detail belongs to the upstream contract.
+    industry: Optional[Dict[str, Any]] = None
     onboarding: Optional[bool] = False
     is_mentor: Optional[bool] = False
     language: Optional[str] = DEFAULT_LANGUAGE

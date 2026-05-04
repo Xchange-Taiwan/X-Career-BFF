@@ -52,15 +52,6 @@ async def get_profile(
     return res_success(data=jsonable_encoder(data))
 
 
-@router.get('/{language}/industries',
-            responses=idempotent_response('get_industries', common.ProfessionListVO))
-async def get_industries(
-        language: Language = Path(...)
-):
-    data: Dict = await _user_service.get_industries(language)
-    return res_success(data=jsonable_encoder(data))
-
-
 @router.get('/{language}/countries',
             responses=idempotent_response('get_countries', common.CountryListVO))
 async def get_countries(
