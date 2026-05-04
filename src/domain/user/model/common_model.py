@@ -13,20 +13,6 @@ class MetadataVO(BaseModel):
     icon: Optional[str] = None
 
 
-class InterestVO(BaseModel):
-    id: int
-    category: InterestCategory = None
-    language: Optional[str] = None
-    subject_group: str = 'unknown'
-    subject: Optional[str] = ''
-    desc: Optional[MetadataVO] = None
-
-
-class InterestListVO(BaseModel):
-    interests: List[InterestVO] = []
-    language: Optional[str] = None
-
-
 class ProfessionDTO(BaseModel):
     id: int
     category: ProfessionCategory
