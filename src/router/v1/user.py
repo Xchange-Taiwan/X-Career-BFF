@@ -1,5 +1,4 @@
 import logging
-from typing import List, Optional
 
 from fastapi import (
     APIRouter,
@@ -16,7 +15,6 @@ from ...domain.user.model import (
     common_model as common,
     user_model as user,
     reservation_model as reservation,
-    tag_model as tag,
 )
 from ...infra.util.util import get_localized_territories_alpha_3
 
@@ -51,16 +49,6 @@ async def get_profile(
         language: Language = Path(...),
 ):
     data: user.ProfileVO = await _user_service.get_user_profile(user_id, language.value)
-    return res_success(data=jsonable_encoder(data))
-
-
-@router.get('/{language}/interests',
-            responses=idempotent_response('get_interests', common.InterestListVO))
-async def get_interests(
-        language: Language = Path(...),
-        interest: InterestCategory = Query(...),
-):
-    data: Dict = await _user_service.get_interests(language, interest)
     return res_success(data=jsonable_encoder(data))
 
 
@@ -126,15 +114,3 @@ async def update_reservation_status(
     body.my_user_id = user_id
     res: Dict = await _user_service.update_reservation_status(reservation_id, body)
     return res_success(data=res)
-
-
-@router.get('/{language}/tags/catalog',
-            responses=idempotent_response('get_tag_catalog', tag.TagCatalogsVO))
-async def get_tag_catalog(
-        language: str = Path(...),
-        kind: Optional[List[TagKind]] = Query(default=None),
-):
-    # Pass `?kind=skill&kind=topic`, or omit `kind` to fetch all kinds.
-    kind_values = [k.value for k in kind] if kind else None
-    data: Dict = await _user_service.get_tag_catalog(language, kind_values)
-    return res_success(data=data)
