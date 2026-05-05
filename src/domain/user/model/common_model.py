@@ -1,33 +1,9 @@
 import logging
-from typing import List, Optional
+from typing import List
 
 from pydantic import BaseModel
 
-from ....config.constant import *
-
 log = logging.getLogger(__name__)
-
-
-class MetadataVO(BaseModel):
-    desc: Optional[str] = None
-    icon: Optional[str] = None
-
-
-class ProfessionDTO(BaseModel):
-    id: int
-    category: ProfessionCategory
-    language: Optional[str]
-
-
-class ProfessionVO(ProfessionDTO):
-    subject_group: str = 'unknown'
-    subject: str = ''
-    profession_metadata: MetadataVO = MetadataVO()
-    language: Optional[str] = ''
-
-
-class ProfessionListVO(BaseModel):
-    professions: List[ProfessionVO] = []
 
 
 class CountryVO(BaseModel):
