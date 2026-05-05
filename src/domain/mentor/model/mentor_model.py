@@ -43,6 +43,10 @@ class TimeSlotDTO(BaseModel):
     rrule: Optional[str] = Field(default=None, example="FREQ=WEEKLY;COUNT=4")
     timezone: str = Field(default="UTC", example="UTC")
     exdate: List[Optional[int]] = Field(default=[], example=[1718413200, 1719622800])
+    # New-format marker mirrored from X-Career-User. NULL = legacy
+    # MINUTELY-rrule row; set = (dtstart, dtend) is block, divided into
+    # sub-slots of this length. Must flow through unchanged.
+    meeting_duration_minutes: Optional[int] = Field(default=None, example=30)
 
 
 class MentorScheduleDTO(BaseModel):
@@ -68,6 +72,7 @@ class MentorScheduleSegmentVO(BaseModel):
     rrule: Optional[str] = Field(default=None, example="FREQ=WEEKLY;COUNT=4")
     timezone: str = Field(default="UTC", example="UTC")
     exdate: List[Optional[int]] = Field(default=[], example=[1718413200, 1719622800])
+    meeting_duration_minutes: Optional[int] = Field(default=None, example=30)
     source: str = Field(..., example="schedule")
     source_id: Optional[int] = Field(default=None, example=100)
 
