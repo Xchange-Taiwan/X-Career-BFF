@@ -74,6 +74,17 @@ class AuthorizeType(Enum):
     LOGIN = 'LOGIN'
 
 
+class TagKind(Enum):
+    # Mirrors X-Career-User's TagKind. The 5 mentor profile buckets are
+    # (kind × array): want_tags carries position/skill/topic; have_tags
+    # carries skill/topic. INDUSTRY is flat (stored on profiles.industry,
+    # not in want_tags/have_tags).
+    SKILL = 'skill'
+    POSITION = 'position'
+    TOPIC = 'topic'
+    INDUSTRY = 'industry'
+
+
 # Session/cache 欄位與 HttpOnly Cookie 名稱（與 OAuth 2.0 RFC 6749 參數名一致）
 REFRESH_TOKEN_KEY = 'refresh_token'
 
