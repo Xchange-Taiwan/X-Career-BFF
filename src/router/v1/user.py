@@ -66,7 +66,7 @@ async def get_countries(
 @router.get('/{language}/tags/catalog',
             responses=idempotent_response('get_tag_catalog', tag.TagCatalogsVO))
 async def get_tag_catalog(
-        language: Language = Path(default=Language.ZH_TW),
+        language: Language = Path(..., example=Language.ZH_TW),
         kind: Optional[List[TagKind]] = Query(default=None),
 ):
     kinds = [k.value for k in kind] if kind else None
