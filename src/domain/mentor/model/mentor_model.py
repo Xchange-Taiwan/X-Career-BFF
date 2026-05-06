@@ -21,6 +21,15 @@ class MentorProfileDTO(ProfileDTO):
     about: Optional[str] = None
     seniority_level: Optional[SeniorityLevel] = SeniorityLevel.NO_REVEAL
 
+    # Per bucket: None = leave alone, [] = clear, [...] = replace.
+    # Values are leaf subject_groups validated server-side against the
+    # tags catalog. Matches X-Career-User MentorProfileDTO.
+    want_position: Optional[List[str]] = None
+    want_skill: Optional[List[str]] = None
+    want_topic: Optional[List[str]] = None
+    have_skill: Optional[List[str]] = None
+    have_topic: Optional[List[str]] = None
+
     class Config:
         from_attributes = True
 
@@ -30,6 +39,15 @@ class MentorProfileVO(ProfileVO):
     about: Optional[str] = ""
     seniority_level: Optional[SeniorityLevel] = SeniorityLevel.NO_REVEAL
     experiences: Optional[List[ExperienceVO]] = Field(default_factory=list)
+
+    # Bucketed tag subject_groups, mirroring X-Career-User MentorProfileVO.
+    # Values are flat subject_group canonical keys; frontend resolves display
+    # metadata from the tag catalog. None = not bucketed; [] = empty.
+    want_position: Optional[List[str]] = None
+    want_skill: Optional[List[str]] = None
+    want_topic: Optional[List[str]] = None
+    have_skill: Optional[List[str]] = None
+    have_topic: Optional[List[str]] = None
 
 
 class TimeSlotDTO(BaseModel):
@@ -43,10 +61,6 @@ class TimeSlotDTO(BaseModel):
     rrule: Optional[str] = Field(default=None, example="FREQ=WEEKLY;COUNT=4")
     timezone: str = Field(default="UTC", example="UTC")
     exdate: List[Optional[int]] = Field(default=[], example=[1718413200, 1719622800])
-    # New-format marker mirrored from X-Career-User. NULL = legacy
-    # MINUTELY-rrule row; set = (dtstart, dtend) is block, divided into
-    # sub-slots of this length. Must flow through unchanged.
-    meeting_duration_minutes: Optional[int] = Field(default=None, example=30)
 
 
 class MentorScheduleDTO(BaseModel):
@@ -72,7 +86,6 @@ class MentorScheduleSegmentVO(BaseModel):
     rrule: Optional[str] = Field(default=None, example="FREQ=WEEKLY;COUNT=4")
     timezone: str = Field(default="UTC", example="UTC")
     exdate: List[Optional[int]] = Field(default=[], example=[1718413200, 1719622800])
-    meeting_duration_minutes: Optional[int] = Field(default=None, example=30)
     source: str = Field(..., example="schedule")
     source_id: Optional[int] = Field(default=None, example=100)
 
