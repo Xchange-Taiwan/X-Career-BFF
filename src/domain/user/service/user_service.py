@@ -1,5 +1,5 @@
 import logging
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 
 from fastapi.encoders import jsonable_encoder
 
@@ -35,6 +35,18 @@ class UserService:
     async def upsert_user_profile(self, data: ProfileDTO) -> Optional[Dict[str, Any]]:
         req_url = f"{USER_SERVICE_URL}/v1/{USERS}/profile"
         res: Optional[Dict[str, Any]] = await self.service_api.simple_put(url=req_url, json=data.model_dump())
+        return res
+
+    async def get_tag_catalog(
+        self,
+        language: str,
+        kinds: Optional[List[str]] = None,
+    ) -> Optional[Dict[str, Any]]:
+        req_url = f"{USER_SERVICE_URL}/v1/{USERS}/{language}/tags/catalog"
+        # httpx serializes a list value as repeated query keys (?kind=skill&kind=topic),
+        # which matches the upstream `Optional[List[TagKind]]` Query signature.
+        params = {"kind": kinds} if kinds else None
+        res: Optional[Dict[str, Any]] = await self.service_api.simple_get(url=req_url, params=params)
         return res
 
     async def get_reservation_list(self, user_id: int, query: ReservationQueryDTO) -> Dict:

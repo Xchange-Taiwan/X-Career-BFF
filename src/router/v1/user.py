@@ -1,4 +1,5 @@
 import logging
+from typing import List, Optional
 
 from fastapi import (
     APIRouter,
@@ -15,6 +16,7 @@ from ...domain.user.model import (
     common_model as common,
     user_model as user,
     reservation_model as reservation,
+    tag_model as tag,
 )
 from ...infra.util.util import get_localized_territories_alpha_3
 
@@ -59,6 +61,17 @@ async def get_countries(
 ):
     data: Dict = get_localized_territories_alpha_3(language)
     return res_success(data=data)
+
+
+@router.get('/{language}/tags/catalog',
+            responses=idempotent_response('get_tag_catalog', tag.TagCatalogsVO))
+async def get_tag_catalog(
+        language: Language = Path(default=Language.ZH_TW),
+        kind: Optional[List[TagKind]] = Query(default=None),
+):
+    kinds = [k.value for k in kind] if kind else None
+    res: Dict = await _user_service.get_tag_catalog(language.value, kinds)
+    return res_success(data=res)
 
 
 @router.get('/{user_id}/reservations',
