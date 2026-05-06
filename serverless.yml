@@ -135,9 +135,33 @@ functions:
     memorySize: 256
     environment:
       STAGE: ${self:provider.stage}
-      # S3 相關環境變數
+      TESTING: ${env:TESTING}
+      DEFAULT_LANGUAGE: ${env:DEFAULT_LANGUAGE}
+      # S3 / storage
+      XC_BUCKET: ${env:XC_BUCKET}
       XC_USER_BUCKET: ${env:XC_USER_BUCKET}
       S3_REGION: ${self:provider.region}
+      MAX_WIDTH: ${env:MAX_WIDTH}
+      MAX_HEIGHT: ${env:MAX_HEIGHT}
+      MAX_STORAGE_SIZE: ${env:MAX_STORAGE_SIZE}
+      # DynamoDB cache table + TTLs
+      TABLE_CACHE: ${env:TABLE_CACHE}
+      BATCH: ${env:BATCH}
+      REQUEST_INTERVAL_TTL: ${env:REQUEST_INTERVAL_TTL}
+      SHORT_TERM_TTL: ${env:SHORT_TERM_TTL}
+      LONG_TERM_TTL: ${env:LONG_TERM_TTL}
+      CACHE_TTL: ${env:CACHE_TTL}
+      # JWT
+      JWT_ALGORITHM: ${env:JWT_ALGORITHM}
+      ACCESS_TOKEN_TTL: ${env:ACCESS_TOKEN_TTL}
+      REFRESH_TOKEN_TTL: ${env:REFRESH_TOKEN_TTL}
+      AUTH_RESPONSE_FIELDS: ${env:AUTH_RESPONSE_FIELDS}
+      # Upstream micro-services
+      AUTH_SERVICE_URL: ${env:AUTH_SERVICE_URL}
+      USER_SERVICE_URL: ${env:USER_SERVICE_URL}
+      SEARCH_SERVICE_URL: ${env:SEARCH_SERVICE_URL}
+      # Frontend redirect for Google OAuth
+      FRONTEND_REDIRECT_URL: ${env:FRONTEND_REDIRECT_URL}
     layers:
     - {Ref: PythonRequirementsLambdaLayer}
     events:
