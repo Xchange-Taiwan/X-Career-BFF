@@ -48,6 +48,13 @@ jobs:
           TABLE_CACHE: ${{ secrets.TABLE_CACHE }}
           XC_USER_BUCKET: ${{ secrets.XC_USER_BUCKET }}
 
+      # Block until Lambda's CloudFormation rollout has fully settled.
+      # Without this, `update-function-configuration` below can race the
+      # in-progress deploy and get its env vars overwritten when the
+      # rollout finishes with serverless.yml's (smaller) environment block.
+      - name: Wait for Lambda update to settle
+        run: aws lambda wait function-updated --function-name x-career-bff-dev-app
+
       - name: Update Lambda environment variables
         run: |
           aws lambda update-function-configuration \
