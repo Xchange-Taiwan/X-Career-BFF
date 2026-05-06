@@ -3,18 +3,15 @@ from typing import List
 
 from fastapi import (
     APIRouter,
-    Header, Path, Query, Body, Depends,
+    Path, Query, Body, Depends,
 )
 from fastapi.encoders import jsonable_encoder
 
 from ..req.authorization import verify_jwt_access, verify_path_user_id
 from src.app._di.injection import _mentor_service
-from src.config.constant import ExperienceCategory, Language
+from src.config.constant import Language
 from src.config.exception import *
-from src.domain.mentor.model import (
-    mentor_model as mentor,
-    experience_model as experience,
-)
+from src.domain.mentor.model import mentor_model as mentor
 from src.domain.user.model import (
     common_model as common,
 )
@@ -68,36 +65,6 @@ async def get_universities(
     if not data:
         raise ClientException(msg='There are no universities in this country!')
     res = common.UniversityListVO(universities=data).model_dump()
-    return res_success(data=res)
-
-
-@router.put('/{user_id}/experiences/{experience_type}',
-            dependencies=[Depends(verify_path_user_id)],
-            responses=idempotent_response('upsert_experience', experience.ExperienceVO))
-async def upsert_experience(
-        is_mentor: bool = Header(False),
-        user_id: int = Path(...),
-        experience_type: ExperienceCategory = Path(...),
-        body: experience.ExperienceDTO = Body(...),
-):
-    res: experience.ExperienceVO = await _mentor_service.upsert_experience(
-        body, user_id, experience_type.value, is_mentor
-    )
-    return res_success(data=jsonable_encoder(res))
-
-
-@router.delete('/{user_id}/experiences/{experience_type}/{experience_id}',
-               dependencies=[Depends(verify_path_user_id)],
-               responses=idempotent_response('delete_experience', experience.ExperienceVO))
-async def delete_experience(
-        is_mentor: bool = Header(False),
-        user_id: int = Path(...),
-        experience_type: ExperienceCategory = Path(...),
-        experience_id: int = Path(...),
-):
-    res: bool = await _mentor_service.delete_experience(
-        user_id, experience_type.value, experience_id, is_mentor
-    )
     return res_success(data=res)
 
 

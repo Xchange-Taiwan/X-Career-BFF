@@ -30,6 +30,12 @@ class MentorProfileDTO(ProfileDTO):
     have_skill: Optional[List[str]] = None
     have_topic: Optional[List[str]] = None
 
+    # Experiences travel inline with the profile PUT — same three-state
+    # semantics as the tag buckets (None = leave alone, [] = clear,
+    # [...] = replace as the new full set). Mirrors X-Career-User which
+    # stores them as JSONB[] on profiles.experiences.
+    experiences: Optional[List[ExperienceVO]] = None
+
     class Config:
         from_attributes = True
 
