@@ -402,14 +402,16 @@ class AuthService:
         auth_res: Dict,
         removed_fields: Set = set(),
         revoke_previous_refresh: Optional[str] = None,
+        grace_previous_refresh: Optional[str] = None,
     ) -> Optional[str]:
         """寫入快取並從 auth_res 剔除敏感欄位。若 removed_fields 含 refresh_token，回傳該值供 auth_response 設 HttpOnly cookie。
 
-        並維護 Redis `rt:{refresh}` -> user_id_key，供 OAuth refresh grant 查詢；輪替或重登時傳 revoke_previous_refresh 撤銷舊索引。
+        並維護 Redis `rt:{refresh}` -> user_id_key，供 OAuth refresh grant 查詢。
+        登入/登出時傳 ``revoke_previous_refresh`` 立即撤銷舊索引；
+        OAuth refresh rotation 改傳 ``grace_previous_refresh``，將舊索引改寫為短期
+        ``{'replaced_by': new_rt, 'user_id_key': ...}`` 標記，讓 race 中仍持舊 rt 的
+        並行請求在 grace 窗口內也能換到同一份新 token，而不是 401 invalid_grant。
         """
-        if revoke_previous_refresh:
-            await self.cache.delete(_refresh_token_index_key(revoke_previous_refresh))
-
         auth_res.update({
             'online': True,
             REFRESH_TOKEN_KEY: gen_refresh_token(),
@@ -429,6 +431,16 @@ class AuthService:
             ex=LONG_TERM_TTL,
         )
 
+        # 新 rt 已 commit 後再處理舊 rt: index，避免並行讀者看到尚未生效的 replaced_by。
+        if revoke_previous_refresh:
+            await self.cache.delete(_refresh_token_index_key(revoke_previous_refresh))
+        elif grace_previous_refresh:
+            await self.cache.set(
+                _refresh_token_index_key(grace_previous_refresh),
+                {'replaced_by': new_refresh, 'user_id_key': user_id_key},
+                ex=REFRESH_TOKEN_GRACE_TTL,
+            )
+
         # remove sensitive data: 'aid' & removed_fields
         to_remove = set(removed_fields)
         to_remove.add('aid')
@@ -444,11 +456,34 @@ class AuthService:
     '''
 
     async def get_new_token_pair(self, refresh_token: str) -> Dict:
-        """OAuth 2.0 refresh_token grant：僅依 refresh_token 查 session 並輪替 refresh（rotation）。"""
-        user_id_key = await self.cache.get(_refresh_token_index_key(refresh_token))
-        if not user_id_key:
+        """OAuth 2.0 refresh_token grant：僅依 refresh_token 查 session 並輪替 refresh（rotation）。
+
+        舊 rt 在 rotation 後仍會被改寫為短期 grace 標記
+        (``REFRESH_TOKEN_GRACE_TTL`` 秒)，這段時間內 race 過來的並行呼叫
+        會直接拿到剛產生的新 pair 而不再多輪一輪，避免一贏多輸的 401。
+        """
+        cached = await self.cache.get(_refresh_token_index_key(refresh_token))
+        if not cached:
             raise UnauthorizedException(msg='invalid_grant')
 
+        # Grace path: 舊 rt 已在 rotation 視窗內，直接拿 user 當下的 token pair 回應，
+        # 不再 rotate。'replaced_by' 留作除錯線索，定位用 user_id_key。
+        if isinstance(cached, dict) and 'replaced_by' in cached:
+            user_id_key = cached.get('user_id_key')
+            user = await self.cache.get(user_id_key) if user_id_key else None
+            if not user or REFRESH_TOKEN_KEY not in user:
+                raise UnauthorizedException(msg='invalid_grant')
+            res = self.apply_token(user)
+            current_rt = user.get(REFRESH_TOKEN_KEY)
+            auth_res = {k: res[k] for k in ['user_id', 'token'] if k in res}
+            if current_rt:
+                auth_res[REFRESH_TOKEN_KEY] = current_rt
+            return {
+                'auth': auth_res,
+            }
+
+        # Normal path: cached 是 user_id_key 字串
+        user_id_key = cached
         user = await self.cache.get(user_id_key)
         if not user:
             await self.cache.delete(_refresh_token_index_key(refresh_token))
@@ -461,7 +496,7 @@ class AuthService:
         await self.cache_auth_res(
             user_id_key,
             user,
-            revoke_previous_refresh=refresh_token,
+            grace_previous_refresh=refresh_token,
         )
         res = self.apply_token(user)
         new_rt = user.get(REFRESH_TOKEN_KEY)
