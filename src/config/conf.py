@@ -26,6 +26,11 @@ JWT_ALGORITHM = os.getenv('JWT_ALGORITHM', 'HS256')
 ACCESS_TOKEN_TTL = int(os.getenv('ACCESS_TOKEN_TTL', 1800))
 # default = 30 days (30 * 86400 secs)
 REFRESH_TOKEN_TTL = int(os.getenv('REFRESH_TOKEN_TTL', 2592000))
+# Grace window after refresh_token rotation during which the just-rotated
+# refresh_token is still accepted (returns the freshly minted pair) so that
+# concurrent /v1/auth/token callers racing on the same starting token all
+# converge instead of one winning and the rest receiving 401 invalid_grant.
+REFRESH_TOKEN_GRACE_TTL = int(os.getenv('REFRESH_TOKEN_GRACE_TTL', 10))
 
 # filter auth response fields
 AUTH_RESPONSE_FIELDS = os.getenv('AUTH_RESPONSE_FIELDS', 'oauth_id;account_type;region;online')
