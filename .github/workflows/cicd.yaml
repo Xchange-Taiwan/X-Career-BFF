@@ -3,13 +3,12 @@ name: X-Career-BFF Pipeline
 on:
   push:
     branches:
-      - dev
+      - main
 
 jobs:
   deploy:
-    if: github.ref == 'refs/heads/dev'
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    environment: dev
 
     steps:
       - name: Checkout repository
@@ -41,9 +40,9 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Deploy to AWS Lambda
-        run: npx sls deploy --stage dev --region ${{ secrets.AWS_REGION }}
+        run: npx sls deploy --stage prod --region ${{ secrets.AWS_REGION }}
         env:
-          STAGE: dev
+          STAGE: prod
           THE_REGION: ${{ secrets.AWS_REGION }}
           ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
           TABLE_CACHE: ${{ secrets.TABLE_CACHE }}
@@ -54,16 +53,16 @@ jobs:
       # in-progress deploy and get its env vars overwritten when the
       # rollout finishes with serverless.yml's (smaller) environment block.
       - name: Wait for Lambda update to settle
-        run: aws lambda wait function-updated --function-name x-career-bff-dev-app
+        run: aws lambda wait function-updated --function-name x-career-bff-prod-app
 
       - name: Update Lambda environment variables
         run: |
           aws lambda update-function-configuration \
-            --function-name x-career-bff-dev-app \
+            --function-name x-career-bff-prod-app \
             --environment "Variables={
           DEFAULT_LANGUAGE=zh_TW,
-          STAGE=dev,
-          TESTING=dev,
+          STAGE=prod,
+          TESTING=false,
           XC_USER_BUCKET=x-career-multimedia,
           BATCH=10,
           REQUEST_INTERVAL_TTL=8,

@@ -29,6 +29,7 @@ class GoogleOAuthService(AuthService):
         self.google_client_secret = GOOGLE_CLIENT_SECRET
 
         self.google_redirect_uri = f'{FRONTEND_REDIRECT_URL}'
+        self.google_oauth_scopes = GOOGLE_OAUTH_SCOPES
         self.google_auth_url = 'https://accounts.google.com/o/oauth2/v2/auth'
         self.google_token_url = 'https://oauth2.googleapis.com/token'
 
@@ -52,11 +53,12 @@ class GoogleOAuthService(AuthService):
             'client_id': self.google_client_id,
             'redirect_uri': self.google_redirect_uri,
             'response_type': 'code',
-            # Include openid so Google token endpoint returns OIDC id_token.
-            'scope': 'openid email profile',
+            # permissions declared for OAuth verification.
+            'scope': self.google_oauth_scopes,
             'state': state,
             'access_type': 'offline',
             'prompt': 'consent',
+            'include_granted_scopes': 'true',
         }
 
         # 生成授權 URL

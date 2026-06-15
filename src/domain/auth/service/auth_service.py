@@ -444,11 +444,22 @@ class AuthService:
     '''
 
     async def get_new_token_pair(self, refresh_token: str) -> Dict:
-        """OAuth 2.0 refresh_token grant：僅依 refresh_token 查 session 並輪替 refresh（rotation）。"""
-        user_id_key = await self.cache.get(_refresh_token_index_key(refresh_token))
-        if not user_id_key:
+        """OAuth 2.0 refresh_token grant：僅依 refresh_token 查 session 並輪替 refresh（rotation）。
+
+        舊 rt 在 rotation 後仍會被改寫為短期 grace 標記
+        (``REFRESH_TOKEN_GRACE_TTL`` 秒)，這段時間內 race 過來的並行呼叫
+        會直接拿到剛產生的新 pair 而不再多輪一輪，避免一贏多輸的 401。
+        """
+        cached = await self.cache.get(_refresh_token_index_key(refresh_token))
+        if not cached:
             raise UnauthorizedException(msg='invalid_grant')
 
+        # Grace path: rotation 視窗內，直接回 rotation 當下存的 pair。
+        if isinstance(cached, dict) and 'auth' in cached:
+            return {'auth': cached['auth']}
+
+        # Normal path: cached 是 user_id_key 字串
+        user_id_key = cached
         user = await self.cache.get(user_id_key)
         if not user:
             await self.cache.delete(_refresh_token_index_key(refresh_token))
@@ -458,19 +469,21 @@ class AuthService:
         if cached_refresh_token != refresh_token or not valid_refresh_token(cached_refresh_token):
             raise UnauthorizedException(msg='invalid_grant')
 
-        await self.cache_auth_res(
-            user_id_key,
-            user,
-            revoke_previous_refresh=refresh_token,
-        )
+        await self.cache_auth_res(user_id_key, user)
         res = self.apply_token(user)
         new_rt = user.get(REFRESH_TOKEN_KEY)
         auth_res = {k: res[k] for k in ['user_id', 'token'] if k in res}
         if new_rt:
             auth_res[REFRESH_TOKEN_KEY] = new_rt
-        return {
-            'auth': auth_res,
-        }
+
+        # 把舊 rt: 改寫成 grace marker，內含 rotation 當下的完整回應。
+        await self.cache.set(
+            _refresh_token_index_key(refresh_token),
+            {'auth': auth_res},
+            ex=REFRESH_TOKEN_GRACE_TTL,
+        )
+
+        return {'auth': auth_res}
 
     '''
     logout

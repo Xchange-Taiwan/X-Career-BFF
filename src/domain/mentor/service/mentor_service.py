@@ -1,7 +1,6 @@
 import logging
 from typing import Optional, Dict, Any
 
-from ..model.experience_model import ExperienceVO, ExperienceDTO
 from ..model.mentor_model import (
     MentorProfileDTO,
     MentorProfileVO,
@@ -10,7 +9,7 @@ from ..model.mentor_model import (
     MentorScheduleDTO,
 )
 from ....config.conf import USER_SERVICE_URL, DEFAULT_LANGUAGE, CACHE_TTL
-from ....config.constant import MENTORS, ExperienceCategory, Language
+from ....config.constant import MENTORS, Language
 from ....config.exception import NotFoundException, raise_http_exception
 from ....infra.client.async_service_api_adapter import AsyncServiceApiAdapter
 from ....infra.template.cache import ICache
@@ -42,31 +41,6 @@ class MentorService:
             url=req_url, json=data.model_dump(mode='json'),
         )
         return res
-
-    async def upsert_experience(self, data: ExperienceDTO, user_id: int, experience_type: str, is_mentor: bool) -> ExperienceVO:
-        req_url = f"{USER_SERVICE_URL}/v1/{MENTORS}/{user_id}/experiences/{experience_type}"
-
-        payload = data.model_dump()
-        payload.update({"category": experience_type})
-        headers = {"is_mentor": str(is_mentor).lower()}
-        res: Optional[ServiceApiResponse] = await self.service_api.put(
-            url=req_url, json=payload, headers=headers
-        )
-        res_data = res.data
-
-        return ExperienceVO.of(res_data.get('id'),
-                               ExperienceCategory(res_data.get('category')),
-                               res_data.get('mentor_experiences_metadata'),
-                               res_data.get('order'))
-
-    async def delete_experience(self, user_id: int, exp_cate: str, exp_id: int, is_mentor: bool) -> bool:
-        req_url = f"{USER_SERVICE_URL}/v1/{MENTORS}/{user_id}/experiences/{exp_cate}/{exp_id}"
-
-        headers = {"is_mentor": str(is_mentor).lower()}
-        res: Optional[ServiceApiResponse] = await self.service_api.delete(
-            url=req_url, headers=headers
-        )
-        return res.data
 
     def cache_key(self, category: str, language: str):
         return f"{category}:{language}"
