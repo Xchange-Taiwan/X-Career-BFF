@@ -10,8 +10,10 @@ from fastapi import UploadFile, File, HTTPException
 
 from src.domain.file.model.file_info_model import FileInfoDTO, FileInfoListVO
 from ...app._di.injection import _user_service
-from ...config.conf import XC_BUCKET, S3_REGION, MAX_STORAGE_SIZE, MAX_WIDTH, MAX_HEIGHT, XC_USER_BUCKET, PRESIGNED_URL_EXPIRES, MAX_FILE_SIZE
+from ...config.conf import S3_REGION, MAX_STORAGE_SIZE, MAX_WIDTH, MAX_HEIGHT, XC_USER_BUCKET, PRESIGNED_URL_EXPIRES, MAX_FILE_SIZE, STAGE
 from ...config.exception import ServerException, NotFoundException
+
+ENV_PREFIX = f"{STAGE}/" if STAGE != "prod" else ""
 from ...domain.file.service.file_service import FileService
 from ...domain.user.model.user_model import ProfileDTO
 
@@ -25,108 +27,7 @@ class GlobalObjectStorage:
         self.file_service = file_service
         self.__cls_name = self.__class__.__name__
 
-    def init(self, bucket, version):
-        file = None
-        key = None
-        try:
-            file = json.dumps({'version': version})
-            key = ''.join([str(bucket), '/email_info.json'])
-            obj = self.s3.Object(XC_BUCKET, key)
-            obj.put(Body=file)
 
-            return version
-
-        except Exception as e:
-            log.error(f'{self.__cls_name}.init [init file error]\
-                bucket:%s, version:%s, file:%s, key:%s, err:%s',
-                      bucket, version, file, key, e.__str__())
-            raise ServerException(msg='init file fail')
-
-    def update(self, bucket, version, newdata):
-        data = None
-        result = None
-        key = None
-        try:
-            data = self.find(bucket)
-            if data is None:
-                raise NotFoundException(msg=f'file:{bucket} not found')
-
-            if 'version' in data and data['version'] != version:
-                raise NotFoundException(msg='no version there OR invalid version')
-
-            data.update(newdata)
-            result = json.dumps(data)
-
-            key = ''.join([str(bucket), '/email_info.json'])
-            obj = self.s3.Object(XC_BUCKET, key)
-            obj.put(Body=result)
-            return result
-
-        except NotFoundException as e:
-            log.error(f'{self.__cls_name}.update [no version found] \
-                bucket:%s, version:%s, newdata:%s, data:%s, result:%s, key:%s, err:%s',
-                      bucket, version, newdata, data, result, key, e.__str__())
-            raise NotFoundException(msg=e.msg)
-
-        except Exception as e:
-            log.error(f'{self.__cls_name}.update [update file error] \
-                bucket:%s, version:%s, newdata:%s, data:%s, result:%s, key:%s, err:%s',
-                      bucket, version, newdata, data, result, key, e.__str__())
-            raise ServerException(msg='update file fail')
-
-    def delete(self, bucket):
-        key = None
-        result = False
-        try:
-            key = ''.join([str(bucket), '/email_info.json'])
-            self.s3.Object(XC_BUCKET, key).delete()
-            result = True
-            return result
-
-        except Exception as e:
-            log.error(f'{self.__cls_name}.delete [delete file error] \
-                bucket:%s, key:%s, result:%s, err:%s',
-                      bucket, key, result, e.__str__())
-            raise ServerException(msg='delete file fail')
-
-    '''
-        return {
-            'email': 'abc@gmail.com',
-            'region': 'jp',
-        }, None
-    '''
-
-    def find(self, bucket):
-        key = None
-        result = None
-        try:
-            key = ''.join([str(bucket), '/email_info.json'])
-            obj = self.s3.Object(XC_BUCKET, key)
-
-            file_stream = io.BytesIO()
-            obj.download_fileobj(file_stream)
-            file_stream.seek(0)
-            string = file_stream.read().decode('utf-8')
-            result = json.loads(string)
-
-            return result
-
-        except ClientError as e:
-            # file does not exist
-            if e.response['Error']['Code'] == '404':
-                return None
-            else:
-                log.error(f'{self.__cls_name}.find [req error] \
-                    bucket:%s, key:%s, result:%s, err:%s',
-                          bucket, key, result, e.__str__())
-                raise ServerException(msg='req error of find file')
-
-        except Exception as e:
-            err = e.__str__()
-            log.error(f'{self.__cls_name}.find [find file error] \
-                bucket:%s, key:%s, result:%s, err:%s',
-                      bucket, key, result, err)
-            raise ServerException(msg='find file fail')
 
     async def upload_avatar(self, file: UploadFile = File(...), user_id: int = -1) -> FileInfoListVO:
         try:
@@ -241,7 +142,7 @@ class GlobalObjectStorage:
         return avatar_dto
 
     def __get_obj_key(self, file_name: str, user_id: int) -> str:
-        return 'files/' + str(user_id) + '/' + file_name
+        return f'{ENV_PREFIX}files/{user_id}/{file_name}'
 
     def __get_obj_url(self, file_name: str, user_id: int, region: str) -> str:
         return f'https://{XC_USER_BUCKET}.s3.{region}.amazonaws.com/{self.__get_obj_key(file_name, user_id)}'
@@ -339,10 +240,10 @@ class GlobalObjectStorage:
             raise HTTPException(status_code=500, detail=f"Error interacting with S3: {e.response['Error']['Message']}")
 
     def get_user_storage_size(self, user_id: int):
-        return self.__get_total_file_size(XC_USER_BUCKET, f'files/{user_id}/')
+        return self.__get_total_file_size(XC_USER_BUCKET, f'{ENV_PREFIX}files/{user_id}/')
 
     def get_presigned_url_for_avatar(self, user_id: int) -> dict:
-        key = f'files/{user_id}/avatar'
+        key = f'{ENV_PREFIX}files/{user_id}/avatar'
         post_data = self.__get_presigned_post(key)
         return post_data
 
