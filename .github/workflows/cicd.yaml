@@ -3,11 +3,11 @@ name: X-Career-BFF Pipeline
 on:
   push:
     branches:
-      - dev
+      - main
 
 jobs:
   deploy:
-    if: github.ref == 'refs/heads/dev'
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
     steps:
@@ -40,29 +40,22 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Deploy to AWS Lambda
-        run: npx sls deploy --stage dev --region ${{ secrets.AWS_REGION }}
+        run: npx sls deploy --stage prod --region ${{ secrets.AWS_REGION }}
         env:
-          STAGE: dev
+          STAGE: prod
           THE_REGION: ${{ secrets.AWS_REGION }}
           ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
           TABLE_CACHE: ${{ secrets.TABLE_CACHE }}
           XC_USER_BUCKET: ${{ secrets.XC_USER_BUCKET }}
 
-      # Block until Lambda's CloudFormation rollout has fully settled.
-      # Without this, `update-function-configuration` below can race the
-      # in-progress deploy and get its env vars overwritten when the
-      # rollout finishes with serverless.yml's (smaller) environment block.
-      - name: Wait for Lambda update to settle
-        run: aws lambda wait function-updated --function-name x-career-bff-dev-app
-
       - name: Update Lambda environment variables
         run: |
           aws lambda update-function-configuration \
-            --function-name x-career-bff-dev-app \
+            --function-name x-career-bff-prod-app \
             --environment "Variables={
           DEFAULT_LANGUAGE=zh_TW,
-          STAGE=dev,
-          TESTING=dev,
+          STAGE=prod,
+          TESTING=false,
           XC_USER_BUCKET=x-career-multimedia,
           BATCH=10,
           REQUEST_INTERVAL_TTL=8,
@@ -73,11 +66,11 @@ jobs:
           REFRESH_TOKEN_TTL=2592000,
           AUTH_RESPONSE_FIELDS=oauth_id;account_type;region;online,
           CACHE_TTL=300,
-          TABLE_CACHE=dev_x_career_bff_cache,
-          AUTH_SERVICE_URL=https://d11k5l9gl6.execute-api.ap-northeast-1.amazonaws.com/dev/auth-service/api,
-          USER_SERVICE_URL=https://gvjbxpuqmh.execute-api.ap-northeast-1.amazonaws.com/dev/user-service/api,
-          SEARCH_SERVICE_URL=https://qa9af3a6vf.execute-api.ap-northeast-1.amazonaws.com/dev/search-service/api,
-          FRONTEND_REDIRECT_URL=https://xtalent.vercel.app/auth/google/callback/redirect,
+          TABLE_CACHE=${{ secrets.TABLE_CACHE_PROD }},
+          AUTH_SERVICE_URL=${{ secrets.AUTH_SERVICE_URL_PROD }},
+          USER_SERVICE_URL=${{ secrets.USER_SERVICE_URL_PROD }},
+          SEARCH_SERVICE_URL=${{ secrets.SEARCH_SERVICE_URL_PROD }},
+          FRONTEND_REDIRECT_URL=${{ secrets.FRONTEND_REDIRECT_URL_PROD }},
           MAX_WIDTH=300,
           MAX_HEIGHT=300,
           MAX_STORAGE_SIZE=15728640,
