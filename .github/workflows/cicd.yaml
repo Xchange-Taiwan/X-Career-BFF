@@ -48,6 +48,13 @@ jobs:
           TABLE_CACHE: ${{ secrets.TABLE_CACHE }}
           XC_USER_BUCKET: ${{ secrets.XC_USER_BUCKET }}
 
+      # Block until Lambda's CloudFormation rollout has fully settled.
+      # Without this, `update-function-configuration` below can race the
+      # in-progress deploy and get its env vars overwritten when the
+      # rollout finishes with serverless.yml's (smaller) environment block.
+      - name: Wait for Lambda update to settle
+        run: aws lambda wait function-updated --function-name x-career-bff-prod-app
+
       - name: Update Lambda environment variables
         run: |
           aws lambda update-function-configuration \
@@ -66,15 +73,15 @@ jobs:
           REFRESH_TOKEN_TTL=2592000,
           AUTH_RESPONSE_FIELDS=oauth_id;account_type;region;online,
           CACHE_TTL=300,
-          TABLE_CACHE=${{ secrets.TABLE_CACHE_PROD }},
-          AUTH_SERVICE_URL=${{ secrets.AUTH_SERVICE_URL_PROD }},
-          USER_SERVICE_URL=${{ secrets.USER_SERVICE_URL_PROD }},
-          SEARCH_SERVICE_URL=${{ secrets.SEARCH_SERVICE_URL_PROD }},
-          FRONTEND_REDIRECT_URL=${{ secrets.FRONTEND_REDIRECT_URL_PROD }},
+          TABLE_CACHE=${{ secrets.TABLE_CACHE }},
+          AUTH_SERVICE_URL=${{ secrets.AUTH_SERVICE_URL }},
+          USER_SERVICE_URL=${{ secrets.USER_SERVICE_URL }},
+          SEARCH_SERVICE_URL=${{ secrets.SEARCH_SERVICE_URL }},
+          FRONTEND_REDIRECT_URL=${{ secrets.FRONTEND_REDIRECT_URL }},
           MAX_WIDTH=300,
           MAX_HEIGHT=300,
           MAX_STORAGE_SIZE=15728640,
           GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }},
-          GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }},
+          GOOGLE_OAUTH_SCOPES=${{ vars.GOOGLE_OAUTH_SCOPES }}
           }"
-

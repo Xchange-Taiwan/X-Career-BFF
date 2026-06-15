@@ -4,12 +4,12 @@ from src.config.constant import Language
 
 DEFAULT_LANGUAGE = os.getenv('DEFAULT_LANGUAGE', 'zh_TW')
 DEFAULT_LANGUAGE_ENUM = Language(DEFAULT_LANGUAGE)
-LOCAL_REGION = os.getenv('AWS_REGION', 'ap-northeast-1')
+LOCAL_REGION = os.getenv('AWS_REGION', 'xxxx')
 S3_REGION = os.getenv('S3_REGION', 'ap-northeast-1')
 STAGE = os.getenv('STAGE', 'local')
 TESTING = os.getenv('TESTING', 'local')
 
-XC_USER_BUCKET = os.getenv('XC_USER_BUCKET', 'x-career-multimedia')
+XC_USER_BUCKET = os.getenv('XC_USER_BUCKET', 'xxxx')
 
 BATCH = int(os.getenv('BATCH', '10'))
 
@@ -35,7 +35,7 @@ AUTH_RESPONSE_FIELDS = AUTH_RESPONSE_FIELDS.strip().split(';')
 # default cache ttl: 5 minutes
 CACHE_TTL = int(os.getenv('CACHE_TTL', 300))
 # dynamodb
-TABLE_CACHE = os.getenv('TABLE_CACHE', 'dev_x_career_bff_cache')
+TABLE_CACHE = os.getenv('TABLE_CACHE', 'xxxx')
 # redis
 REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
 REDIS_PORT = int(os.getenv('REDIS_PORT', '6379'))
@@ -59,7 +59,11 @@ MAX_FILE_SIZE = int(os.getenv('MAX_FILE_SIZE', 15 * 1024 * 1024))
 PRESIGNED_URL_EXPIRES = int(os.getenv('PRESIGNED_URL_EXPIRES', 600))
 
 # Google OAuth2 setup
-GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID', 'google-client-id')
-GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET', 'google-client-secret')
+GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID', 'xxxx')
+GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET', 'xxxx')
+GOOGLE_OAUTH_SCOPES = os.getenv('GOOGLE_OAUTH_SCOPES', 'xxxx')
+GOOGLE_OAUTH_SCOPES = ' '.join(
+    GOOGLE_OAUTH_SCOPES.replace(',', ' ').replace(';', ' ').split()
+)
 API_BASE_URL = os.getenv('API_BASE_URL', 'http://127.0.0.1:8006')
 REDICRECT_URI = os.getenv('REDICRECT_URI', '/api/v2/oauth/google/callback')
