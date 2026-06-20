@@ -57,7 +57,11 @@ class GoogleOAuthService(AuthService):
             'scope': self.google_oauth_scopes,
             'state': state,
             'access_type': 'offline',
-            'prompt': 'consent',
+            # Force an explicit account choice and consent step even when the
+            # browser already has a Google session or previously granted these
+            # scopes. This also makes the complete OAuth flow reproducible for
+            # Google verification recordings.
+            'prompt': 'select_account consent',
             'include_granted_scopes': 'true',
         }
 
