@@ -1,18 +1,19 @@
 from enum import Enum
 
 
-class Language(Enum):
+class Language(str, Enum):
     EN_US = 'en_US'
     ZH_TW = 'zh_TW'
 
 
-class ExperienceCategory(Enum):
+class ExperienceCategory(str, Enum):
     WORK = 'WORK'
     EDUCATION = 'EDUCATION'
     LINK = 'LINK'
+    WHAT_I_OFFER = 'WHAT_I_OFFER'
 
 
-class SeniorityLevel(Enum):
+class SeniorityLevel(str, Enum):
     NO_REVEAL = 'NO REVEAL'
     JUNIOR = 'JUNIOR'
     INTERMEDIATE = 'INTERMEDIATE'
@@ -33,18 +34,18 @@ class TimeSlotType(str, Enum):
     FORBIDDEN = 'FORBIDDEN'
 
 
-class RoleType(Enum):
+class RoleType(str, Enum):
     MENTOR = 'MENTOR'
     MENTEE = 'MENTEE'
 
 
-class BookingStatus(Enum):
+class BookingStatus(str, Enum):
     PENDING = 'PENDING'
     ACCEPT = 'ACCEPT'
     REJECT = 'REJECT'
 
 
-class ReservationListState(Enum):
+class ReservationListState(str, Enum):
     MENTOR_UPCOMING = 'MENTOR_UPCOMING'
     MENTEE_UPCOMING = 'MENTEE_UPCOMING'
     MENTOR_PENDING = 'MENTOR_PENDING'
@@ -53,7 +54,7 @@ class ReservationListState(Enum):
     MENTEE_HISTORY = 'MENTEE_HISTORY'
 
 
-class SortingBy(Enum):
+class SortingBy(str, Enum):
     UPDATED_TIME = 'UPDATED_TIME'
     # VIEW = 'VIEW'
 
@@ -63,18 +64,18 @@ class Sorting(Enum):
     DESC = -1
 
 
-class AccountType(Enum):
+class AccountType(str, Enum):
     XC = 'XC'
     GOOGLE = 'GOOGLE'
     LINKEDIN = 'LINKEDIN'
 
 
-class AuthorizeType(Enum):
+class AuthorizeType(str, Enum):
     SIGNUP = 'SIGNUP'
     LOGIN = 'LOGIN'
 
 
-class TagKind(Enum):
+class TagKind(str, Enum):
     # Mirrors X-Career-User's TagKind. The 5 mentor profile buckets are
     # (kind × array): want_tags carries position/skill/topic; have_tags
     # carries skill/topic. INDUSTRY is flat (stored on profiles.industry,

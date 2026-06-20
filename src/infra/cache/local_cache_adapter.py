@@ -29,12 +29,13 @@ class LocalCacheAdapter(ICache):
     async def set(self, key: str, val: Any, ex: int = None):
         if key is None:
             log.error('local cache key is None key: %s, val: %s, ex: %s', key, val, ex)
-            return
+            return False
 
         self.cache[key] = val
         if ex is not None:
             now = current_seconds()
             self.ttl[key] = now + ex
+        return True
 
     async def delete(self, key: str):
         if key in self.cache:
