@@ -32,6 +32,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Validate Serverless configuration
+        run: npx sls print --stage prod --region ${{ secrets.AWS_REGION }}
+        env:
+          STAGE: prod
+          THE_REGION: ${{ secrets.AWS_REGION }}
+          ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+          TABLE_CACHE: ${{ secrets.TABLE_CACHE }}
+          XC_USER_BUCKET: ${{ secrets.XC_USER_BUCKET }}
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -55,6 +64,9 @@ jobs:
       - name: Wait for Lambda update to settle
         run: aws lambda wait function-updated --function-name x-career-bff-prod-app
 
+      - name: Verify thumbnail Lambda is active
+        run: aws lambda wait function-active --function-name x-career-bff-prod-avatar-thumb
+
       - name: Update Lambda environment variables
         run: |
           aws lambda update-function-configuration \
@@ -63,7 +75,7 @@ jobs:
           DEFAULT_LANGUAGE=zh_TW,
           STAGE=prod,
           TESTING=false,
-          XC_USER_BUCKET=x-career-multimedia,
+          XC_USER_BUCKET=${{ secrets.XC_USER_BUCKET }},
           BATCH=10,
           REQUEST_INTERVAL_TTL=8,
           SHORT_TERM_TTL=1800,
