@@ -36,13 +36,13 @@ provider:
       - logs:CreateLogGroup
       - logs:TagResource
     Resource:
-      - arn:aws:logs:${env:THE_REGION}:${env:ACCOUNT_ID}:log-group:/aws/lambda/${self:service}-${self:provider.stage}-app
+      - arn:aws:logs:${env:THE_REGION}:${env:ACCOUNT_ID}:log-group:/aws/lambda/${self:service}-${self:provider.stage}-*
   - Effect: Allow
     Action:
       - logs:CreateLogStream
       - logs:PutLogEvents
     Resource:
-      - arn:aws:logs:${env:THE_REGION}:${env:ACCOUNT_ID}:log-group:/aws/lambda/${self:service}-${self:provider.stage}-app:*
+      - arn:aws:logs:${env:THE_REGION}:${env:ACCOUNT_ID}:log-group:/aws/lambda/${self:service}-${self:provider.stage}-*:*
 
   - Effect: Allow
     Action:
@@ -103,6 +103,9 @@ provider:
 #    - include-me-dir/**
 
 custom:
+  avatarKeyPrefixes:
+    dev: dev/files/
+    prod: files/
   pythonRequirements:
     dockerizePip: true
     layer:
@@ -148,6 +151,29 @@ functions:
           origin: '*'
           headers: '*'
           allowCredentials: false
+
+  avatarThumb:
+    name: ${self:service}-${self:provider.stage}-avatar-thumb
+    package:
+      patterns:
+      - "!**"
+      - "src/async/avatar_thumb_handler.py"
+    handler: src.async.avatar_thumb_handler.lambda_handler
+    timeout: 30
+    memorySize: 256
+    environment:
+      STAGE: ${self:provider.stage}
+      XC_USER_BUCKET: ${env:XC_USER_BUCKET}
+    layers:
+    - {Ref: PythonRequirementsLambdaLayer}
+    events:
+    - s3:
+        bucket: ${env:XC_USER_BUCKET}
+        event: s3:ObjectCreated:*
+        rules:
+        - prefix: ${self:custom.avatarKeyPrefixes.${self:provider.stage}}
+        - suffix: /avatar
+        existing: true
 
 plugins:
 - serverless-python-requirements

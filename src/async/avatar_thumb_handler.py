@@ -2,8 +2,9 @@
 此為 lambda 函數 avatar-thumb-generator 的程式碼，用於處理 S3 上傳事件，生成使用者頭像縮圖並上傳回 S3。
 """
 import boto3
-import uuid
 import logging
+import os
+import uuid
 from urllib.parse import unquote_plus
 from PIL import Image, ImageOps
 
@@ -11,6 +12,10 @@ log = logging.getLogger()
 log.setLevel(logging.INFO)
          
 s3_client = boto3.client('s3')
+
+STAGE = os.environ["STAGE"]
+XC_USER_BUCKET = os.environ["XC_USER_BUCKET"]
+ENV_PREFIX = f"{STAGE}/" if STAGE != "prod" else ""
 
 # 縮圖最大寬高
 MAX_WIDTH = 300
@@ -58,25 +63,34 @@ def resize_image(src_path, dst_path):
     return original_size, resized_size
 
 def is_valid_avatar_key(key: str) -> bool:
-    if not key.startswith("files/"):
+    expected_prefix = f"{ENV_PREFIX}files/"
+    if not key.startswith(expected_prefix):
         return False
     if not key.endswith("/avatar"):
         return False
-    parts = key.split("/")
-    return len(parts) == 3
+
+    relative_key = key[len(ENV_PREFIX):]
+    parts = relative_key.split("/")
+    return len(parts) == 3 and bool(parts[1])
 
 
 def lambda_handler(event, context):
     log.info("Lambda invoked | recordCount=%s", len(event.get("Records", [])))
 
     for record in event.get("Records", []):
+        bucket = None
+        key = None
+        user_id = None
+        download_path = None
+        upload_path = None
+
         try:
             bucket = record["s3"]["bucket"]["name"]
             key = unquote_plus(record["s3"]["object"]["key"])
 
             log.info("S3 event received | bucket=%s | key=%s", bucket, key)
 
-            if bucket != "x-career-multimedia":
+            if bucket != XC_USER_BUCKET:
                 log.info("Skip event | reason=invalid_bucket | bucket=%s", bucket)
                 continue
 
@@ -84,11 +98,12 @@ def lambda_handler(event, context):
                 log.info("Skip event | reason=invalid_key | key=%s", key)
                 continue
 
-            user_id = key.split("/")[1]
+            relative_key = key[len(ENV_PREFIX):]
+            user_id = relative_key.split("/")[1]
 
             download_path = f"/tmp/{uuid.uuid4()}"
             upload_path = f"/tmp/avatar-thumb-{uuid.uuid4()}"
-            thumb_key = f"files/{user_id}/avatar-thumb"
+            thumb_key = f"{ENV_PREFIX}files/{user_id}/avatar-thumb"
 
             s3_client.download_file(bucket, key, download_path)
 
@@ -110,10 +125,13 @@ def lambda_handler(event, context):
                 resized_size[1]
             )
 
-        except Exception as e:
+        except Exception:
             log.exception("Thumbnail failed | userId=%s | key=%s",
                 user_id,
                 key
             )
             continue
-
+        finally:
+            for temp_path in (download_path, upload_path):
+                if temp_path and os.path.exists(temp_path):
+                    os.remove(temp_path)
